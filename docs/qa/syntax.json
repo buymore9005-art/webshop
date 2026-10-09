@@ -1,0 +1,6 @@
+{
+  "scope": "TypeScript syntax only; not typecheck, bundling or Deno execution.",
+  "compiler": "5.8.3",
+  "files": 25,
+  "errors": []
+}

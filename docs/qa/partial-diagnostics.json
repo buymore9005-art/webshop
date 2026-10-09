@@ -1,0 +1,15 @@
+{
+  "scope": "Partial diagnostics with dependencies missing; NOT a successful typecheck.",
+  "total": 1052,
+  "byCode": {
+    "2307": 25,
+    "2322": 2,
+    "2339": 1,
+    "2688": 1,
+    "2875": 13,
+    "7006": 106,
+    "7026": 896,
+    "7053": 8
+  },
+  "unboundNames": []
+}

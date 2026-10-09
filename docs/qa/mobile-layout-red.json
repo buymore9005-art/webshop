@@ -1,0 +1,187 @@
+{
+  "scope": "Actual index.css with static QA-only representative markup. No React build, Tailwind generation, live data, Auth or payment tested.",
+  "cases": [
+    {
+      "fixture": "catalog",
+      "viewport": 320,
+      "pass": true,
+      "width": 320,
+      "scrollWidth": 320,
+      "smallInput": 0,
+      "overflow": []
+    },
+    {
+      "fixture": "catalog",
+      "viewport": 360,
+      "pass": true,
+      "width": 360,
+      "scrollWidth": 360,
+      "smallInput": 0,
+      "overflow": []
+    },
+    {
+      "fixture": "catalog",
+      "viewport": 390,
+      "pass": true,
+      "width": 390,
+      "scrollWidth": 390,
+      "smallInput": 0,
+      "overflow": []
+    },
+    {
+      "fixture": "catalog",
+      "viewport": 768,
+      "pass": true,
+      "width": 768,
+      "scrollWidth": 768,
+      "smallInput": 0,
+      "overflow": []
+    },
+    {
+      "fixture": "catalog",
+      "viewport": 1440,
+      "pass": true,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "smallInput": 0,
+      "overflow": []
+    },
+    {
+      "fixture": "admin-orders",
+      "viewport": 320,
+      "pass": true,
+      "width": 320,
+      "scrollWidth": 320,
+      "smallInput": 0,
+      "overflow": []
+    },
+    {
+      "fixture": "admin-orders",
+      "viewport": 360,
+      "pass": true,
+      "width": 360,
+      "scrollWidth": 360,
+      "smallInput": 0,
+      "overflow": []
+    },
+    {
+      "fixture": "admin-orders",
+      "viewport": 390,
+      "pass": true,
+      "width": 390,
+      "scrollWidth": 390,
+      "smallInput": 0,
+      "overflow": []
+    },
+    {
+      "fixture": "admin-orders",
+      "viewport": 768,
+      "pass": true,
+      "width": 768,
+      "scrollWidth": 768,
+      "smallInput": 0,
+      "overflow": []
+    },
+    {
+      "fixture": "admin-orders",
+      "viewport": 1440,
+      "pass": true,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "smallInput": 0,
+      "overflow": []
+    },
+    {
+      "fixture": "checkout",
+      "viewport": 320,
+      "pass": true,
+      "width": 320,
+      "scrollWidth": 320,
+      "smallInput": 0,
+      "overflow": []
+    },
+    {
+      "fixture": "checkout",
+      "viewport": 360,
+      "pass": true,
+      "width": 360,
+      "scrollWidth": 360,
+      "smallInput": 0,
+      "overflow": []
+    },
+    {
+      "fixture": "checkout",
+      "viewport": 390,
+      "pass": true,
+      "width": 390,
+      "scrollWidth": 390,
+      "smallInput": 0,
+      "overflow": []
+    },
+    {
+      "fixture": "checkout",
+      "viewport": 768,
+      "pass": true,
+      "width": 768,
+      "scrollWidth": 768,
+      "smallInput": 0,
+      "overflow": []
+    },
+    {
+      "fixture": "checkout",
+      "viewport": 1440,
+      "pass": true,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "smallInput": 0,
+      "overflow": []
+    },
+    {
+      "fixture": "product-dialog",
+      "viewport": 320,
+      "pass": false,
+      "width": 320,
+      "scrollWidth": 320,
+      "smallInput": 2,
+      "overflow": []
+    },
+    {
+      "fixture": "product-dialog",
+      "viewport": 360,
+      "pass": false,
+      "width": 360,
+      "scrollWidth": 360,
+      "smallInput": 2,
+      "overflow": []
+    },
+    {
+      "fixture": "product-dialog",
+      "viewport": 390,
+      "pass": false,
+      "width": 390,
+      "scrollWidth": 390,
+      "smallInput": 2,
+      "overflow": []
+    },
+    {
+      "fixture": "product-dialog",
+      "viewport": 768,
+      "pass": true,
+      "width": 768,
+      "scrollWidth": 768,
+      "smallInput": 2,
+      "overflow": []
+    },
+    {
+      "fixture": "product-dialog",
+      "viewport": 1440,
+      "pass": true,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "smallInput": 2,
+      "overflow": []
+    }
+  ],
+  "passed": 17,
+  "failed": 3
+}

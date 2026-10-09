@@ -1,0 +1,86 @@
+[
+  {
+    "uploaded": ".gitignore(2)",
+    "project_path": ".gitignore",
+    "sha256": "ac80a6e11ddd192eb092b45b09045246d3ebfdc5b8aee4cbe7473cf89bd5609c",
+    "bytes": 2152
+  },
+  {
+    "uploaded": "Admin.tsx",
+    "project_path": "Admin.tsx",
+    "sha256": "ce0af79d507d811d032d380df5a05d10909ffb488c2f9c8d20199654625d2f6b",
+    "bytes": 29008
+  },
+  {
+    "uploaded": "App.tsx",
+    "project_path": "App.tsx",
+    "sha256": "3c6fd474f3d76c36569e9d00042ac889c70247b495be99640086875198bee5d0",
+    "bytes": 25620
+  },
+  {
+    "uploaded": "index.css",
+    "project_path": "index.css",
+    "sha256": "5da80409a8ba64a4442c47a87bcace2ad62128dd0069932ff1bfad0feead8b94",
+    "bytes": 1457
+  },
+  {
+    "uploaded": "index(2).html",
+    "project_path": "index.html",
+    "sha256": "0b062988120acc305fdd2c84bad4d50003af97e9c754c7d5ad8e569e0a5de3e9",
+    "bytes": 485
+  },
+  {
+    "uploaded": "LICENSE(2)",
+    "project_path": "LICENSE",
+    "sha256": "422dc1ae77d2095f193cde785c34e0e9a20a5bea833778e9925efda245a0c55a",
+    "bytes": 1066
+  },
+  {
+    "uploaded": "main(9).tsx",
+    "project_path": "main.tsx",
+    "sha256": "b665cac7156cb9338a6932d17d7842c6b3dae9683e5083f4f39be5abeb813f7d",
+    "bytes": 591
+  },
+  {
+    "uploaded": "package(2).json",
+    "project_path": "package.json",
+    "sha256": "852d2750178947b1423f257c7c7efdc5e55a78db924cea740b71e4e8c81e38e1",
+    "bytes": 632
+  },
+  {
+    "uploaded": "README(2).md",
+    "project_path": "README.md",
+    "sha256": "ef0adb1730297066955fb0a7e9674546df9a99ed278fa72d76862590cfe6f1e1",
+    "bytes": 14
+  },
+  {
+    "uploaded": "supabaseClient.ts",
+    "project_path": "supabaseClient.ts",
+    "sha256": "9b650c4b90259d0f7fb1edb3c5867a437c0b0edf8aa283787b69cfeeb0371de5",
+    "bytes": 416
+  },
+  {
+    "uploaded": "tsconfig(2).json",
+    "project_path": "tsconfig.json",
+    "sha256": "67ec5708b3faa1a5c9928434963398f521749cf4574b89b46f49fda1c0374ac6",
+    "bytes": 564
+  },
+  {
+    "uploaded": "tsconfig.node(2).json",
+    "project_path": "tsconfig.node.json",
+    "sha256": "c40d0614fda5b8a746a1ba2e3be8e2370140c0167851ac77881cd53bb5647cdd",
+    "bytes": 184
+  },
+  {
+    "uploaded": "vercel.json",
+    "project_path": "vercel.json",
+    "sha256": "c85f30a05020d207d1d632151b1958bc59a5c3b0aebceaa8bcd6ea316b435b6d",
+    "bytes": 80
+  },
+  {
+    "uploaded": "vite.config(2).ts",
+    "project_path": "vite.config.ts",
+    "sha256": "2d8b8a9c0291a6635f5efef200ae0fae8bfd0f5d57b3e456125e71aea661be6a",
+    "bytes": 163
+  }
+]

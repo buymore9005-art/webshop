@@ -1,0 +1,470 @@
+
+> zyha-id@1.1.0 test
+> node scripts/run-tests.cjs
+
+TAP version 13
+# Subtest: same product and variant merge quantities
+ok 1 - same product and variant merge quantities
+  ---
+  duration_ms: 1.968499
+  type: 'test'
+  ...
+# Subtest: different variants remain distinct
+ok 2 - different variants remain distinct
+  ---
+  duration_ms: 1.841964
+  type: 'test'
+  ...
+# Subtest: variant is mandatory when product has variants
+ok 3 - variant is mandatory when product has variants
+  ---
+  duration_ms: 0.500036
+  type: 'test'
+  ...
+# Subtest: unknown variant cannot enter cart
+ok 4 - unknown variant cannot enter cart
+  ---
+  duration_ms: 0.188418
+  type: 'test'
+  ...
+# Subtest: out of stock is rejected
+ok 5 - out of stock is rejected
+  ---
+  duration_ms: 0.276379
+  type: 'test'
+  ...
+# Subtest: inactive product is rejected
+ok 6 - inactive product is rejected
+  ---
+  duration_ms: 0.216464
+  type: 'test'
+  ...
+# Subtest: quantities are integers only
+ok 7 - quantities are integers only
+  ---
+  duration_ms: 0.463139
+  type: 'test'
+  ...
+# Subtest: empty cart is rejected
+ok 8 - empty cart is rejected
+  ---
+  duration_ms: 0.276301
+  type: 'test'
+  ...
+# Subtest: checkout serializes no price or customer-controlled totals
+ok 9 - checkout serializes no price or customer-controlled totals
+  ---
+  duration_ms: 1.328725
+  type: 'test'
+  ...
+# Subtest: display shipping threshold
+ok 10 - display shipping threshold
+  ---
+  duration_ms: 0.754942
+  type: 'test'
+  ...
+# Subtest: Indonesian phone normalization
+ok 11 - Indonesian phone normalization
+  ---
+  duration_ms: 0.463177
+  type: 'test'
+  ...
+# Subtest: phone invalid input rejected
+ok 12 - phone invalid input rejected
+  ---
+  duration_ms: 0.413201
+  type: 'test'
+  ...
+# Subtest: URL javascript not accepted
+ok 13 - URL javascript not accepted
+  ---
+  duration_ms: 0.166715
+  type: 'test'
+  ...
+# Subtest: data URLs not accepted
+ok 14 - data URLs not accepted
+  ---
+  duration_ms: 0.112078
+  type: 'test'
+  ...
+# Subtest: secure image URL preserved
+ok 15 - secure image URL preserved
+  ---
+  duration_ms: 0.245542
+  type: 'test'
+  ...
+# Subtest: WA message encoded as a whole, including & and new lines
+ok 16 - WA message encoded as a whole, including & and new lines
+  ---
+  duration_ms: 0.367037
+  type: 'test'
+  ...
+# Subtest: CSV formula injection is neutralized
+ok 17 - CSV formula injection is neutralized
+  ---
+  duration_ms: 0.274692
+  type: 'test'
+  ...
+# Subtest: corrupt stored cart is discarded
+ok 18 - corrupt stored cart is discarded
+  ---
+  duration_ms: 0.511129
+  type: 'test'
+  ...
+# Subtest: stored cart survives roundtrip
+ok 19 - stored cart survives roundtrip
+  ---
+  duration_ms: 0.466555
+  type: 'test'
+  ...
+# Subtest: hostile stored qty is discarded
+ok 20 - hostile stored qty is discarded
+  ---
+  duration_ms: 0.43183
+  type: 'test'
+  ...
+# Subtest: customer fields validated
+ok 21 - customer fields validated
+  ---
+  duration_ms: 0.398851
+  type: 'test'
+  ...
+# Subtest: checkout ignores tampered client price
+ok 22 - checkout ignores tampered client price
+  ---
+  duration_ms: 4.146916
+  type: 'test'
+  ...
+# Subtest: reject invalid quantity 0
+ok 23 - reject invalid quantity 0
+  ---
+  duration_ms: 0.652534
+  type: 'test'
+  ...
+# Subtest: reject invalid quantity -1
+ok 24 - reject invalid quantity -1
+  ---
+  duration_ms: 0.176565
+  type: 'test'
+  ...
+# Subtest: reject invalid quantity 1.1
+ok 25 - reject invalid quantity 1.1
+  ---
+  duration_ms: 0.166901
+  type: 'test'
+  ...
+# Subtest: reject invalid quantity 100
+ok 26 - reject invalid quantity 100
+  ---
+  duration_ms: 0.407678
+  type: 'test'
+  ...
+# Subtest: reject invalid quantity 2
+ok 27 - reject invalid quantity 2
+  ---
+  duration_ms: 0.146526
+  type: 'test'
+  ...
+# Subtest: reject invalid quantity null
+ok 28 - reject invalid quantity null
+  ---
+  duration_ms: 0.245168
+  type: 'test'
+  ...
+# Subtest: duplicate cart line rejected server side
+ok 29 - duplicate cart line rejected server side
+  ---
+  duration_ms: 0.348893
+  type: 'test'
+  ...
+# Subtest: malformed UUID rejected
+ok 30 - malformed UUID rejected
+  ---
+  duration_ms: 0.636335
+  type: 'test'
+  ...
+# Subtest: receipt proof requires 256 bit hex value
+ok 31 - receipt proof requires 256 bit hex value
+  ---
+  duration_ms: 0.975593
+  type: 'test'
+  ...
+# Subtest: settlement and code 200 is paid
+ok 32 - settlement and code 200 is paid
+  ---
+  duration_ms: 0.279715
+  type: 'test'
+  ...
+# Subtest: capture challenge must not become paid
+ok 33 - capture challenge must not become paid
+  ---
+  duration_ms: 0.136697
+  type: 'test'
+  ...
+# Subtest: capture accept can become paid
+ok 34 - capture accept can become paid
+  ---
+  duration_ms: 0.106785
+  type: 'test'
+  ...
+# Subtest: settlement denied does not become paid
+ok 35 - settlement denied does not become paid
+  ---
+  duration_ms: 0.095158
+  type: 'test'
+  ...
+# Subtest: non-success code does not become paid
+ok 36 - non-success code does not become paid
+  ---
+  duration_ms: 0.414014
+  type: 'test'
+  ...
+# Subtest: fractional money rejected
+ok 37 - fractional money rejected
+  ---
+  duration_ms: 0.258662
+  type: 'test'
+  ...
+# Subtest: decimal provider representation accepted
+ok 38 - decimal provider representation accepted
+  ---
+  duration_ms: 0.158063
+  type: 'test'
+  ...
+# Subtest: non-finite and exponent money rejected
+ok 39 - non-finite and exponent money rejected
+  ---
+  duration_ms: 0.229194
+  type: 'test'
+  ...
+# Subtest: signature comparison rejects unequal length
+ok 40 - signature comparison rejects unequal length
+  ---
+  duration_ms: 0.157561
+  type: 'test'
+  ...
+# Subtest: GET status with no currency remains valid IDR response
+ok 41 - GET status with no currency remains valid IDR response
+  ---
+  duration_ms: 0.85028
+  type: 'test'
+  ...
+# Subtest: GET status explicitly wrong currency is rejected
+ok 42 - GET status explicitly wrong currency is rejected
+  ---
+  duration_ms: 0.35328
+  type: 'test'
+  ...
+# Subtest: GET status amount must match server order
+ok 43 - GET status amount must match server order
+  ---
+  duration_ms: 1.502204
+  type: 'test'
+  ...
+# Subtest: GET status other order cannot update current order
+ok 44 - GET status other order cannot update current order
+  ---
+  duration_ms: 0.680324
+  type: 'test'
+  ...
+# Subtest: Snap item IDs remain unique for two variants of same product
+ok 45 - Snap item IDs remain unique for two variants of same product
+  ---
+  duration_ms: 1.078566
+  type: 'test'
+  ...
+# Subtest: Snap address is limited while full shipping address remains in order
+ok 46 - Snap address is limited while full shipping address remains in order
+  ---
+  duration_ms: 0.371414
+  type: 'test'
+  ...
+# Subtest: Snap totals equal stored order and request 3DS
+ok 47 - Snap totals equal stored order and request 3DS
+  ---
+  duration_ms: 0.343611
+  type: 'test'
+  ...
+# Subtest: Snap rejects an inconsistent stored total
+ok 48 - Snap rejects an inconsistent stored total
+  ---
+  duration_ms: 1.040783
+  type: 'test'
+  ...
+# Subtest: Large Snap payload is collapsed without altering amount or stored items
+ok 49 - Large Snap payload is collapsed without altering amount or stored items
+  ---
+  duration_ms: 1.376239
+  type: 'test'
+  ...
+# Subtest: admin route uses a real Auth gate
+ok 50 - admin route uses a real Auth gate
+  ---
+  duration_ms: 2.184933
+  type: 'test'
+  ...
+# Subtest: browser never writes paid directly
+ok 51 - browser never writes paid directly
+  ---
+  duration_ms: 0.35272
+  type: 'test'
+  ...
+# Subtest: old public settings server-key field is absent
+ok 52 - old public settings server-key field is absent
+  ---
+  duration_ms: 0.259045
+  type: 'test'
+  ...
+# Subtest: no decorative icon dependency in UI
+ok 53 - no decorative icon dependency in UI
+  ---
+  duration_ms: 0.564355
+  type: 'test'
+  ...
+# Subtest: one shot SQL exists and uses authoritative pricing
+ok 54 - one shot SQL exists and uses authoritative pricing
+  ---
+  duration_ms: 0.37156
+  type: 'test'
+  ...
+# Subtest: setup does not seed fake products or orders
+ok 55 - setup does not seed fake products or orders
+  ---
+  duration_ms: 0.369656
+  type: 'test'
+  ...
+# Subtest: normal build requires typecheck
+ok 56 - normal build requires typecheck
+  ---
+  duration_ms: 0.184978
+  type: 'test'
+  ...
+# Subtest: all relative modules are packaged
+ok 57 - all relative modules are packaged
+  ---
+  duration_ms: 58.554183
+  type: 'test'
+  ...
+# Subtest: orders have no browser INSERT/UPDATE grants
+ok 58 - orders have no browser INSERT/UPDATE grants
+  ---
+  duration_ms: 1.967272
+  type: 'test'
+  ...
+# Subtest: guest SQL RPCs are revoked from browser roles
+ok 59 - guest SQL RPCs are revoked from browser roles
+  ---
+  duration_ms: 0.717035
+  type: 'test'
+  ...
+# Subtest: admin authorization never reads editable metadata
+ok 60 - admin authorization never reads editable metadata
+  ---
+  duration_ms: 0.394304
+  type: 'test'
+  ...
+# Subtest: setup stops on unrelated existing schema
+ok 61 - setup stops on unrelated existing schema
+  ---
+  duration_ms: 0.266375
+  type: 'test'
+  ...
+# Subtest: idempotent checkout is serialized before insert
+ok 62 - idempotent checkout is serialized before insert
+  ---
+  duration_ms: 0.216686
+  type: 'test'
+  ...
+# Subtest: stock locks follow deterministic ordering
+ok 63 - stock locks follow deterministic ordering
+  ---
+  duration_ms: 0.231386
+  type: 'test'
+  ...
+# Subtest: receipt proof is hashed and not public table access
+ok 64 - receipt proof is hashed and not public table access
+  ---
+  duration_ms: 0.259029
+  type: 'test'
+  ...
+# Subtest: payment mode is snapshotted per order
+ok 65 - payment mode is snapshotted per order
+  ---
+  duration_ms: 0.353306
+  type: 'test'
+  ...
+# Subtest: webhook verifies status server to server
+ok 66 - webhook verifies status server to server
+  ---
+  duration_ms: 0.229489
+  type: 'test'
+  ...
+# Subtest: browser callback never asserts payment success
+ok 67 - browser callback never asserts payment success
+  ---
+  duration_ms: 0.164858
+  type: 'test'
+  ...
+# Subtest: gallery file uploads validate byte signatures
+ok 68 - gallery file uploads validate byte signatures
+  ---
+  duration_ms: 0.193498
+  type: 'test'
+  ...
+# Subtest: application does not use former Supabase endpoint
+ok 69 - application does not use former Supabase endpoint
+  ---
+  duration_ms: 0.19952
+  type: 'test'
+  ...
+# Subtest: tailwind is built locally, not CDN script
+ok 70 - tailwind is built locally, not CDN script
+  ---
+  duration_ms: 0.191039
+  type: 'test'
+  ...
+# Subtest: order inputs on frontend never set payment status
+ok 71 - order inputs on frontend never set payment status
+  ---
+  duration_ms: 0.193524
+  type: 'test'
+  ...
+# Subtest: unstarted gateway cancellation is service-only and concurrency-guarded
+ok 72 - unstarted gateway cancellation is service-only and concurrency-guarded
+  ---
+  duration_ms: 1.477917
+  type: 'test'
+  ...
+# Subtest: duplicate auth sign-in does not unmount an existing admin workspace
+ok 73 - duplicate auth sign-in does not unmount an existing admin workspace
+  ---
+  duration_ms: 0.250546
+  type: 'test'
+  ...
+# Subtest: server normalizes variant names without changing customer data
+ok 74 - server normalizes variant names without changing customer data
+  ---
+  duration_ms: 0.330108
+  type: 'test'
+  ...
+# Subtest: bootstrap email does not collide with auth.users.email column
+ok 75 - bootstrap email does not collide with auth.users.email column
+  ---
+  duration_ms: 0.303206
+  type: 'test'
+  ...
+# Subtest: catalog URL pagination is a nonnegative integer
+ok 76 - catalog URL pagination is a nonnegative integer
+  ---
+  duration_ms: 0.149628
+  type: 'test'
+  ...
+1..76
+# tests 76
+# suites 0
+# pass 76
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 163.431561

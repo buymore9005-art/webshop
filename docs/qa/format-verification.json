@@ -1,0 +1,127 @@
+[
+  {
+    "file": "Admin.tsx",
+    "formatted": true,
+    "emittedCodeMatches": true
+  },
+  {
+    "file": "App.tsx",
+    "formatted": true,
+    "emittedCodeMatches": true
+  },
+  {
+    "file": "main.tsx",
+    "formatted": true,
+    "emittedCodeMatches": true
+  },
+  {
+    "file": "src/admin/Dashboard.tsx",
+    "formatted": true,
+    "emittedCodeMatches": true
+  },
+  {
+    "file": "src/admin/Orders.tsx",
+    "formatted": true,
+    "emittedCodeMatches": true
+  },
+  {
+    "file": "src/admin/Payments.tsx",
+    "formatted": true,
+    "emittedCodeMatches": true
+  },
+  {
+    "file": "src/admin/Products.tsx",
+    "formatted": true,
+    "emittedCodeMatches": true
+  },
+  {
+    "file": "src/admin/Settings.tsx",
+    "formatted": true,
+    "emittedCodeMatches": true
+  },
+  {
+    "file": "src/components/AdminGate.tsx",
+    "formatted": true,
+    "emittedCodeMatches": true
+  },
+  {
+    "file": "src/components/UI.tsx",
+    "formatted": true,
+    "emittedCodeMatches": true
+  },
+  {
+    "file": "src/lib/api.ts",
+    "formatted": true,
+    "emittedCodeMatches": true
+  },
+  {
+    "file": "src/lib/domain.ts",
+    "formatted": true,
+    "emittedCodeMatches": true
+  },
+  {
+    "file": "src/lib/useResource.ts",
+    "formatted": true,
+    "emittedCodeMatches": true
+  },
+  {
+    "file": "src/shop/CartPanel.tsx",
+    "formatted": true,
+    "emittedCodeMatches": true
+  },
+  {
+    "file": "src/shop/Checkout.tsx",
+    "formatted": true,
+    "emittedCodeMatches": true
+  },
+  {
+    "file": "src/shop/OrderReceipt.tsx",
+    "formatted": true,
+    "emittedCodeMatches": true
+  },
+  {
+    "file": "src/shop/payment.ts",
+    "formatted": true,
+    "emittedCodeMatches": true
+  },
+  {
+    "file": "src/types.ts",
+    "formatted": true,
+    "emittedCodeMatches": true
+  },
+  {
+    "file": "src/vite-env.d.ts",
+    "formatted": true,
+    "emittedCodeMatches": true
+  },
+  {
+    "file": "supabase/functions/_shared/server.ts",
+    "formatted": true,
+    "emittedCodeMatches": true
+  },
+  {
+    "file": "supabase/functions/_shared/validation.ts",
+    "formatted": true,
+    "emittedCodeMatches": true
+  },
+  {
+    "file": "supabase/functions/midtrans-webhook/index.ts",
+    "formatted": true,
+    "emittedCodeMatches": true
+  },
+  {
+    "file": "supabase/functions/rapid-api/index.ts",
+    "formatted": true,
+    "emittedCodeMatches": true
+  },
+  {
+    "file": "supabaseClient.ts",
+    "formatted": true,
+    "emittedCodeMatches": true
+  },
+  {
+    "file": "vite.config.ts",
+    "formatted": true,
+    "emittedCodeMatches": true
+  }
+]
