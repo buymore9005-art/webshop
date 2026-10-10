@@ -1,5 +1,17 @@
 # CHANGELOG — ZYHA ID 1.2.0
 
+## Inventaris stok per varian
+
+- Menambahkan stok dan ambang peringatan terpisah untuk tiap varian; produk tanpa
+  varian tetap menggunakan stok produk.
+- Menambahkan tab Manajemen stok pada Produk & katalog untuk ringkasan stok,
+  filter, penyesuaian beralasan, dan riwayat pergerakan.
+- Checkout mengunci, memvalidasi, mengurangi, dan mencatat stok di database secara
+  atomik. Pembatalan mengembalikan stok terukur satu kali.
+- Migration `20261014000000_variant_inventory.sql` memulai varian legacy yang belum
+  mempunyai stok dari 0; jumlah stok lama tidak disalin ke semua varian. Isi stok awal
+  manual di Admin sebelum penjualan.
+
 ## Kolase foto brand di footer
 
 - Mengganti kartu cerita brand berbasis artikel menjadi bagian Showcase / Portfolio

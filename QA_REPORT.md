@@ -6,6 +6,17 @@ Tanggal laporan: 10 Oktober 2026. Basis: 14 file webshop yang diunggah di percak
 release production tervalidasi: migration SQL/RLS, Auth/Realtime, Edge Functions,
 provider shipping, GitHub CI, Vercel, dan pembayaran live belum diuji.**
 
+## Pembaruan fitur stok per varian
+
+Frontend kini mengelola stok terpisah per varian dan menyediakan tab manajemen
+inventaris, ambang stok rendah, penyesuaian dengan alasan, serta audit mutasi. Checkout
+dan restore pembatalan menggunakan migration
+`supabase/migrations/20261014000000_variant_inventory.sql`. Tes lokal mencakup
+ketersediaan varian independen dan kontrak source SQL; SQL tersebut belum dieksekusi
+atau diuji terhadap PostgreSQL/Supabase staging. Migration harus dijalankan manual
+sebelum deployment frontend. Varian lama yang belum memiliki nilai stok diset ke 0;
+jumlah awal harus dimasukkan Admin secara manual.
+
 ## Validasi terbaru — 10 Oktober 2026
 
 Validasi awal setelah konfigurasi deployment dan pemulihan bukti pesanan menjalankan
@@ -30,6 +41,10 @@ Migration RLS `20261013000000_brand_gallery.sql` ditambahkan; belum diterapkan k
 Supabase. Sebanyak 76 tes, strict typecheck, build production, pemeriksaan import, dan
 git diff check lulus. Browser belum dapat menguji data katalog langsung karena
 environment Supabase lokal tidak dikonfigurasi.
+
+Perubahan stok per varian yang lebih baru melewati 83 tes, strict typecheck,
+production build, dan `git diff --check`. Pemeriksaan mencakup perilaku stok tiap
+varian dan assertion source migration; hasil tersebut bukan eksekusi SQL.
 
 ## Yang benar-benar dijalankan
 

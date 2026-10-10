@@ -122,7 +122,7 @@ export function WishlistPage({ session, products, loading, error, onRemove, onPr
             {products.map(product => <article className="product-card" key={product.id}>
                 <button className="product-photo" onClick={() => onProduct(product.id)} aria-label={'Lihat ' + product.title}><Photo src={product.image_url || product.images[0]} alt={product.title} /></button>
                 <div className="product-copy"><p className="eyebrow">{product.category || 'Koleksi'}</p><h2><button className="product-name" onClick={() => onProduct(product.id)}>{product.title}</button></h2><strong>{money(product.price)}</strong>
-                    {product.stock === 0 && <small className="stock-unavailable">Stok habis</small>}
+                    {(!product.variants.length && product.stock === 0) || (product.variants.length > 0 && product.variants.every(variant => variant.stock === 0)) ? <small className="stock-unavailable">Stok habis</small> : null}
                     <div className="actions"><button className="button secondary" onClick={() => onProduct(product.id)}>Lihat produk</button><button className="text-button danger" onClick={() => onRemove(product)}>Hapus</button></div>
                 </div>
             </article>)}

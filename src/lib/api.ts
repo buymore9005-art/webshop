@@ -9,7 +9,7 @@ export interface CatalogFilter {
     sort: string;
     admin?: boolean;
 }
-const PRODUCT_FIELDS = 'id,title,price,description,category,image_url,images,variants,stock,weight_grams,is_active,version,created_at,updated_at';
+const PRODUCT_FIELDS = 'id,title,price,description,category,image_url,images,variants,stock,stock_alert_threshold,weight_grams,is_active,version,created_at,updated_at';
 const ORDER_FIELDS = 'id,order_number,items,subtotal,shipping_fee,shipping_quote_id,coupon_code,discount_amount,total_price,status,payment_method,payment_snapshot,fulfillment_status,tracking_number,carrier,created_at,customer_name,customer_phone,customer_address,customer_district,customer_city,customer_province,customer_postal_code,total_weight_grams,customer_note,version,updated_at';
 const ARTICLE_FIELDS = 'id,slug,title,excerpt,body,cover_image_url,status,published_at,created_at,updated_at';
 export async function getProducts(filter: CatalogFilter, signal?: AbortSignal) {
@@ -281,11 +281,19 @@ export async function loadReceipt(access: OrderAccess) { const x = await shopAct
     receipt: Receipt;
 }>({ ...access, action: 'receipt' }); return x.receipt; }
 export async function saveProduct(value: Partial<Product>, original?: Product) {
-    const payload = { title: value.title?.trim(), description: value.description?.trim() || '', category: value.category?.trim() || '', price: Number(value.price), stock: value.stock === null ? null : Number(value.stock), weight_grams: Number(value.weight_grams), image_url: value.image_url || '', images: value.images || [], variants: (value.variants || []).map(v => ({ name: v.name.trim(), image: v.image.trim() })), is_active: value.is_active ?? true };
+    const payload = { title: value.title?.trim(), description: value.description?.trim() || '', category: value.category?.trim() || '', price: Number(value.price), stock: value.stock === null ? null : Number(value.stock), stock_alert_threshold: Number(value.stock_alert_threshold ?? 5), weight_grams: Number(value.weight_grams), image_url: value.image_url || '', images: value.images || [], variants: (value.variants || []).map(v => ({ name: v.name.trim(), image: v.image.trim(), stock: v.stock === null ? null : Number(v.stock ?? 0), low_stock_threshold: Number(v.low_stock_threshold ?? 5) })), is_active: value.is_active ?? true };
     if (!payload.title || !Number.isSafeInteger(payload.price) || payload.price < 1 || payload.price > 1e9)
         throw new Error('Nama dan harga produk tidak valid.');
     if (payload.stock !== null && (!Number.isInteger(payload.stock) || payload.stock < 0))
         throw new Error('Stok harus bilangan bulat nonnegatif.');
+    if (!Number.isInteger(payload.stock_alert_threshold) || payload.stock_alert_threshold < 0 || payload.stock_alert_threshold > 100000000)
+        throw new Error('Batas peringatan stok harus bilangan bulat 0–100.000.000.');
+    for (const variant of payload.variants) {
+        if (variant.stock !== null && (!Number.isInteger(variant.stock) || variant.stock < 0 || variant.stock > 100000000))
+            throw new Error(`Stok varian ${variant.name || ''} harus bilangan bulat 0–100.000.000 atau kosong untuk stok tak terbatas.`);
+        if (!Number.isInteger(variant.low_stock_threshold) || variant.low_stock_threshold < 0 || variant.low_stock_threshold > 100000000)
+            throw new Error(`Batas peringatan stok varian ${variant.name || ''} tidak valid.`);
+    }
     if (!Number.isSafeInteger(payload.weight_grams) || payload.weight_grams < 0 || payload.weight_grams > 100000000)
         throw new Error('Berat produk harus bilangan bulat 0–100.000.000 gram.');
     const query = original ? client().from('products').update(payload).eq('id', original.id).eq('version', original.version) : client().from('products').insert(payload);
@@ -317,6 +325,34 @@ export async function importProducts(products: ProductImportRow[]) {
     if (data?.length !== products.length)
         throw new Error('Respons impor tidak lengkap; periksa katalog sebelum mengulangi impor.');
     return data.length;
+}
+export async function adjustInventory(productId: string, variant: string, delta: number, reason: string) {
+    if (!Number.isInteger(delta) || delta === 0 || Math.abs(delta) > 100000000)
+        throw new Error('Penyesuaian stok harus bilangan bulat bukan nol.');
+    const { data, error } = await client().rpc('zyha_admin_adjust_inventory', {
+        p_product_id: productId,
+        p_variant: variant,
+        p_delta: delta,
+        p_reason: reason.trim(),
+    });
+    if (error)
+        throw error;
+    return data as { stock: number; movement_id: string };
+}
+export async function getInventoryMovements(productId: string, variant: string) {
+    let query = client().from('inventory_movements')
+        .select('id,product_id,variant_name,delta,stock_after,reason,created_at')
+        .eq('product_id', productId)
+        .order('created_at', { ascending: false })
+        .limit(50);
+    if (variant)
+        query = query.eq('variant_name', variant);
+    else
+        query = query.is('variant_name', null);
+    const { data, error } = await query;
+    if (error)
+        throw error;
+    return data || [];
 }
 export async function saveMethod(value: Omit<PaymentMethod, 'id'>, id?: string) { const q = id ? client().from('payment_methods').update(value).eq('id', id) : client().from('payment_methods').insert(value); const { data, error } = await q.select('id').single(); if (error)
     throw error; return data; }

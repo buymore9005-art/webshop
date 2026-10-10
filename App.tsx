@@ -281,12 +281,12 @@ export default function App() {
                 <p className="eyebrow">{p.category || 'Koleksi'}</p>
                 <h3><button className="product-name" onClick={() => navigate('shop', p.id)}>{p.title}</button></h3>
                 <strong>{money(p.price)}</strong>
-                {p.stock === 0 && <small className="stock-unavailable">Stok habis</small>}
+                {(!p.variants.length && p.stock === 0) || (p.variants.length > 0 && p.variants.every(variant => variant.stock === 0)) ? <small className="stock-unavailable">Stok habis</small> : null}
                 <div className="product-quick-actions">
                   <button type="button" className="button secondary" aria-pressed={wishlist.data?.some(item => item.id === p.id) || false} aria-label={wishlist.data?.some(item => item.id === p.id) ? 'Hapus ' + p.title + ' dari wishlist' : 'Simpan ' + p.title + ' ke wishlist'} onClick={() => void toggleWishlist(p)}><StoreIcon name="heart" /><span>{wishlist.data?.some(item => item.id === p.id) ? 'Tersimpan' : 'Wishlist'}</span></button>
                   <button type="button" className="button secondary" onClick={() => void shareProduct(p)} aria-label={'Bagikan ' + p.title}><StoreIcon name="share" /><span>Bagikan</span></button>
                 </div>
-                <button type="button" className="button secondary wide product-action" disabled={p.stock === 0} onClick={() => p.variants.length ? navigate('shop', p.id) : add(p)}>
+                <button type="button" className="button secondary wide product-action" disabled={!p.variants.length && p.stock === 0 || p.variants.length > 0 && p.variants.every(variant => variant.stock === 0)} onClick={() => p.variants.length ? navigate('shop', p.id) : add(p)}>
                   {p.variants.length ? 'Pilih varian' : 'Tambah ke keranjang'}
                 </button>
               </div>
@@ -353,7 +353,7 @@ function ProductDetail({ product: p, whatsappPhone, onAdd, onShare, wishlisted, 
   wishlisted: boolean;
   onWishlist: () => void;
 }) {
-  const [variant, setVariant] = useState(p.variants[0]?.name || '');
+  const [variant, setVariant] = useState(p.variants.find(item => item.stock === null || (item.stock ?? 0) > 0)?.name || p.variants[0]?.name || '');
   const [image, setImage] = useState(p.images[0] || p.image_url);
   // Display gallery uses only product photos; variant previews live in their own selection panel.
   const images = Array.from(new Set([p.image_url, ...p.images].filter(Boolean)));
@@ -394,29 +394,30 @@ function ProductDetail({ product: p, whatsappPhone, onAdd, onShare, wishlisted, 
         <h2>Detail produk</h2>
         <p className="product-description">{p.description || 'Deskripsi belum tersedia.'}</p>
       </div>
-      {p.stock !== null && <p className={'stock-status ' + (p.stock === 0 ? 'out-of-stock' : '')}>
+      {!p.variants.length && p.stock !== null && <p className={'stock-status ' + (p.stock === 0 ? 'out-of-stock' : '')}>
         {p.stock > 0 ? 'Stok tersedia: ' + p.stock : 'Stok habis'}
       </p>}
       {p.variants.length > 0 && <fieldset className="variant-panel">
         <legend>Pilih varian</legend>
         <p className="variant-hint">Pilihan ini akan dicantumkan pada pesanan Anda.</p>
         <div className="variants">
-          {p.variants.map(v => <button type="button" key={v.name} className={'button secondary variant-option ' + (variant === v.name ? 'selected' : '')} aria-pressed={variant === v.name} onClick={() => {
+          {p.variants.map(v => <button type="button" key={v.name} disabled={v.stock === 0} title={v.stock === 0 ? 'Varian ini habis' : undefined} className={'button secondary variant-option ' + (variant === v.name ? 'selected' : '') + (v.stock === 0 ? ' sold-out' : '')} aria-pressed={variant === v.name} onClick={() => {
             setVariant(v.name); if (v.image)
               setImage(v.image);
           }}>
             {v.image && <span className="variant-thumbnail"><Photo src={v.image} alt={'Varian ' + v.name} /></span>}
-            <span className="variant-label">{v.name}</span>
+            <span className="variant-label">{v.name}<small>{v.stock === null ? 'Stok tidak dibatasi' : (v.stock ?? 0) === 0 ? 'Habis' : `Sisa ${v.stock}`}</small></span>
           </button>)}
         </div>
-        <p className="selection-summary" role="status">Varian terpilih: <strong>{variant}</strong></p>
+        <p className="selection-summary" role="status">Varian terpilih: <strong>{variant}</strong>{p.variants.find(item => item.name === variant)?.stock === 0 && <span className="stock-unavailable"> · Stok habis</span>}</p>
       </fieldset>}
+      {!!p.variants.length && p.variants.every(item => item.stock === 0) && <p className="stock-status out-of-stock">Semua varian sedang habis.</p>}
       <div className="actions product-purchase">
         <button type="button" className="button secondary" aria-pressed={wishlisted} onClick={onWishlist}><StoreIcon name="heart" />{wishlisted ? 'Tersimpan' : 'Wishlist'}</button>
         <button type="button" className="button secondary" onClick={onShare}><StoreIcon name="share" />Bagikan</button>
         {productWhatsApp && <a className="button secondary product-whatsapp" href={productWhatsApp} target="_blank" rel="noopener noreferrer"><StoreIcon name="whatsapp" />Tanya produk</a>}
-        <button className="button secondary" disabled={p.stock === 0} onClick={() => onAdd(p, variant)}>Tambah ke keranjang</button>
-        <button className="button" disabled={p.stock === 0} onClick={() => onAdd(p, variant, true)}>Beli langsung<StoreIcon name="arrow-right" /></button>
+        <button className="button secondary" disabled={p.variants.length ? p.variants.find(item => item.name === variant)?.stock === 0 : p.stock === 0} onClick={() => onAdd(p, variant)}>Tambah ke keranjang</button>
+        <button className="button" disabled={p.variants.length ? p.variants.find(item => item.name === variant)?.stock === 0 : p.stock === 0} onClick={() => onAdd(p, variant, true)}>Beli langsung<StoreIcon name="arrow-right" /></button>
       </div>
     </section>
   </div>;

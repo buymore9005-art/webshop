@@ -140,12 +140,35 @@ Pada project kosong yang baru dibuat, urutannya:
 3. `supabase/migrations/20261011000000_remove_midtrans.sql`
 4. `supabase/migrations/20261012000000_shipping_foundation.sql`
 5. `supabase/migrations/20261013000000_brand_gallery.sql`
+6. `supabase/migrations/20261014000000_variant_inventory.sql`
 
 Pada project yang sudah aktif, JANGAN ulangi setup awal. Jalankan hanya migration
-yang memang belum diterapkan, berurutan; bila migration pertumbuhan dan penghapusan
-Midtrans serta fondasi pengiriman sudah sukses, jalankan langkah 5 untuk kolase foto.
-Migration menambahkan tabel `brand_gallery` dengan RLS: publik hanya membaca foto
-aktif, sedangkan perubahan hanya dapat dilakukan Admin terautentikasi.
+yang memang belum diterapkan, berurutan. Migration brand gallery menambahkan tabel
+`brand_gallery` dengan RLS: publik hanya membaca foto aktif, sedangkan perubahan hanya
+dapat dilakukan Admin terautentikasi. Migration inventory menambahkan stok per varian,
+riwayat pergerakan stok dan RPC Admin; terapkan langkah 6 setelah migration sebelumnya.
+Jangan jalankan ulang langkah 6 setelah stok mulai dikelola.
+
+### Stok dan inventaris per varian
+
+Migration `20261014000000_variant_inventory.sql` menambahkan kolom ambang peringatan
+stok produk, `stock` dan `low_stock_threshold` pada setiap objek varian JSONB, tabel
+audit `inventory_movements`, serta RPC `zyha_admin_adjust_inventory`. Produk lama
+yang memiliki varian dan belum memiliki nilai `stock` akan mendapat stok **0** untuk
+setiap varian; angka stok bersama lama tidak dibagi/diduplikasi. Isi jumlah awal
+secara manual dari Produk & katalog > Manajemen stok atau editor produk sebelum
+mengaktifkan penjualan. Produk tanpa varian mempertahankan stok produknya.
+
+Admin dapat melihat kondisi stok rendah/habis/tak terbatas, mengatur stok dan ambang
+peringatan tiap varian, membuat penyesuaian dengan alasan, dan melihat hingga 50
+pergerakan terakhir untuk item yang dipilih. Checkout mengunci produk dalam urutan
+deterministik, memvalidasi serta mengurangi stok varian di database dalam transaksi
+yang sama dengan pembuatan pesanan. Pembatalan mengembalikan stok terukur satu kali
+dan mencatat pergerakan; stok tanpa batas tidak dikurangi atau dikembalikan.
+Pemeriksaan browser membantu UX, tetapi database tetap menjadi otoritas stok.
+Terapkan migration ke Supabase sebelum deploy frontend yang membaca kolom baru.
+SQL disediakan di file migration; belum dijalankan pada project pengguna dan perlu
+divalidasi dahulu pada staging/backup.
 
 Setelah migration, Admin > Pengaturan > Pengiriman tetap menggunakan ongkir tetap
 sebagai tarif checkout aktif. Simpan alamat asal/pengirim di panel Alamat asal /

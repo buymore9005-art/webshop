@@ -4,6 +4,8 @@ export type FulfillmentStatus = 'unfulfilled' | 'processing' | 'shipped' | 'comp
 export interface Variant {
     name: string;
     image: string;
+    stock?: number | null;
+    low_stock_threshold?: number;
 }
 export interface Product {
     id: string;
@@ -15,6 +17,7 @@ export interface Product {
     images: string[];
     variants: Variant[];
     stock: number | null;
+    stock_alert_threshold: number;
     weight_grams: number;
     is_active: boolean;
     version: number;

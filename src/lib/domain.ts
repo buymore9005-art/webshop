@@ -45,8 +45,12 @@ export function addCartLine(cart: CartLine[], product: Product, variant: string,
         throw new Error('Pilih varian produk terlebih dahulu.');
     if (!product.variants.length && variant)
         throw new Error('Varian tidak valid.');
-    const total = cart.filter(x => x.product_id === product.id).reduce((s, x) => s + x.quantity, 0) + count;
-    if (product.stock !== null && total > product.stock)
+    const selectedVariant = product.variants.find(v => v.name === variant);
+    const total = cart.filter(x => x.product_id === product.id && x.variant === variant).reduce((s, x) => s + x.quantity, 0) + count;
+    const availableStock = product.variants.length
+        ? selectedVariant?.stock === null ? null : selectedVariant?.stock ?? 0
+        : product.stock;
+    if (availableStock !== null && availableStock !== undefined && total > availableStock)
         throw new Error('Jumlah melebihi stok yang tersedia.');
     const found = cart.find(x => x.product_id === product.id && x.variant === variant);
     if (found)
