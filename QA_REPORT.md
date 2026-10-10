@@ -13,7 +13,7 @@ Validasi awal setelah konfigurasi deployment dan pemulihan bukti pesanan menjala
 kupon, dan impor massal, `node scripts/run-tests.cjs`, `npm run typecheck`,
 `npm run build`, dan `node scripts/check-files.cjs` kembali berhasil. Setelah penghapusan integrasi pembayaran otomatis, `node scripts/run-tests.cjs`,
 `npm run build`, dan `node scripts/check-files.cjs` lulus kembali. Pengujian terakhir
-setelah penghapusan integrasi meliputi 62 tes, build, dan pemeriksaan file/import.
+setelah perbaikan CORS checkout meliputi 64 tes, build, dan pemeriksaan file/import.
 Build mencakup
 strict typecheck dan Vite production bundle. Lingkungan ini memakai Node 24.14.0/npm
 11.11.0, sedangkan project dan workflow CI menetapkan Node 22; hasil ini belum
@@ -24,7 +24,7 @@ GitHub Actions remote, atau deployment Vercel yang dijalankan.
 
 | Pemeriksaan | Hasil | Bukti dan cakupan |
 |---|---|---|
-| Unit domain/checkout/pembayaran manual + assertion source | 62 tes lulus setelah penghapusan integrasi | Pure TS dikompilasi dan dieksekusi dengan Node; assertion source bukan transaksi DB. |
+| Unit domain/checkout/pembayaran manual + assertion source | 64 tes lulus setelah perbaikan CORS checkout | Pure TS dikompilasi dan dieksekusi dengan Node; assertion source bukan transaksi DB. |
 | Syntax TypeScript | 25 file, 0 parse error | docs/qa/syntax.json; TypeScript5.8.3 aktual. Tidak menggantikan pemeriksaan tipe penuh |
 | Kelengkapan/import lokal | 15 file wajib, 25source, 71import relatif lulus | docs/qa/imports.log; jalur relatif nyata, bukan declaration shim |
 | Layout CSS browser | 25/25 fixture lulus | docs/qa/mobile-layout.json; Chromium, lebar320/360/390/768/1440 |
@@ -35,7 +35,7 @@ GitHub Actions remote, atau deployment Vercel yang dijalankan.
 | Impor CSV / kupon / akun di Supabase | BELUM DIEKSEKUSI LIVE | Tes lokal validasi domain/kontrak; tidak ada import/query aktual ke Supabase |
 | Kontrak API Komerce | BELUM DIINTEGRASIKAN | Tidak ada kunci vendor; docs host tidak tersedia dan detail integrasi belum diverifikasi dalam akun merchant |
 | SQL/RLS/trigger/functions di PostgreSQL | BELUM DIEKSEKUSI | Tidak ada PostgreSQL/Supabase staging yang terotorisasi di lingkungan ini |
-| Edge Deno deploy/typecheck | BELUM DIUJI LIVE | Tidak ada Supabase staging yang terotorisasi di lingkungan ini |
+| Edge Deno deploy/typecheck dan CORS live | BELUM DIUJI LIVE | Header CORS `x-supabase-api-version` sudah ditambahkan; belum dideploy ke Supabase project pengguna |
 | Semua halaman React dengan data Supabase | BELUM DIUJI END-TO-END | Fixture layout bukan aplikasi React terhubung |
 | GitHub CI/Vercel deployment | BELUM DIJALANKAN | File saja disediakan; tidak ada perubahan remote |
 

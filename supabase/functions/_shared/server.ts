@@ -46,7 +46,7 @@ export function cors(request: Request): Record<string, string> {
     const allowed = env('ALLOWED_ORIGINS').split(',').map(s => s.trim().replace(/\/$/, ''));
     if (origin && !allowed.includes(origin))
         throw new HttpError(403, 'Origin tidak diizinkan.');
-    return { 'Vary': 'Origin', 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type', ...(origin ? { 'Access-Control-Allow-Origin': origin } : {}) };
+    return { 'Vary': 'Origin', 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-api-version', ...(origin ? { 'Access-Control-Allow-Origin': origin } : {}) };
 }
 export function json(body: unknown, status = 200, headers: Record<string, string> = {}) {
     return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', ...headers } });

@@ -41,6 +41,9 @@ export async function shopAction<T>(body: Record<string, unknown>): Promise<T> {
     const { data, error } = await client().functions.invoke('rapid-api', { body });
     if (error) {
         let message = errorMessage(error);
+        if (error.name === 'FunctionsFetchError' || /failed to send a request to the edge function/i.test(message)) {
+            message = 'Tidak dapat menghubungi layanan checkout. Periksa koneksi, lalu minta pengelola toko memastikan Edge Function rapid-api sudah di-deploy dan domain toko tercantum tepat di ALLOWED_ORIGINS. Permintaan mungkin sudah diterima server; coba lagi dari tab yang sama agar tidak membuat pesanan duplikat.';
+        }
         try {
             const detail = await error.context?.json();
             if (typeof detail?.error === 'string')

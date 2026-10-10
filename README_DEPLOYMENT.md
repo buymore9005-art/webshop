@@ -185,6 +185,12 @@ Permintaan pengubahan oleh Admin memvalidasi bearer token ke Auth dan active Adm
 akses bukti tamu membutuhkan UUID request + token acak 256-bit. Jangan mengganti
 handler dengan proxy service key.
 
+Jika browser menampilkan “Failed to send a request to the Edge Function” saat checkout,
+pastikan function `rapid-api` sudah dideploy dari source terbaru dan `ALLOWED_ORIGINS`
+memuat origin persis situs aktif, misalnya `https://nama-toko.vercel.app` (tanpa path
+atau slash akhir). Setelah mengubah source CORS atau secret, deploy ulang function dan
+coba checkout lagi pada tab yang sama.
+
 Jika project sebelumnya telah memakai skema lama, backup database lalu jalankan
 `supabase/migrations/20261011000000_remove_midtrans.sql` setelah migration pertumbuhan
 toko. Migration ini menghapus konfigurasi, token, ID transaksi dan fungsi pembayaran

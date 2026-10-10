@@ -1,7 +1,7 @@
 {
     "project":  "ZYHA ID webshop",
     "version":  "1.1.0",
-    "status":  "Payment integration removed; 62 local tests and production build pass; remote Supabase, Vercel and live-payment validation not performed. See QA_REPORT.md.",
+    "status":  "Payment integration removed; 64 local tests and production build pass; checkout CORS update is not deployed to Supabase. See QA_REPORT.md.",
     "files":  [
                   {
                       "path":  ".env.example",
@@ -205,8 +205,8 @@
                   },
                   {
                       "path":  "QA_REPORT.md",
-                      "bytes":  9042,
-                      "sha256":  "18febd9c0bf49d647a6368f515db073068205dae3cc6406fa9a02bb447637762"
+                      "bytes":  9097,
+                      "sha256":  "b5c8325b03595b9817a5e8d66b1ae146dc7aa727cc0b299704d4b8f6d206ae71"
                   },
                   {
                       "path":  "README.md",
@@ -215,8 +215,8 @@
                   },
                   {
                       "path":  "README_DEPLOYMENT.md",
-                      "bytes":  18525,
-                      "sha256":  "6177adbc39792cd1f961210895ae9c096a95c6942890396ef6bbfd4786615fe1"
+                      "bytes":  18923,
+                      "sha256":  "3ec073d869de6c3e526c65931918c089afae44648481df48ed1dd58e6f201d20"
                   },
                   {
                       "path":  "scripts/check-files.cjs",
@@ -285,8 +285,8 @@
                   },
                   {
                       "path":  "src/lib/api.ts",
-                      "bytes":  20656,
-                      "sha256":  "658e4c079f07ab5a20cd6e804718efb8bfc3ebc734ebb484acf65c2e4fc9ca49"
+                      "bytes":  21108,
+                      "sha256":  "3cfe600ea69c7ff13ddaf2f717ec97223629c48a799fa868dc02052f68c5157e"
                   },
                   {
                       "path":  "src/lib/domain.ts",
@@ -350,8 +350,8 @@
                   },
                   {
                       "path":  "supabase/functions/_shared/server.ts",
-                      "bytes":  4348,
-                      "sha256":  "0db3468286a8a32c0d6c6ccc568a0ea4b17916b75544db54cbec7258f6b00056"
+                      "bytes":  4372,
+                      "sha256":  "c0a9b24627705ae7ed16a009d25db04566e99da7aea81b689e94b0e3da42b654"
                   },
                   {
                       "path":  "supabase/functions/_shared/validation.ts",
@@ -405,8 +405,8 @@
                   },
                   {
                       "path":  "tests/source.test.cjs",
-                      "bytes":  5661,
-                      "sha256":  "1b534fca0adca1eeba644f5e3646ca740ffab58530d2e3e06bd83cfa7af93972"
+                      "bytes":  5960,
+                      "sha256":  "59a191083c7952f45efa02622ebe5da26215c5352e0633288b9273a1ff3b63f5"
                   },
                   {
                       "path":  "tsconfig.json",
