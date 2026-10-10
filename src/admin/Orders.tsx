@@ -2,16 +2,14 @@ import type { FormEvent } from 'react';
 import { useEffect, useState } from 'react';
 import { client } from '../../supabaseClient';
 import type { Order } from '../types';
-import { exportOrderPage, getOrders, orderAction, shopAction } from '../lib/api';
+import { exportOrderPage, getOrders, orderAction } from '../lib/api';
 import { dateTime, errorMessage, fulfillmentLabels, money, orderLabels } from '../lib/domain';
 import { useResource } from '../lib/useResource';
 import { Field, Message, Modal, Pagination } from '../components/UI';
 export default function Orders() {
   const [page, setPage] = useState(0), [status, setStatus] = useState(''), [search, setSearch] = useState(''), [start, setStart] = useState(''), [end, setEnd] = useState(''), [rev, setRev] = useState(0);
   const result = useResource(JSON.stringify([page, status, search, start, end, rev]), () => getOrders(page, status, search, start, end));
-  const [editing, setEditing] = useState<(Order & {
-    inventory_note?: string;
-  }) | null>(null), [action, setAction] = useState(''), [reason, setReason] = useState(''), [tracking, setTracking] = useState(''), [carrier, setCarrier] = useState('');
+  const [editing, setEditing] = useState<Order | null>(null), [action, setAction] = useState(''), [reason, setReason] = useState(''), [tracking, setTracking] = useState(''), [carrier, setCarrier] = useState('');
   const [busy, setBusy] = useState(false), [error, setError] = useState(''), [message, setMessage] = useState('');
   const events = useResource('events:' + editing?.id + ':' + rev, async () => {
     if (!editing)
@@ -23,28 +21,10 @@ export default function Orders() {
   async function save(event: FormEvent) {
     event.preventDefault(); if (!editing || busy)
       return; setBusy(true); setError(''); try {
-        if (action === 'cancel-unstarted')
-          await shopAction({ action, orderId: editing.id, version: editing.version, note: reason });
-        else
-          await orderAction(editing.id, editing.version, action, reason, tracking, carrier);
+        await orderAction(editing.id, editing.version, action, reason, tracking, carrier);
         setEditing(null);
         setRev(n => n + 1);
         setMessage('Perubahan pesanan disimpan.');
-      }
-    catch (e) {
-      setError(errorMessage(e));
-    }
-    finally {
-      setBusy(false);
-    }
-  }
-  async function sync() {
-    if (!editing)
-      return; setBusy(true); setError(''); try {
-        await shopAction({ action: 'sync-admin', orderId: editing.id });
-        setEditing(null);
-        setRev(n => n + 1);
-        setMessage('Status Midtrans diperiksa.');
       }
     catch (e) {
       setError(errorMessage(e));
@@ -61,7 +41,6 @@ export default function Orders() {
       setError(errorMessage(e));
     }
   }
-  const manual = editing?.payment_snapshot.type !== 'Midtrans';
   return <section className="stack">
     <div className="section-heading">
       <h1>Pesanan</h1>
@@ -157,9 +136,6 @@ export default function Orders() {
         </p>
         {editing.customer_note && <p>Catatan: {editing.customer_note}
         </p>}
-        {editing.inventory_note && <p className="message error">
-          {editing.inventory_note}
-        </p>}
         <div className="panel stack">
           {editing.items.map((item, i) => <div className="split" key={i}>
             <span>
@@ -178,6 +154,7 @@ export default function Orders() {
               {money(editing.shipping_fee)}
             </strong>
           </div>
+          {editing.coupon_code && <div className="split"><span>Diskon kupon ({editing.coupon_code})</span><strong>−{money(editing.discount_amount)}</strong></div>}
           <div className="split border-top">
             <span>Total</span>
             <strong>
@@ -188,16 +165,11 @@ export default function Orders() {
         <p>
           {editing.payment_method} · {orderLabels[editing.status]} · {fulfillmentLabels[editing.fulfillment_status]}
         </p>
-        {!manual && <div className="stack">
-          <p className="message">Status pembayaran otomatis hanya berasal dari server Midtrans. Pembatalan/refund dilakukan di dashboard Midtrans, kemudian sinkronkan status.</p>
-          <button type="button" className="button secondary" disabled={busy} onClick={sync}>Periksa Midtrans</button>
-        </div>}
         <form className="stack" onSubmit={save}>
           <Field label="Tindakan">
             <select required value={action} onChange={e => setAction(e.target.value)}>
               <option value="">Pilih tindakan</option>
-              {!manual && editing.status === 'pending' && <option value="cancel-unstarted">Batalkan sebelum pembayaran dimulai (minimal 5 menit)</option>}
-              {manual && editing.status === 'pending' && <>
+              {editing.status === 'pending' && <>
                 <option value="paid">Konfirmasi pembayaran diterima</option>
                 <option value="cancelled">Batalkan pesanan dan kembalikan stok</option>
               </>}
@@ -231,7 +203,7 @@ export default function Orders() {
         <div className="event-list">
           {events.data?.map(e => <article key={e.id}>
             <strong>
-              {e.event === 'order_created' ? 'Pesanan dibuat' : e.event === 'midtrans_verified' ? 'Verifikasi Midtrans' : e.event === 'admin_paid' ? 'Pembayaran dikonfirmasi' : e.event === 'admin_cancelled' ? 'Pesanan dibatalkan' : e.event === 'admin_processing' ? 'Pesanan diproses' : e.event === 'admin_shipped' ? 'Pesanan dikirim' : 'Pesanan diselesaikan'}
+              {e.event === 'order_created' ? 'Pesanan dibuat' : e.event === 'admin_paid' ? 'Pembayaran dikonfirmasi' : e.event === 'admin_cancelled' ? 'Pesanan dibatalkan' : e.event === 'admin_processing' ? 'Pesanan diproses' : e.event === 'admin_shipped' ? 'Pesanan dikirim' : e.event === 'admin_completed' ? 'Pesanan diselesaikan' : 'Status diperbarui'}
             </strong>
             <small>
               {dateTime(e.created_at)}

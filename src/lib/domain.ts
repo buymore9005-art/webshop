@@ -1,4 +1,4 @@
-import type { CartLine, CheckoutItem, Customer, Product, OrderStatus, FulfillmentStatus } from '../types';
+import type { CartLine, CheckoutItem, Customer, Product, OrderAccess, OrderStatus, FulfillmentStatus } from '../types';
 export const MAX_LINES = 50;
 export const MAX_QUANTITY = 99;
 export const MAX_MONEY = 1000000000;
@@ -89,6 +89,67 @@ export function parseCart(raw: string | null): CartLine[] {
         return [];
     }
 }
+export function parseOrderAccessBackup(raw: string): OrderAccess {
+    let data: unknown;
+    try {
+        data = JSON.parse(raw);
+    }
+    catch {
+        throw new Error('File kunci pemulihan bukan JSON yang valid.');
+    }
+    if (!data || typeof data !== 'object' || Array.isArray(data))
+        throw new Error('Format kunci pemulihan tidak valid.');
+    const backup = data as Record<string, unknown>;
+    if (backup.format !== 'zyha-order-access' || backup.version !== 1 ||
+        typeof backup.requestId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(backup.requestId) ||
+        typeof backup.receiptToken !== 'string' || !/^[0-9a-f]{64}$/.test(backup.receiptToken) ||
+        typeof backup.signature !== 'string' || !/^[0-9a-f]{64}$/.test(backup.signature) ||
+        typeof backup.orderNumber !== 'string' || !/^ZYHA-[A-F0-9]{32}$/.test(backup.orderNumber))
+        throw new Error('Isi file kunci pemulihan tidak lengkap atau tidak dikenali.');
+    return {
+        requestId: backup.requestId.toLowerCase(),
+        receiptToken: backup.receiptToken,
+        signature: backup.signature,
+    };
+}
+export function serializeOrderAccessBackup(access: OrderAccess, orderNumber: string): string {
+    const backup = {
+        format: 'zyha-order-access',
+        version: 1,
+        orderNumber,
+        requestId: access.requestId,
+        receiptToken: access.receiptToken,
+        signature: access.signature,
+    };
+    const contents = JSON.stringify(backup, null, 2);
+    parseOrderAccessBackup(contents);
+    return contents;
+}
+export function articleSlug(value: string): string {
+    const slug = value.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 120).replace(/-+$/g, '');
+    if (slug.length < 3)
+        throw new Error('Slug artikel minimal 3 karakter dan hanya boleh berisi huruf, angka, dan tanda hubung.');
+    return slug;
+}
+export function safeFooterHref(value: string): string {
+    const href = value.trim();
+    if (!href)
+        return '';
+    if (href.length > 2048 || href.startsWith('//') || href.startsWith('/\\') || /[\u0000-\u001f\u007f]/.test(href))
+        throw new Error('Tautan footer tidak valid.');
+    if (href.startsWith('/'))
+        return href;
+    try {
+        const url = new URL(href);
+        if (url.protocol !== 'https:' || !url.hostname || url.username || url.password)
+            throw new Error();
+        return url.href;
+    }
+    catch {
+        throw new Error('Tautan footer harus berupa HTTPS atau path internal toko.');
+    }
+}
 export function validateCustomer(value: Customer): Customer {
     const customer = { name: value.name.trim(), address: value.address.trim(), phone: normalizePhone(value.phone), note: value.note.trim() };
     if (customer.name.length < 2 || customer.name.length > 120)
@@ -107,6 +168,92 @@ export function csvCell(value: unknown): string {
     if (/^[\s]*[=+@-]/.test(s))
         s = "'" + s;
     return '"' + s.replace(/"/g, '""') + '"';
+}
+export interface ProductImportRow {
+    title: string;
+    price: number;
+    description: string;
+    category: string;
+    image_url: string;
+    stock: number | null;
+    is_active: boolean;
+}
+export function parseProductCsv(raw: string): ProductImportRow[] {
+    const rows: string[][] = [];
+    let row: string[] = [], cell = '', quoted = false, afterQuote = false;
+    const text = raw.replace(/^\uFEFF/, '');
+    for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        if (quoted) {
+            if (char === '"' && text[i + 1] === '"') {
+                cell += '"';
+                i++;
+            }
+            else if (char === '"')
+                quoted = false, afterQuote = true;
+            else
+                cell += char;
+            continue;
+        }
+        if (afterQuote && char !== ',' && char !== '\n' && char !== '\r' && char !== ' ' && char !== '\t')
+            throw new Error('Format CSV tidak valid: ada karakter setelah tanda kutip penutup.');
+        if (char === '"') {
+            if (cell.length || afterQuote)
+                throw new Error('Format CSV tidak valid: tanda kutip harus mengapit seluruh isi kolom.');
+            quoted = true;
+        }
+        else if (char === ',') {
+            row.push(cell.trim());
+            cell = '';
+            afterQuote = false;
+        }
+        else if (char === '\n' || char === '\r') {
+            if (char === '\r' && text[i + 1] === '\n')
+                i++;
+            row.push(cell.trim());
+            if (row.some(value => value !== ''))
+                rows.push(row);
+            row = [];
+            cell = '';
+            afterQuote = false;
+        }
+        else {
+            cell += char;
+        }
+    }
+    if (quoted)
+        throw new Error('Format CSV tidak valid: ada tanda kutip yang belum ditutup.');
+    row.push(cell.trim());
+    if (row.some(value => value !== ''))
+        rows.push(row);
+    if (rows.length < 2)
+        throw new Error('CSV harus berisi header dan minimal satu baris produk.');
+    if (rows.length > 251)
+        throw new Error('Maksimal 250 produk per impor.');
+    const allowed = ['title', 'price', 'description', 'category', 'image_url', 'stock', 'is_active'];
+    const headers = rows[0].map(value => value.toLowerCase());
+    if (new Set(headers).size !== headers.length || headers.some(header => !allowed.includes(header)) || !headers.includes('title') || !headers.includes('price'))
+        throw new Error('Header wajib: title,price. Header opsional: description,category,image_url,stock,is_active. Jangan gunakan header lain atau duplikat.');
+    const index = (name: string) => headers.indexOf(name);
+    return rows.slice(1).map((values, rowIndex) => {
+        if (values.length !== headers.length)
+            throw new Error(`Baris ${rowIndex + 2}: jumlah kolom tidak sesuai header.`);
+        const get = (name: string) => index(name) < 0 ? '' : values[index(name)];
+        const title = get('title'), rawPrice = get('price'), description = get('description');
+        const category = get('category'), imageUrl = get('image_url'), rawStock = get('stock'), rawActive = get('is_active');
+        const price = Number(rawPrice), stock = rawStock === '' ? null : Number(rawStock);
+        if (title.length < 1 || title.length > 200 || !/^\d+$/.test(rawPrice) || !Number.isSafeInteger(price) || price < 1 || price > MAX_MONEY)
+            throw new Error(`Baris ${rowIndex + 2}: nama produk dan harga bilangan bulat 1–${MAX_MONEY} wajib valid.`);
+        if (description.length > 10000 || category.length > 100)
+            throw new Error(`Baris ${rowIndex + 2}: deskripsi maksimal 10.000 karakter dan kategori maksimal 100 karakter.`);
+        if (imageUrl && !safeImageUrl(imageUrl))
+            throw new Error(`Baris ${rowIndex + 2}: image_url harus berupa URL HTTPS yang valid.`);
+        if (rawStock !== '' && (!/^\d+$/.test(rawStock) || !Number.isSafeInteger(stock) || (stock as number) > 100000000))
+            throw new Error(`Baris ${rowIndex + 2}: stock harus kosong atau bilangan bulat 0–100.000.000.`);
+        if (rawActive && !['true', 'false'].includes(rawActive.toLowerCase()))
+            throw new Error(`Baris ${rowIndex + 2}: is_active harus true atau false.`);
+        return { title, price, description, category, image_url: safeImageUrl(imageUrl), stock, is_active: rawActive ? rawActive.toLowerCase() === 'true' : true };
+    });
 }
 export const orderLabels: Record<OrderStatus, string> = { pending: 'Menunggu pembayaran', paid: 'Lunas', cancelled: 'Dibatalkan', expired: 'Kedaluwarsa', failed: 'Gagal', refunded: 'Dikembalikan', partial_refund: 'Pengembalian sebagian' };
 export const fulfillmentLabels: Record<FulfillmentStatus, string> = { unfulfilled: 'Belum diproses', processing: 'Diproses', shipped: 'Dikirim', completed: 'Selesai' };

@@ -2,33 +2,52 @@
 
 Tanggal laporan: 10 Oktober 2026. Basis: 14 file webshop yang diunggah di percakapan.
 
-**Status: kandidat implementasi lengkap sebagai source, belum release production
-tervalidasi. Full build belum lulus. Eksekusi SQL dan pembayaran live belum diuji.**
+**Status: fitur toko, tes, typecheck, dan build lokal lulus. Ini belum berarti
+release production tervalidasi: migration SQL/RLS, Auth/Realtime, Edge Functions,
+Komerce, GitHub CI, Vercel, dan pembayaran live belum diuji.**
+
+## Validasi terbaru — 10 Oktober 2026
+
+Validasi awal setelah konfigurasi deployment dan pemulihan bukti pesanan menjalankan
+`npm ci`, 79 tes, dan production build. Setelah penambahan akun/wishlist/artikel/footer,
+kupon, dan impor massal, `node scripts/run-tests.cjs`, `npm run typecheck`,
+`npm run build`, dan `node scripts/check-files.cjs` kembali berhasil. Setelah penghapusan integrasi pembayaran otomatis, `node scripts/run-tests.cjs`,
+`npm run build`, dan `node scripts/check-files.cjs` lulus kembali. Pengujian terakhir
+setelah penghapusan integrasi meliputi 62 tes, build, dan pemeriksaan file/import.
+Build mencakup
+strict typecheck dan Vite production bundle. Lingkungan ini memakai Node 24.14.0/npm
+11.11.0, sedangkan project dan workflow CI menetapkan Node 22; hasil ini belum
+menggantikan pemeriksaan runner Node 22. Tidak ada SQL, Supabase, Komerce,
+GitHub Actions remote, atau deployment Vercel yang dijalankan.
 
 ## Yang benar-benar dijalankan
 
 | Pemeriksaan | Hasil | Bukti dan cakupan |
 |---|---|---|
-| Unit domain/checkout/gateway + assertion source | 76 lulus, 0 gagal, 0 skip | docs/qa/tests.log; pure TS dikompilasi dan dieksekusi dengan Node; sebagian tes adalah assertion source, bukan transaksi DB |
+| Unit domain/checkout/pembayaran manual + assertion source | 62 tes lulus setelah penghapusan integrasi | Pure TS dikompilasi dan dieksekusi dengan Node; assertion source bukan transaksi DB. |
 | Syntax TypeScript | 25 file, 0 parse error | docs/qa/syntax.json; TypeScript5.8.3 aktual. Tidak menggantikan pemeriksaan tipe penuh |
 | Kelengkapan/import lokal | 15 file wajib, 25source, 71import relatif lulus | docs/qa/imports.log; jalur relatif nyata, bukan declaration shim |
 | Layout CSS browser | 25/25 fixture lulus | docs/qa/mobile-layout.json; Chromium, lebar320/360/390/768/1440 |
 | Source formatting | Struktur emitted JS dibandingkan | docs/qa/format-verification.json; tidak dianggap tes integrasi |
-| Instalasi npm | Tidak berhasil, timeout exit124 | docs/qa/install.log dan .exit; registry tidak terjangkau saat pengerjaan |
-| Full typecheck | Gagal, exit2 | docs/qa/typecheck.log; vite/client belum tersedia karena dependencies belum terpasang |
-| npm run build | Gagal, exit2 | docs/qa/build.log; pemeriksaan file lulus, mandatory typecheck berhenti sebelum Vite |
+| Clean install `npm ci` | Lulus, 148 paket | Dijalankan dengan lockfile di lingkungan Node 24; npm memberi peringatan engine karena project meminta Node 22 |
+| Full typecheck | Lulus | `npm run build` menjalankan strict frontend dan Vite config typecheck sebelum bundling |
+| `npm run build` | Lulus | Strict typecheck dan Vite production bundle setelah integrasi pembayaran otomatis dihapus |
+| Impor CSV / kupon / akun di Supabase | BELUM DIEKSEKUSI LIVE | Tes lokal validasi domain/kontrak; tidak ada import/query aktual ke Supabase |
+| Kontrak API Komerce | BELUM DIINTEGRASIKAN | Tidak ada kunci vendor; docs host tidak tersedia dan detail integrasi belum diverifikasi dalam akun merchant |
 | SQL/RLS/trigger/functions di PostgreSQL | BELUM DIEKSEKUSI | Tidak ada PostgreSQL/Supabase staging yang terotorisasi di lingkungan ini |
-| Edge Deno deploy/typecheck dan Midtrans | BELUM DIUJI LIVE | Hanya validasi pure/helper, parse source dan kontrak keamanan; tidak ada secret merchant |
+| Edge Deno deploy/typecheck | BELUM DIUJI LIVE | Tidak ada Supabase staging yang terotorisasi di lingkungan ini |
 | Semua halaman React dengan data Supabase | BELUM DIUJI END-TO-END | Fixture layout bukan aplikasi React terhubung |
 | GitHub CI/Vercel deployment | BELUM DIJALANKAN | File saja disediakan; tidak ada perubahan remote |
 
-Runtime: Node22.16.0, npm10.9.2, TypeScript5.8.3 preinstalled. Tes unit tidak
-memalsukan paket React/Vite/Supabase atau menonaktifkan strict agar terlihat lulus.
+Runtime validasi terbaru: Node24.14.0, npm11.11.0; workflow ditetapkan ke Node22.
+Tes unit tidak memalsukan paket React/Vite/Supabase atau menonaktifkan strict agar
+terlihat lulus.
 
-`docs/qa/partial-diagnostics.json` adalah diagnostik programmatic compiler ketika
-paket eksternal masih hilang; banyak error dependency/JSX/inference tetap muncul.
-Tidak ditemukannya unbound internal name pada pemeriksaan itu BUKAN full typecheck
-lulus. Jangan menafsirkan parse/import atau hasil76tes sebagai kepastian build.
+`docs/qa/partial-diagnostics.json`, `docs/qa/install.log`, `docs/qa/typecheck.log`,
+`docs/qa/build.log`, dan `docs/qa/tests.log` mencatat pemeriksaan pada iterasi
+sebelumnya saat dependency tidak tersedia. Log tersebut bersifat historis; hasil
+validasi terbaru di atas menggantikannya untuk tes/build lokal, bukan untuk staging
+Supabase, CI GitHub, atau deployment.
 
 ## Cakupan tes yang lulus
 
@@ -38,11 +57,20 @@ lulus. Jangan menafsirkan parse/import atau hasil76tes sebagai kepastian build.
   jumlah barang, duplikasi item, nominal provider dan respons GET status.
 - Capture challenge tidak dianggap paid; capture accept/settlement yang sesuai dapat
   dipetakan paid; currency/ID/amount salah ditolak; signature comparison diuji.
-- Snap menggunakan ID item unik per varian, total konsisten, pemotongan alamat hanya untuk
-  provider; ukuran payload dibatasi, tanpa mengubah snapshot order atau nominal.
+- Pada versi sebelumnya, payload pembayaran otomatis diuji; integrasi tersebut
+  sudah dihapus dan tes ini bukan validasi untuk versi saat ini.
 - Assertion source menjaga Admin Auth gate, tidak ada pembaruan paid/server key di frontend,
   revoked RPC tamu, receipt yang di-hash, lock reservasi, mode pembayaran per pesanan, webhook GET,
   sandbox/production, uploads, tidak ada seed bisnis palsu/ikon dan kelengkapan file.
+- Format kunci pemulihan pesanan yang diunduh diuji menerima format versi yang dikenal
+  dan menolak JSON rusak maupun versi yang tidak didukung. File berisi token akses,
+  bukan data alamat/nomor telepon; siapa pun yang memilikinya dapat membaca ringkasan
+  pesanan sampai masa akses server 30 hari berakhir.
+- Parser impor CSV menguji escaping kutip/koma, header duplikat, format harga dan URL
+  gambar; semua baris divalidasi di browser sebelum satu batch insert. Tidak ada tes
+  terhadap service database remote atau kegagalan jaringan saat insert.
+- Kalkulasi diskon dan tampilan pembayaran manual diuji lokal; batas konkurensi/pemakaian kupon
+  mengandalkan row lock pada migration dan wajib diuji pada Supabase staging.
 
 Assertion keberadaan grant/lock/signature pada file SQL tidak membuktikan PostgreSQL
 menerapkan policy dengan benar. Supabase tests/database-smoke.sql disediakan sebagai
@@ -78,12 +106,14 @@ harus diuji sebelum penggunaan nyata. Tidak menambahkan cron expiry fiktif.
 
 ## Release gate yang belum ditutup
 
-1. npm install/lockfile nyata, clean npm ci, typecheck dan build exit0.
+1. Jalankan workflow GitHub Actions pada Node 22 dan verifikasi Preview Vercel.
 2. Jalankan setup pada Supabase baru, ulang sekali, lalu SQL smoke test dan audit RLS/Storage.
 3. Deploy Edge Functions dan uji request checkout, idempotency, stock concurrency,privasi receipt.
 4. Uji akun Admin/anon/non-Admin, recovery, logout, perubahan izin, galeri, CSV, semua form.
-5. Midtrans sandbox end-to-end dengan notifikasi/GET status/retry/refund/nominal asli.
-6. Vercel Preview pada perangkat mobile/desktop; production hanya setelah semua gate lulus.
+5. Uji pembayaran manual, konfirmasi Admin, pengembalian stok, dan pesanan lama pada Supabase staging.
+6. Minta/konfirmasi spesifikasi tarif Komerce dan uji integrasi sebelum mengaktifkan
+   tarif dinamis; saat ini checkout masih memakai ongkir datar yang diatur Admin.
+7. Vercel Preview pada perangkat mobile/desktop; production hanya setelah semua gate lulus.
 
 README_DEPLOYMENT.md berisi urutan setup dan penyimpanan secrets yang tepat. Tidak perlu
 menambahkan service key ke frontend untuk mengatasi error konfigurasi.

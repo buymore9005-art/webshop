@@ -1,7 +1,44 @@
 # CHANGELOG — ZYHA ID 1.1.0
 
+## Fitur pertumbuhan toko
+
+- Menambahkan akun pelanggan Supabase Auth, riwayat pesanan untuk checkout saat login,
+  dan wishlist yang tersimpan di akun serta tersinkron lintas perangkat melalui
+  Supabase Realtime dan RLS.
+- Menambahkan halaman artikel publik serta CRUD artikel (draf/terbit) dan informasi
+  footer pada backoffice.
+- Menambahkan kupon diskon (persentase/nominal) dengan periode, minimum belanja,
+  batas penggunaan total/per pelanggan, dan penukaran atomik di server saat checkout.
+- Menambahkan impor produk CSV melalui backoffice, dengan pratinjau, validasi semua
+  baris, serta batas 250 produk per batch.
+- Menambahkan migration terpisah yang harus dijalankan setelah `supabase-setup.sql`.
+  Migration, signup Auto Confirm Email, realtime, asosiasi pesanan dan penukaran kupon
+  belum diverifikasi terhadap project Supabase jarak jauh.
+- Tarif otomatis Komerce belum diaktifkan; uji integrasi memerlukan kontrak vendor
+  yang dapat diandalkan, asal gudang, dan berat produk.
+- Menyempurnakan tampilan responsif untuk konten, riwayat akun, dan footer toko.
+
+## Tindak lanjut audit — 10 Oktober 2026
+
+- Menambahkan `.gitignore`, contoh environment browser/Edge, lockfile, dan workflow
+  GitHub Actions untuk clean install, tes, typecheck, serta build pada Node 22.
+- Menambahkan ekspor file kunci pemulihan privat di bukti pesanan dan pemulihan akses
+  melalui file tersebut; file tidak mencakup alamat atau nomor telepon.
+- Memverifikasi clean install lokal, 79 tes, strict typecheck, dan production build.
+  Validasi Supabase, GitHub Actions remote, serta deployment tetap belum
+  dilakukan.
+
 Pengembangan dilakukan dari 14 file webshop pengguna. Tidak mengambil halaman,
 SQL, role, atau dependency dari aplikasi PRODUCTION BUYMORE.
+
+## Penghapusan pembayaran otomatis
+
+- Menghapus Snap, webhook, endpoint sinkronisasi pembayaran, konfigurasi Admin,
+  secret contoh, dan jalur khusus provider. Checkout tetap mendukung pembayaran
+  manual Bank, E-Wallet, dan QRIS, dengan verifikasi pesanan oleh Admin.
+- Menyediakan migration Supabase untuk membuang kolom/fungsi provider dari skema lama.
+  Migration menonaktifkan metode lama, mempertahankan snapshot order, dan menghapus
+  token/ID transaksi serta konfigurasi lama; buat backup database sebelum menerapkan.
 
 ## Tahap 1 — audit dan pemetaan
 

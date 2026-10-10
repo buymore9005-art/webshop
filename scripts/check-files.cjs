@@ -1,5 +1,5 @@
 const fs=require('node:fs'),path=require('node:path');
-const required=['main.tsx','App.tsx','Admin.tsx','supabaseClient.ts','index.css','index.html','package.json','tsconfig.json','tsconfig.node.json','src/vite-env.d.ts','tailwind.config.cjs','postcss.config.cjs','supabase-setup.sql','supabase/functions/rapid-api/index.ts','supabase/functions/midtrans-webhook/index.ts'];
+const required=['main.tsx','App.tsx','Admin.tsx','supabaseClient.ts','index.css','index.html','package.json','tsconfig.json','tsconfig.node.json','src/vite-env.d.ts','tailwind.config.cjs','postcss.config.cjs','supabase-setup.sql','supabase/functions/rapid-api/index.ts'];
 let failures=[];for(const name of required)if(!fs.existsSync(name)||!fs.statSync(name).isFile()||!fs.readFileSync(name).length)failures.push('File wajib hilang/kosong: '+name);
 const source=[];function walk(dir){for(const e of fs.readdirSync(dir,{withFileTypes:true})){if(['node_modules','.git','dist','.test-build','.test-tools','docs'].includes(e.name))continue;const p=path.join(dir,e.name);if(e.isDirectory())walk(p);else if(/\.(ts|tsx)$/.test(p))source.push(p);}}walk('.');
 let imports=0;

@@ -16,12 +16,12 @@ file output menggunakan nama import normal. Tidak ada symlink/dependency tersemb
 | src/lib/useResource.ts | Lifecycle query dan stale response |
 | src/components/AdminGate.tsx | Auth/login/recovery/izin Admin |
 | src/components/UI.tsx | Form, foto, dialog, status, pagination, error boundary |
-| src/shop | CartPanel, Checkout, OrderReceipt, integrasi Snap/Tawk |
+| src/shop | CartPanel, Checkout, OrderReceipt, integrasi live-chat Tawk |
 | src/admin | Products, Payments, Orders, Dashboard/Analytics, Settings/WA |
 | supabase-setup.sql | Setup Supabase baru, lengkap satu file |
-| supabase/functions/rapid-api/index.ts | API tamu checkout/receipt/payment dan sync Admin |
-| supabase/functions/midtrans-webhook/index.ts | Penerimaan webhook terverifikasi |
-| supabase/functions/_shared | Validasi/payload dan transport database/gateway |
+| supabase/functions/rapid-api/index.ts | API tamu checkout dan receipt |
+| supabase/functions/_shared | Validasi checkout dan transport database |
+| supabase/migrations/20261011000000_remove_midtrans.sql | Penghapusan skema integrasi lama; pertahankan snapshot order |
 | supabase/tests/database-smoke.sql | Test SQL staging rollback, belum dijalankan lokal |
 | scripts, tests | Pemeriksaan file/source, unit/kontrak dan fixture CSS |
 | docs | Audit input, rencana, bukti QA, manifest hasil |

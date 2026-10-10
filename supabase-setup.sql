@@ -57,9 +57,6 @@ create table if not exists public.settings (
   admin_phone text not null default '' check(admin_phone='' or admin_phone ~ '^62[0-9]{8,13}$'),
   shipping_fee bigint not null default 0 check(shipping_fee between 0 and 1000000000),
   free_shipping_min bigint check(free_shipping_min between 0 and 1000000000),
-  midtrans_enabled boolean not null default false,
-  midtrans_client_key text not null default '' check(length(midtrans_client_key)<=200),
-  midtrans_mode text not null default 'sandbox' check(midtrans_mode in ('sandbox','production')),
   updated_at timestamptz not null default now()
 );
 insert into public.settings(id) values(1) on conflict(id) do nothing;
@@ -84,14 +81,14 @@ create table if not exists public.payment_methods (
   name text not null check(length(btrim(name)) between 1 and 100),
   account_number text not null default '' check(length(account_number)<=100),
   account_holder text not null default '' check(length(account_holder)<=150),
-  type text not null check(type in ('Bank','E-Wallet','QRIS','Midtrans')),
+  type text not null check(type in ('Bank','E-Wallet','QRIS')),
   qris_url text not null default '' check(qris_url='' or qris_url ~ '^https://'),
   is_active boolean not null default true,
   sort_order integer not null default 0,
   created_at timestamptz not null default now(), updated_at timestamptz not null default now(),
   constraint zyha_payment_details check (
     (type in ('Bank','E-Wallet') and length(btrim(account_number))>0 and length(btrim(account_holder))>0)
-    or (type='QRIS' and qris_url<>'') or type='Midtrans')
+    or (type='QRIS' and qris_url<>''))
 );
 create table if not exists public.orders (
   id uuid primary key default gen_random_uuid(),
@@ -106,7 +103,7 @@ create table if not exists public.orders (
   items jsonb not null check(jsonb_typeof(items)='array' and jsonb_array_length(items) between 1 and 50),
   subtotal bigint not null check(subtotal>0),
   shipping_fee bigint not null check(shipping_fee>=0),
-  total_price bigint not null check(total_price between 1 and 1000000000 and total_price=subtotal+shipping_fee),
+  total_price bigint not null check(total_price between 1 and 1000000000),
   payment_method_id uuid not null references public.payment_methods(id) on delete restrict,
   payment_method text not null,
   payment_snapshot jsonb not null,
@@ -115,16 +112,7 @@ create table if not exists public.orders (
   tracking_number text not null default '' check(length(tracking_number)<=120),
   carrier text not null default '' check(length(carrier)<=80),
   stock_restored boolean not null default false,
-  inventory_note text not null default '',
   refund_amount bigint not null default 0 check(refund_amount>=0 and refund_amount<=total_price),
-  gateway_order_id text unique,
-  gateway_transaction_id text,
-  gateway_state text,
-  snap_token text,
-  snap_redirect_url text,
-  payment_lock_id uuid,
-  payment_lock_until timestamptz,
-  gateway_checked_at timestamptz,
   version bigint not null default 1,
   created_at timestamptz not null default now(), updated_at timestamptz not null default now()
 );
@@ -184,7 +172,7 @@ create policy zyha_products_public on public.products for select to anon,authent
 drop policy if exists zyha_products_admin on public.products;
 create policy zyha_products_admin on public.products for all to authenticated using((select public.zyha_is_admin())) with check((select public.zyha_is_admin()));
 drop policy if exists zyha_methods_public on public.payment_methods;
-create policy zyha_methods_public on public.payment_methods for select to anon,authenticated using(is_active and (type<>'Midtrans' or exists(select 1 from public.settings where id=1 and midtrans_enabled)));
+create policy zyha_methods_public on public.payment_methods for select to anon,authenticated using(is_active);
 drop policy if exists zyha_methods_admin on public.payment_methods;
 create policy zyha_methods_admin on public.payment_methods for all to authenticated using((select public.zyha_is_admin())) with check((select public.zyha_is_admin()));
 drop policy if exists zyha_orders_admin_read on public.orders;
@@ -241,7 +229,7 @@ begin
  if (select count(*) from jsonb_array_elements(p_items)) <> (select count(distinct (value->>'product_id',coalesce(value->>'variant',''))) from jsonb_array_elements(p_items)) then raise exception 'Baris produk duplikat'; end if;
  select * into s from public.settings where id=1 for share;
  select * into m from public.payment_methods where id=p_method_id and is_active for share;
- if not found or (m.type='Midtrans' and (not s.midtrans_enabled or s.midtrans_client_key='')) then raise exception 'Metode pembayaran tidak tersedia'; end if;
+ if not found then raise exception 'Metode pembayaran tidak tersedia'; end if;
  -- Lock products in deterministic order to avoid overselling and deadlocks.
  perform 1 from public.products where id in(select (value->>'product_id')::uuid from jsonb_array_elements(p_items)) order by id for update;
  for line in select value from jsonb_array_elements(p_items) loop
@@ -258,8 +246,8 @@ begin
  end loop;
  fee=case when s.free_shipping_min is not null and sub>=s.free_shipping_min then 0 else s.shipping_fee end;
  if sub+fee>1000000000 then raise exception 'Total pesanan melewati batas'; end if;
- insert into public.orders(id,order_number,request_id,receipt_hash,request_hash,customer_name,customer_address,customer_phone,customer_note,items,subtotal,shipping_fee,total_price,payment_method_id,payment_method,payment_snapshot,gateway_order_id)
- values(oid,'ZYHA-'||upper(replace(oid::text,'-','')),p_request_id,encode(extensions.digest(p_receipt_token,'sha256'),'hex'),p_request_hash,cname,addr,phone,note,snapshots,sub,fee,sub+fee,m.id,m.name,to_jsonb(m)||jsonb_build_object('gateway_mode',s.midtrans_mode,'gateway_client_key',s.midtrans_client_key),case when m.type='Midtrans' then 'ZYHA-'||oid::text else null end);
+ insert into public.orders(id,order_number,request_id,receipt_hash,request_hash,customer_name,customer_address,customer_phone,customer_note,items,subtotal,shipping_fee,total_price,payment_method_id,payment_method,payment_snapshot)
+ values(oid,'ZYHA-'||upper(replace(oid::text,'-','')),p_request_id,encode(extensions.digest(p_receipt_token,'sha256'),'hex'),p_request_hash,cname,addr,phone,note,snapshots,sub,fee,sub+fee,m.id,m.name,to_jsonb(m));
  insert into public.order_events(order_id,event,new_status,note) values(oid,'order_created','pending','Pesanan dibuat; harga dan stok divalidasi database.');
  return oid;
 end $$;
@@ -296,7 +284,6 @@ begin
  if p_version is null or r.version<>p_version then raise exception 'Pesanan telah diperbarui. Muat ulang sebelum mengubah.'; end if;
  next_status=r.status; next_fulfillment=r.fulfillment_status;
  if p_action in ('paid','cancelled') then
-  if r.payment_snapshot->>'type'='Midtrans' then raise exception 'Status pembayaran Midtrans harus dikonfirmasi server Midtrans'; end if;
   if r.status<>'pending' then raise exception 'Hanya pembayaran tertunda yang dapat diverifikasi/dibatalkan'; end if;
   next_status=p_action;
   if p_action='cancelled' then perform public.zyha_restore_stock(r.id); end if;
@@ -314,58 +301,6 @@ begin
  return jsonb_build_object('ok',true);
 end $$;
 
-create or replace function public.zyha_claim_payment(p_id uuid)
-returns jsonb language plpgsql security definer set search_path='' as $$
-declare r public.orders; claim uuid=gen_random_uuid(); s public.settings;
-begin
- select * into r from public.orders where id=p_id for update;
- if not found or r.status<>'pending' or r.payment_snapshot->>'type'<>'Midtrans' then raise exception 'Pesanan tidak dapat dibayar melalui Midtrans'; end if;
- select * into s from public.settings where id=1;
- if not s.midtrans_enabled or s.midtrans_client_key='' then raise exception 'Midtrans belum dikonfigurasi'; end if;
- if r.snap_token is not null then return jsonb_build_object('token',r.snap_token,'redirect_url',r.snap_redirect_url,'mode',r.payment_snapshot->>'gateway_mode','clientKey',r.payment_snapshot->>'gateway_client_key'); end if;
- if r.payment_lock_until>now() then raise exception 'Pembayaran sedang diproses. Coba kembali sebentar lagi.'; end if;
- update public.orders set payment_lock_id=claim,payment_lock_until=now()+interval '45 seconds' where id=p_id;
- return jsonb_build_object('claim',claim,'order',to_jsonb(r)-'receipt_hash'-'request_hash','mode',r.payment_snapshot->>'gateway_mode','clientKey',r.payment_snapshot->>'gateway_client_key');
-end $$;
-create or replace function public.zyha_save_payment(p_id uuid,p_claim uuid,p_token text,p_url text)
-returns boolean language plpgsql security definer set search_path='' as $$
-begin
- update public.orders set snap_token=p_token,snap_redirect_url=p_url,payment_lock_until=null where id=p_id and payment_lock_id=p_claim and status='pending';
- return found;
-end $$;
-create or replace function public.zyha_apply_gateway_status(p_id uuid,p_status text,p_amount bigint,p_transaction text,p_refund bigint default 0,p_gateway_state text default '')
-returns boolean language plpgsql security definer set search_path='' as $$
-declare r public.orders; line jsonb; available integer; shortage boolean=false;
-begin
- select * into r from public.orders where id=p_id for update;
- if not found or r.payment_snapshot->>'type'<>'Midtrans' or r.total_price<>p_amount then raise exception 'Gateway order/amount mismatch'; end if;
- if p_status not in ('pending','paid','cancelled','expired','failed','refunded','partial_refund') or p_refund<0 or p_refund>r.total_price then raise exception 'Invalid gateway state'; end if;
- if r.gateway_transaction_id is not null and r.gateway_transaction_id<>p_transaction then raise exception 'Gateway transaction mismatch'; end if;
- if r.status='refunded' or (r.status='partial_refund' and p_status in ('pending','paid','cancelled','failed','expired')) or (r.status='paid' and p_status in ('pending','failed','expired')) or (r.status='paid' and p_status='cancelled' and coalesce(r.gateway_state,'')<>'capture') or (r.gateway_state='settlement' and p_gateway_state='capture') or (r.status in ('cancelled','expired','failed') and p_status='pending') then return false; end if;
- if r.status=p_status and r.refund_amount>=p_refund and r.gateway_state=p_gateway_state and r.gateway_transaction_id=p_transaction then return false; end if;
- if p_status in ('cancelled','expired','failed') and (r.status='pending' or (r.status='paid' and r.gateway_state='capture' and r.fulfillment_status in ('unfulfilled','processing'))) then perform public.zyha_restore_stock(r.id); end if;
- -- Never reject a real late settlement merely because an earlier expiry released stock.
- -- Re-reserve what is possible; the admin sees a precise reconciliation note.
- if p_status='paid' and r.stock_restored then
-  perform 1 from public.products where id in(select (value->>'product_id')::uuid from jsonb_array_elements(r.items)) order by id for update;
-  for line in select value from jsonb_array_elements(r.items) loop
-   if (line->>'stock_tracked')::boolean then
-    select stock into available from public.products where id=(line->>'product_id')::uuid;
-    if available is not null then
-     if available<(line->>'quantity')::integer then shortage=true; end if;
-     update public.products set stock=greatest(stock-(line->>'quantity')::integer,0) where id=(line->>'product_id')::uuid;
-    end if;
-   end if;
-  end loop;
- end if;
- update public.orders set status=p_status,gateway_transaction_id=p_transaction,gateway_state=p_gateway_state,
- refund_amount=case when p_status='refunded' then total_price else greatest(refund_amount,p_refund) end,
- stock_restored=case when p_status='paid' then false else stock_restored end,
- inventory_note=case when shortage then 'Pembayaran terlambat diterima setelah pelepasan stok. Periksa ketersediaan fisik sebelum pengiriman.' when p_status='cancelled' and r.status='paid' and r.fulfillment_status in ('shipped','completed') then 'Transaksi capture dibatalkan di Midtrans setelah pengiriman. Rekonsiliasi dana dan barang secara manual.' else inventory_note end,
- version=version+1,updated_at=clock_timestamp() where id=p_id;
- insert into public.order_events(order_id,event,old_status,new_status,note) values(p_id,'midtrans_verified',r.status,p_status,'Status diperiksa melalui API server Midtrans.');
- return true;
-end $$;
 create or replace function public.zyha_dashboard(p_start timestamptz default null,p_end timestamptz default null)
 returns jsonb language plpgsql security definer set search_path='' as $$
 declare result jsonb;
@@ -379,28 +314,10 @@ begin
  return result;
 end $$;
 
--- Verified Admin + provider 404 + no issued token + no live payment claim.
-create or replace function public.zyha_cancel_unstarted(p_id uuid,p_version bigint,p_note text,p_actor uuid)
-returns boolean language plpgsql security definer set search_path='' as $$
-declare r public.orders;
-begin
- if not exists(select 1 from public.admin_users where user_id=p_actor and is_active) then raise exception 'Akses Admin diperlukan'; end if;
- if p_note is null or length(btrim(p_note)) not between 3 and 2000 then raise exception 'Isi alasan pembatalan'; end if;
- select * into r from public.orders where id=p_id for update;
- if not found or p_version is null or r.version<>p_version then raise exception 'Pesanan telah berubah. Muat ulang.'; end if;
- if r.status<>'pending' or r.payment_snapshot->>'type'<>'Midtrans' or r.snap_token is not null or r.gateway_transaction_id is not null or r.payment_lock_until>now() or r.created_at>now()-interval '5 minutes' then raise exception 'Hanya pesanan minimal 5 menit tanpa token/transaksi pembayaran yang dapat dibatalkan di sini.'; end if;
- perform public.zyha_restore_stock(r.id);
- update public.orders set status='cancelled',version=version+1,updated_at=clock_timestamp() where id=r.id;
- insert into public.order_events(order_id,actor_id,event,old_status,new_status,note) values(r.id,p_actor,'admin_cancelled',r.status,'cancelled',btrim(p_note));
- return true;
-end $$;
-revoke all on function public.zyha_cancel_unstarted(uuid,bigint,text,uuid) from public,anon,authenticated;
-grant execute on function public.zyha_cancel_unstarted(uuid,bigint,text,uuid) to service_role;
-
 -- Do not use broad 'grant execute on all functions' here.
 revoke all on function public.zyha_touch(),public.zyha_product_guard(),public.zyha_restore_stock(uuid) from public,anon,authenticated;
-revoke all on function public.zyha_rate_limit(text,integer,integer),public.zyha_place_order(uuid,text,text,jsonb,jsonb,uuid),public.zyha_receipt(uuid,text),public.zyha_claim_payment(uuid),public.zyha_save_payment(uuid,uuid,text,text),public.zyha_apply_gateway_status(uuid,text,bigint,text,bigint,text) from public,anon,authenticated;
-grant execute on function public.zyha_rate_limit(text,integer,integer),public.zyha_place_order(uuid,text,text,jsonb,jsonb,uuid),public.zyha_receipt(uuid,text),public.zyha_claim_payment(uuid),public.zyha_save_payment(uuid,uuid,text,text),public.zyha_apply_gateway_status(uuid,text,bigint,text,bigint,text) to service_role;
+revoke all on function public.zyha_rate_limit(text,integer,integer),public.zyha_place_order(uuid,text,text,jsonb,jsonb,uuid),public.zyha_receipt(uuid,text) from public,anon,authenticated;
+grant execute on function public.zyha_rate_limit(text,integer,integer),public.zyha_place_order(uuid,text,text,jsonb,jsonb,uuid),public.zyha_receipt(uuid,text) to service_role;
 revoke all on function public.zyha_admin_order_action(uuid,bigint,text,text,text,text),public.zyha_dashboard(timestamptz,timestamptz) from public,anon;
 grant execute on function public.zyha_admin_order_action(uuid,bigint,text,text,text,text),public.zyha_dashboard(timestamptz,timestamptz) to authenticated,service_role;
 

@@ -78,7 +78,7 @@ export default function Payments() {
         </Field>
         <Field label="Jenis">
           <select value={draft.type} onChange={e => setDraft({ ...draft, type: e.target.value as PaymentType })}>
-            {['Bank', 'E-Wallet', 'QRIS', 'Midtrans'].map(t => <option key={t}>
+            {(['Bank', 'E-Wallet', 'QRIS'] as PaymentType[]).map(t => <option key={t}>
               {t}
             </option>)}
           </select>
@@ -96,9 +96,8 @@ export default function Payments() {
           <Field label="Unggah QRIS">
             <input type="file" accept="image/jpeg,image/png,image/webp" disabled={busy} onChange={e => { void upload(e.target.files?.[0]); e.target.value = ''; }} />
           </Field>
-          <p className="muted">QRIS ini dikonfirmasi secara manual, bukan webhook Midtrans.</p>
+          <p className="muted">Pembayaran QRIS dikonfirmasi secara manual oleh Admin.</p>
         </>}
-        {draft.type === 'Midtrans' && <p className="message">Metode tampil ke pembeli hanya setelah Midtrans diaktifkan pada Pengaturan. Server key diatur melalui Supabase Edge Function Secrets.</p>}
         <Field label="Urutan tampilan">
           <input type="number" step={1} value={draft.sort_order} onChange={e => setDraft({ ...draft, sort_order: Number(e.target.value) })} />
         </Field>

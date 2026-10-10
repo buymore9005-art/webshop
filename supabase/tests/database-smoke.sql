@@ -13,7 +13,8 @@ begin
  if has_function_privilege('anon','public.zyha_place_order(uuid,text,text,jsonb,jsonb,uuid)','EXECUTE') or has_function_privilege('authenticated','public.zyha_place_order(uuid,text,text,jsonb,jsonb,uuid)','EXECUTE') then raise exception 'FAIL: service checkout RPC exposed to browser'; end if;
  if not has_function_privilege('service_role','public.zyha_place_order(uuid,text,text,jsonb,jsonb,uuid)','EXECUTE') then raise exception 'FAIL: service checkout RPC unavailable'; end if;
  if exists(select 1 from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relname in ('orders','products','settings','payment_methods','order_events','admin_users') and not c.relrowsecurity) then raise exception 'FAIL: RLS missing'; end if;
- if exists(select 1 from information_schema.columns where table_schema='public' and table_name='settings' and column_name='midtrans_server_key') then raise exception 'FAIL: server key column in public settings'; end if;
+ if exists(select 1 from information_schema.columns where table_schema='public' and table_name='settings' and column_name in ('midtrans_enabled','midtrans_client_key','midtrans_mode')) then raise exception 'FAIL: retired payment-provider settings remain'; end if;
+ if exists(select 1 from information_schema.columns where table_schema='public' and table_name='orders' and column_name in ('gateway_order_id','gateway_transaction_id','snap_token')) then raise exception 'FAIL: retired payment-provider order state remains'; end if;
  update public.settings set shipping_fee=10000,free_shipping_min=null where id=1;
  insert into public.products(title,price,stock,variants) values('QA rollback product',125000,5,'[{"name":" KHAKI ","image":""}]') returning id into p;
  if (select variants->0->>'name' from public.products where id=p)<>'KHAKI' then raise exception 'FAIL: variant not normalized'; end if;

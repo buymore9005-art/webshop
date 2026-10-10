@@ -1,5 +1,3 @@
 project_id = "zyha-id-webshop"
 [functions.rapid-api]
 verify_jwt = false
-[functions.midtrans-webhook]
-verify_jwt = false

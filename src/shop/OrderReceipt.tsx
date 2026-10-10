@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import type { Customer, OrderAccess, Receipt, Settings } from '../types';
 import { dateTime, errorMessage, fulfillmentLabels, money, orderLabels, whatsappUrl } from '../lib/domain';
-import { loadReceipt, shopAction } from '../lib/api';
+import { downloadOrderAccessBackup, loadReceipt } from '../lib/api';
 import { Message, Photo } from '../components/UI';
-import { openSnap } from './payment';
 export function OrderReceipt({ initial, access, settings, customer, onBack }: {
   initial: Receipt;
   access: OrderAccess;
@@ -14,7 +13,7 @@ export function OrderReceipt({ initial, access, settings, customer, onBack }: {
   const [receipt, setReceipt] = useState(initial), [busy, setBusy] = useState(false), [error, setError] = useState(''), [message, setMessage] = useState('');
   async function refresh() {
     setBusy(true); setError(''); try {
-      setReceipt(await loadReceipt(access, true));
+      setReceipt(await loadReceipt(access));
       setMessage('Status pesanan diperbarui dari server.');
     }
       catch (e) {
@@ -24,27 +23,10 @@ export function OrderReceipt({ initial, access, settings, customer, onBack }: {
         setBusy(false);
       }
   }
-  async function pay() {
-    if (busy)
-      return; setBusy(true); setError(''); try {
-        const p = await shopAction<{
-          token: string;
-          mode: string;
-          clientKey: string;
-        }>({ ...access, action: 'payment' });
-        await openSnap(p.token, p.mode, p.clientKey, () => { setMessage('Periksa status server untuk memastikan hasil pembayaran.'); void refresh(); });
-      }
-    catch (e) {
-      setError(errorMessage(e));
-    }
-    finally {
-      setBusy(false);
-    }
-  }
   const method = receipt.payment_snapshot;
   let wa = '';
   if (settings.admin_phone) {
-    const text = [`PESANAN ${receipt.order_number}`, customer ? `Nama: ${customer.name}\nAlamat: ${customer.address}\nWhatsApp: ${customer.phone}` : '', ...receipt.items.map(x => `${x.title}${x.variant ? ' (' + x.variant + ')' : ''} × ${x.quantity}: ${money(x.subtotal)}`), `Ongkir: ${money(receipt.shipping_fee)}`, `Total: ${money(receipt.total_price)}`, `Metode: ${receipt.payment_method}`].filter(Boolean).join('\n');
+    const text = [`PESANAN ${receipt.order_number}`, customer ? `Nama: ${customer.name}\nAlamat: ${customer.address}\nWhatsApp: ${customer.phone}` : '', ...receipt.items.map(x => `${x.title}${x.variant ? ' (' + x.variant + ')' : ''} × ${x.quantity}: ${money(x.subtotal)}`), `Ongkir: ${money(receipt.shipping_fee)}`, receipt.coupon_code ? `Kupon ${receipt.coupon_code}: -${money(receipt.discount_amount)}` : '', `Total: ${money(receipt.total_price)}`, `Metode: ${receipt.payment_method}`].filter(Boolean).join('\n');
     try {
       wa = whatsappUrl(settings.admin_phone, text);
     }
@@ -76,30 +58,26 @@ export function OrderReceipt({ initial, access, settings, customer, onBack }: {
           <h3>
             {method.name}
           </h3>
-          {method.type === 'Midtrans' ? <>
-            <p>Total final di bawah telah dihitung oleh server. Lanjutkan hanya setelah nominalnya sesuai.</p>
-            <button type="button" className="button" disabled={busy} onClick={pay}>Bayar melalui Midtrans</button>
-          </> : <>
-            <p>Transfer sesuai total pesanan, kemudian kirim konfirmasi ke Admin. Pesanan tidak otomatis dianggap lunas.</p>
-            {method.qris_url ? <Photo src={method.qris_url} alt={'QRIS ' + method.name} className="qris" /> : <>
-              <p className="account-number">
-                {method.account_number}
-              </p>
-              <p>Atas nama: <strong>
-                {method.account_holder}
-              </strong>
-              </p>
-            </>}
+          {method.type === 'QRIS' && method.qris_url ? <>
+            <p>Bayar sesuai total pesanan, kemudian kirim konfirmasi ke Admin. Pesanan tidak otomatis dianggap lunas.</p>
+            <Photo src={method.qris_url} alt={'QRIS ' + method.name} className="qris" />
             {wa ? <a className="button" href={wa} target="_blank" rel="noopener noreferrer">Kirim konfirmasi ke WhatsApp</a> : <p className="message">Nomor WhatsApp toko belum diatur. Simpan nomor pesanan dan hubungi toko melalui kanal yang tersedia.</p>}
-          </>}
+          </> : method.type === 'Bank' || method.type === 'E-Wallet' ? <>
+            <p>Transfer sesuai total pesanan, kemudian kirim konfirmasi ke Admin. Pesanan tidak otomatis dianggap lunas.</p>
+            <p className="account-number">{method.account_number}</p>
+            <p>Atas nama: <strong>{method.account_holder}</strong></p>
+            {wa ? <a className="button" href={wa} target="_blank" rel="noopener noreferrer">Kirim konfirmasi ke WhatsApp</a> : <p className="message">Nomor WhatsApp toko belum diatur. Simpan nomor pesanan dan hubungi toko melalui kanal yang tersedia.</p>}
+          </> : <p className="message">Instruksi pembayaran untuk pesanan ini tidak tersedia. Hubungi Admin untuk bantuan.</p>}
         </>}
         <Message error={error} success={message} />
         <div className="actions">
           <button className="button secondary" disabled={busy} onClick={refresh}>
             {busy ? 'Memeriksa…' : 'Periksa status'}
           </button>
+          <button type="button" className="button secondary" onClick={() => downloadOrderAccessBackup(access, receipt.order_number)}>Unduh kunci pemulihan</button>
           <button className="button secondary" onClick={() => window.print()}>Cetak ringkasan</button>
         </div>
+        <small>Simpan file kunci di tempat pribadi. File ini memberikan akses ke ringkasan pesanan; jangan bagikan atau unggah ke tempat umum.</small>
       </section>
       <aside className="panel stack">
         <h2>Detail pesanan</h2>
@@ -126,13 +104,14 @@ export function OrderReceipt({ initial, access, settings, customer, onBack }: {
             {money(receipt.shipping_fee)}
           </span>
         </div>
+        {receipt.coupon_code && <div className="split"><span>Diskon kupon ({receipt.coupon_code})</span><strong>−{money(receipt.discount_amount)}</strong></div>}
         <div className="split total">
           <span>Total final</span>
           <strong>
             {money(receipt.total_price)}
           </strong>
         </div>
-        <small>Status lunas hanya berasal dari verifikasi Admin untuk pembayaran manual atau pemeriksaan server Midtrans.</small>
+        <small>Status lunas hanya berasal dari verifikasi pembayaran oleh Admin.</small>
       </aside>
     </div>
     <button type="button" className="button secondary" onClick={onBack}>Kembali ke katalog</button>

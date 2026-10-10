@@ -7,8 +7,10 @@ import Products from './src/admin/Products';
 import Payments from './src/admin/Payments';
 import Orders from './src/admin/Orders';
 import Settings from './src/admin/Settings';
+import Content from './src/admin/Content';
+import Coupons from './src/admin/Coupons';
 import { Modal } from './src/components/UI';
-const navigation = [['dashboard', 'Dashboard'], ['products', 'Produk & katalog'], ['banks', 'Metode bayar'], ['orders', 'Pesanan'], ['analytics', 'Analitik'], ['wa', 'WhatsApp'], ['settings', 'Pengaturan']];
+const navigation = [['dashboard', 'Dashboard'], ['products', 'Produk & katalog'], ['coupons', 'Kupon'], ['banks', 'Metode bayar'], ['orders', 'Pesanan'], ['analytics', 'Analitik'], ['content', 'Artikel & footer'], ['wa', 'WhatsApp'], ['settings', 'Pengaturan']];
 export default function Admin() {
   return <AdminGate>
     <AdminWorkspace />
@@ -41,9 +43,11 @@ function AdminWorkspace() {
       <main className="admin-main">
         {view === 'dashboard' && <Dashboard />}
         {view === 'products' && <Products />}
+        {view === 'coupons' && <Coupons />}
         {view === 'banks' && <Payments />}
         {view === 'orders' && <Orders />}
         {view === 'analytics' && <Dashboard analytics />}
+        {view === 'content' && <Content />}
         {view === 'wa' && <Settings whatsappOnly />}
         {view === 'settings' && <Settings />}
       </main>

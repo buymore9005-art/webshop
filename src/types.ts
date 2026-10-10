@@ -1,4 +1,4 @@
-export type PaymentType = 'Bank' | 'E-Wallet' | 'QRIS' | 'Midtrans';
+export type PaymentType = 'Bank' | 'E-Wallet' | 'QRIS';
 export type OrderStatus = 'pending' | 'paid' | 'cancelled' | 'expired' | 'failed' | 'refunded' | 'partial_refund';
 export type FulfillmentStatus = 'unfulfilled' | 'processing' | 'shipped' | 'completed';
 export interface Variant {
@@ -30,9 +30,6 @@ export interface Settings {
     admin_phone: string;
     shipping_fee: number;
     free_shipping_min: number | null;
-    midtrans_enabled: boolean;
-    midtrans_client_key: string;
-    midtrans_mode: 'sandbox' | 'production';
     updated_at: string;
 }
 export interface PaymentMethod {
@@ -44,6 +41,39 @@ export interface PaymentMethod {
     qris_url: string;
     is_active: boolean;
     sort_order: number;
+}
+export interface Article {
+    id: string;
+    slug: string;
+    title: string;
+    excerpt: string;
+    body: string;
+    cover_image_url: string;
+    status: 'draft' | 'published';
+    published_at: string | null;
+    created_at: string;
+    updated_at: string;
+}
+export interface FooterInfo {
+    id: string;
+    title: string;
+    content: string;
+    href: string;
+    sort_order: number;
+    is_active: boolean;
+}
+export interface Coupon {
+    id: string;
+    code: string;
+    discount_type: 'percent' | 'fixed';
+    discount_value: number;
+    min_subtotal: number;
+    starts_at: string;
+    ends_at: string | null;
+    max_uses: number | null;
+    max_uses_per_customer: number | null;
+    times_used: number;
+    is_active: boolean;
 }
 export interface CartLine {
     product_id: string;
@@ -81,6 +111,8 @@ export interface Receipt {
     items: OrderItem[];
     subtotal: number;
     shipping_fee: number;
+    coupon_code: string | null;
+    discount_amount: number;
     total_price: number;
     status: OrderStatus;
     payment_method: string;

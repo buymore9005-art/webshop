@@ -105,11 +105,6 @@
     "emittedCodeMatches": true
   },
   {
-    "file": "supabase/functions/midtrans-webhook/index.ts",
-    "formatted": true,
-    "emittedCodeMatches": true
-  },
-  {
     "file": "supabase/functions/rapid-api/index.ts",
     "formatted": true,
     "emittedCodeMatches": true

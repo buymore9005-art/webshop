@@ -1464,3 +1464,46 @@ meter {
   .storefront .panel { background: #fff; box-shadow: none; }
   .storefront * { animation: none !important; }
 }
+.footer-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 24px;
+  flex: 1;
+  min-width: 0;
+}
+.footer-info-grid section { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; min-width: 0; }
+.footer-info-grid h2 { font-size: .9rem; }
+.footer-info-grid p { white-space: pre-wrap; overflow-wrap: anywhere; }
+.footer-info-grid .text-button { justify-content: flex-start; text-align: left; }
+.footer-info-grid .message { grid-column: 1/-1; }
+.storefront .footer-info-grid a { min-height: 0; display: inline; }
+.article-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 20px; margin-top: 24px; }
+.article-card { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; }
+.article-card .button,.article-card .text-button { margin-top: auto; }
+.article-card h2 { font-size: 1.25rem; }
+.article-cover { width: 100%; height: 210px; border-radius: 12px; }
+.article-detail { max-width: 900px; }
+.article-detail-cover { width: 100%; max-height: 480px; margin: 24px 0; border-radius: 18px; }
+.article-excerpt { margin: 18px 0; color: var(--muted); font-size: 1.15rem; }
+.article-body { margin-top: 28px; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.9; }
+.customer-order-list,.admin-content-list { display: grid; gap: 16px; }
+.customer-auth-panel { margin-inline: auto; }
+.content-admin-card { display: grid; grid-template-columns: minmax(120px,200px) minmax(0,1fr); gap: 20px; }
+.content-admin-cover { width: 100%; height: 140px; border-radius: 12px; }
+.content-tabs { margin-bottom: 4px; }
+.import-format { padding: 12px; border-radius: 10px; background: #f1f5f9; overflow-wrap: anywhere; }
+.import-format code { font-size: .85rem; }
+.coupon-entry { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: end; gap: 10px; }
+.coupon-list { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 16px; }
+@media (max-width: 800px) {
+  .article-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .footer-info-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+}
+@media (max-width: 640px) {
+  .article-grid,.footer-info-grid { grid-template-columns: minmax(0,1fr); }
+  .content-admin-card { grid-template-columns: minmax(0,1fr); }
+  .content-admin-cover { max-height: 220px; }
+  .coupon-list { grid-template-columns: minmax(0,1fr); }
+  .coupon-entry { grid-template-columns: minmax(0,1fr); }
+  .customer-order-list .panel { padding: 18px; }
+}

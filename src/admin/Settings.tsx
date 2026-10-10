@@ -23,9 +23,7 @@ export default function Settings({ whatsappOnly = false }: {
     setMessage('');
     try {
       const admin_phone = draft.admin_phone.trim() ? normalizePhone(draft.admin_phone) : '';
-      const payload = whatsappOnly ? { admin_phone } : { store_name: draft.store_name.trim(), banner_url: draft.banner_url, hero_title: draft.hero_title.trim(), store_notice: draft.store_notice.trim(), categories: draft.categories, admin_phone, shipping_fee: Number(draft.shipping_fee), free_shipping_min: draft.free_shipping_min === null ? null : Number(draft.free_shipping_min), midtrans_enabled: draft.midtrans_enabled, midtrans_client_key: draft.midtrans_client_key.trim(), midtrans_mode: draft.midtrans_mode };
-      if (draft.midtrans_enabled && !draft.midtrans_client_key.trim())
-        throw new Error('Client key Midtrans wajib diisi saat diaktifkan.');
+      const payload = whatsappOnly ? { admin_phone } : { store_name: draft.store_name.trim(), banner_url: draft.banner_url, hero_title: draft.hero_title.trim(), store_notice: draft.store_notice.trim(), categories: draft.categories, admin_phone, shipping_fee: Number(draft.shipping_fee), free_shipping_min: draft.free_shipping_min === null ? null : Number(draft.free_shipping_min) };
       setDraft(await saveSettings(payload, draft.updated_at));
       setMessage('Pengaturan berhasil disimpan.');
     }
@@ -117,21 +115,6 @@ export default function Settings({ whatsappOnly = false }: {
               <input type="number" min={0} max={1000000000} step={1} value={draft.free_shipping_min ?? ''} onChange={e => setDraft({ ...draft, free_shipping_min: e.target.value === '' ? null : Number(e.target.value) })} />
             </Field>
           </div>
-        </div>
-        <div className="panel stack">
-          <h2>Midtrans Snap</h2>
-          <label className="check">
-            <input type="checkbox" checked={draft.midtrans_enabled} onChange={e => setDraft({ ...draft, midtrans_enabled: e.target.checked })} />Aktifkan pembayaran Midtrans</label>
-          <Field label="Mode">
-            <select value={draft.midtrans_mode} onChange={e => setDraft({ ...draft, midtrans_mode: e.target.value as 'sandbox' | 'production' })}>
-              <option value="sandbox">Sandbox (pengujian)</option>
-              <option value="production">Production (pembayaran nyata)</option>
-            </select>
-          </Field>
-          <Field label="Client key (public)">
-            <input autoComplete="off" maxLength={200} value={draft.midtrans_client_key} onChange={e => setDraft({ ...draft, midtrans_client_key: e.target.value })} />
-          </Field>
-          <p className="message">Server key tidak dimasukkan ke halaman ini. Atur MIDTRANS_SERVER_KEY_SANDBOX / MIDTRANS_SERVER_KEY_PRODUCTION pada Supabase Edge Function Secrets. Pasang webhook sebelum mengaktifkan pembayaran nyata. Mode/key client disimpan sebagai snapshot pada pesanan.</p>
         </div>
       </>}
       <Message error={error} success={message} />

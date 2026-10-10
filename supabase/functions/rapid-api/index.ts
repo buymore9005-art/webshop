@@ -1,5 +1,25 @@
-import { checkoutInput, uuid, proof, string, HttpError, buildSnapPayload } from '../_shared/validation.ts';
-import { cors, Database, env, failure, gateway, gatewayData, hash, json, readJson, syncPayment, type GatewayOrder } from '../_shared/server.ts';
+import { checkoutInput, uuid, proof, string, HttpError } from '../_shared/validation.ts';
+import { cors, Database, env, failure, hash, json, readJson } from '../_shared/server.ts';
+async function optionalCustomerId(request: Request): Promise<string | null> {
+    const authorization = request.headers.get('authorization');
+    if (!authorization)
+        return null;
+    const apiKey = request.headers.get('apikey');
+    if (!apiKey)
+        throw new HttpError(401, 'Sesi pelanggan tidak dapat diverifikasi.');
+    if (authorization === 'Bearer ' + apiKey)
+        return null;
+    if (!authorization.startsWith('Bearer '))
+        throw new HttpError(401, 'Sesi pelanggan tidak valid.');
+    const response = await fetch(env('SUPABASE_URL') + '/auth/v1/user', {
+        headers: { apikey: apiKey, Authorization: authorization },
+        signal: AbortSignal.timeout(10000),
+    });
+    if (!response.ok)
+        throw new HttpError(401, 'Sesi pelanggan telah berakhir. Masuk kembali lalu ulangi.');
+    const user = await response.json();
+    return uuid(user.id);
+}
 Deno.serve(async (request: Request) => {
     let headers: Record<string, string> = {};
     try {
@@ -15,32 +35,41 @@ Deno.serve(async (request: Request) => {
         const actor = await hash(db.key + ':' + ip);
         await db.limit('request:' + actor, 90);
         const action = string(body.action, 'Tindakan', 1, 20);
-        if (action === 'sync-admin' || action === 'cancel-unstarted') {
-            const bearer = request.headers.get('authorization') || '';
-            const auth = await fetch(env('SUPABASE_URL') + '/auth/v1/user', { headers: { apikey: db.key, Authorization: bearer }, signal: AbortSignal.timeout(10000) });
-            if (!auth.ok)
-                throw new HttpError(401, 'Login diperlukan.');
-            const user = await auth.json();
-            const admin = await db.row<{
-                is_active: boolean;
-            }>('admin_users', { select: 'is_active', user_id: 'eq.' + uuid(user.id) });
-            if (!admin?.is_active)
-                throw new HttpError(403, 'Akses Admin diperlukan.');
-            const order = await db.row<GatewayOrder>('orders', { select: '*', id: 'eq.' + uuid(body.orderId) });
-            if (!order)
-                throw new HttpError(404, 'Pesanan tidak ditemukan.');
-            if (action === 'cancel-unstarted') {
-                if (order.payment_snapshot.type !== 'Midtrans')
-                    throw new HttpError(400, 'Gunakan verifikasi manual untuk metode ini.');
-                if (await gatewayData(order))
-                    throw new HttpError(409, 'Transaksi sudah dimulai. Batalkan melalui Midtrans lalu sinkronkan.');
-                if (typeof body.version !== 'number' || !Number.isInteger(body.version))
-                    throw new HttpError(400, 'Versi pesanan tidak valid.');
-                await db.rpc('zyha_cancel_unstarted', { p_id: order.id, p_version: body.version, p_note: string(body.note, 'Alasan', 3, 2000), p_actor: user.id });
+        if (action === 'validate-coupon') {
+            const code = string(body.code, 'Kode kupon', 3, 40).toUpperCase();
+            if (!/^[A-Z0-9_-]{3,40}$/.test(code))
+                throw new HttpError(400, 'Format kode kupon tidak valid.');
+            const phone = string(body.phone, 'Nomor pelanggan', 10, 15);
+            if (!/^62\d{8,13}$/.test(phone) || !Number.isSafeInteger(body.subtotal) || Number(body.subtotal) < 1 || Number(body.subtotal) > 1000000000)
+                throw new HttpError(400, 'Data validasi kupon tidak valid.');
+            const customerKey = await hash(db.key + ':' + phone);
+            await db.limit('coupon-check:' + customerKey, 10, 600);
+            const coupon = await db.row<{
+                id: string; code: string; discount_type: 'percent' | 'fixed'; discount_value: number;
+                min_subtotal: number; starts_at: string; ends_at: string | null; max_uses: number | null;
+                max_uses_per_customer: number | null; times_used: number;
+            }>('coupons', { select: '*', code: 'eq.' + code, is_active: 'eq.true' });
+            const now = Date.now();
+            if (!coupon || Date.parse(coupon.starts_at) > now || (coupon.ends_at && Date.parse(coupon.ends_at) <= now))
+                throw new HttpError(400, 'Kode kupon tidak tersedia atau di luar masa berlaku.');
+            const subtotal = Number(body.subtotal);
+            if (subtotal < Number(coupon.min_subtotal))
+                throw new HttpError(400, 'Minimum belanja untuk kupon belum tercapai.');
+            if (coupon.max_uses !== null && coupon.times_used >= coupon.max_uses)
+                throw new HttpError(400, 'Kupon sudah mencapai batas pemakaian.');
+            if (coupon.max_uses_per_customer !== null) {
+                const query = new URLSearchParams({ select: 'id', coupon_id: 'eq.' + coupon.id, customer_key: 'eq.' + customerKey, limit: String(coupon.max_uses_per_customer) });
+                const uses = await db.request<Array<{ id: string }>>('coupon_redemptions?' + query);
+                if (uses.length >= coupon.max_uses_per_customer)
+                    throw new HttpError(400, 'Batas pemakaian kupon untuk pelanggan ini sudah tercapai.');
             }
-            else
-                await syncPayment(db, order);
-            return json({ ok: true }, 200, headers);
+            const discount = coupon.discount_type === 'percent'
+                ? Math.floor(subtotal * coupon.discount_value / 100)
+                : coupon.discount_value;
+            const discountAmount = Math.min(discount, subtotal - 1);
+            if (discountAmount < 1)
+                throw new HttpError(400, 'Diskon kupon kurang dari Rp1 untuk subtotal ini.');
+            return json({ code: coupon.code, discount_amount: discountAmount }, 200, headers);
         }
         const requestId = uuid(body.requestId);
         const token = proof(body.receiptToken);
@@ -48,6 +77,11 @@ Deno.serve(async (request: Request) => {
             await db.limit('checkout:global', 250);
             await db.limit('checkout:' + actor, 8);
             const data = checkoutInput(body);
+            const customerUserId = await optionalCustomerId(request);
+            const couponCode = typeof body.couponCode === 'string' ? body.couponCode.trim().toUpperCase() : '';
+            if (couponCode && !/^[A-Z0-9_-]{3,40}$/.test(couponCode))
+                throw new HttpError(400, 'Format kode kupon tidak valid.');
+            const customerKey = await hash(db.key + ':' + data.customer.phone);
             await db.limit('phone:' + await hash(db.key + data.customer.phone), 6, 600);
             const existing = await db.row<{
                 id: string;
@@ -55,55 +89,24 @@ Deno.serve(async (request: Request) => {
             const method = await db.row<{
                 type: string;
             }>('payment_methods', { select: 'type', id: 'eq.' + data.methodId, is_active: 'eq.true' });
-            if (!method && !existing)
+            if ((!method || !['Bank', 'E-Wallet', 'QRIS'].includes(method.type)) && !existing)
                 throw new HttpError(400, 'Metode pembayaran tidak tersedia.');
-            if (!existing && method?.type === 'Midtrans') {
-                const settings = await db.row<{
-                    midtrans_mode: string;
-                    midtrans_enabled: boolean;
-                }>('settings', { select: 'midtrans_mode,midtrans_enabled', id: 'eq.1' });
-                if (!settings?.midtrans_enabled)
-                    throw new HttpError(503, 'Midtrans belum diaktifkan.');
-                gateway(settings.midtrans_mode);
+            await db.rpc('zyha_place_order_with_coupon', {
+                p_request_id: requestId, p_receipt_token: token,
+                p_request_hash: await hash(JSON.stringify({ ...data, couponCode })),
+                p_items: data.items, p_customer: data.customer, p_method_id: data.methodId,
+                p_coupon_code: couponCode, p_customer_key: customerKey,
+            });
+            if (customerUserId) {
+                const linked = await db.rpc<boolean>('zyha_attach_customer_order', { p_request_id: requestId, p_user_id: customerUserId });
+                if (!linked)
+                    throw new HttpError(409, 'Pesanan ini sudah terhubung ke akun lain. Gunakan kunci pemulihan untuk membukanya.');
             }
-            await db.rpc('zyha_place_order', { p_request_id: requestId, p_receipt_token: token, p_request_hash: await hash(JSON.stringify(data)), p_items: data.items, p_customer: data.customer, p_method_id: data.methodId });
         }
-        else if (action !== 'receipt' && action !== 'payment')
+        else if (action !== 'receipt')
             throw new HttpError(400, 'Tindakan tidak dikenal.');
         let receipt = await db.rpc<Record<string, unknown>>('zyha_receipt', { p_request_id: requestId, p_receipt_token: token });
-        if (action === 'receipt' && body.refresh === true) {
-            const order = await db.row<GatewayOrder>('orders', { select: '*', id: 'eq.' + uuid(receipt.id) });
-            if (order) {
-                await syncPayment(db, order);
-                receipt = await db.rpc('zyha_receipt', { p_request_id: requestId, p_receipt_token: token });
-            }
-        }
-        if (action !== 'payment')
-            return json({ receipt }, 200, headers);
-        await db.limit('payment:' + String(receipt.id), 6);
-        const context = await db.rpc<{
-            token?: string;
-            claim?: string;
-            redirect_url?: string;
-            order?: GatewayOrder;
-            mode: string;
-            clientKey: string;
-        }>('zyha_claim_payment', { p_id: receipt.id });
-        if (context.token)
-            return json({ token: context.token, mode: context.mode, clientKey: context.clientKey }, 200, headers);
-        const order = context.order;
-        if (!order || !context.claim)
-            throw new HttpError(503, 'Pembayaran belum siap.');
-        const g = gateway(context.mode);
-        const payload = buildSnapPayload(order);
-    const response = await fetch(g.snap, { method: 'POST', headers: { Authorization: g.auth, 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(payload), signal: AbortSignal.timeout(20000) });
-        const snap = await response.json().catch(() => null);
-        if (!response.ok || (typeof snap?.token !== 'string' || !snap.token))
-            throw new HttpError(502, 'Token pembayaran belum tersedia. Pesanan tetap tersimpan. Periksa status sebelum mencoba lagi.');
-        const saved = await db.rpc<boolean>('zyha_save_payment', { p_id: order.id, p_claim: context.claim, p_token: snap.token, p_url: typeof snap.redirect_url === 'string' ? snap.redirect_url : '' });
-        if (!saved)
-            throw new HttpError(409, 'Status pesanan berubah. Periksa status pembayaran.');
-        return json({ token: snap.token, mode: context.mode, clientKey: context.clientKey }, 200, headers);
+        return json({ receipt }, 200, headers);
     }
     catch (error) {
         return failure(error, headers);

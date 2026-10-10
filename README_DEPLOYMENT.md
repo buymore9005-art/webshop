@@ -2,7 +2,7 @@
 
 Versi source 1.1.0. Basisnya 14 file webshop yang diunggah, bukan aplikasi produksi.
 Seluruh kode di ZIP adalah file lengkap. Tidak ada perubahan langsung ke GitHub,
-Vercel, Supabase lama, atau akun Midtrans pengguna.
+Vercel, Supabase lama, atau akun payment provider pengguna.
 
 **Penting:** build penuh dan database/payment live belum tervalidasi di lingkungan
 pengerjaan. Jangan menganggap tes unit sebagai bukti siap menerima pembayaran nyata.
@@ -16,11 +16,8 @@ Ekstrak isi ZIP ke working copy/branch repository webshop Anda. Root harus beris
 file PRODUCTION BUYMORE. Simpan commit/backup repository lama sebelum menyalin.
 
 Pakai Node.js 22 dan npm. Framework dan dependency utama mengikuti repository asli.
-Lockfile webshop tidak diunggah dan instalasi lokal gagal karena registry tidak
-terjangkau, sehingga paket tidak mempunyai package-lock.json buatan. Setelah npm
-install berhasil di komputer/CI yang terhubung internet, periksa dan commit lockfile
-aslinya. Sesudah itu gunakan npm ci untuk clean install. Jangan memakai lockfile
-aplikasi produksi yang pernah diunggah pada percakapan lain.
+`package-lock.json` disertakan; gunakan `npm ci` untuk clean install yang reproducible.
+Jangan memakai lockfile aplikasi produksi yang pernah diunggah pada percakapan lain.
 
 Buat project Supabase BARU yang Anda kuasai. SQL ini bukan migrasi in-place untuk
 schema lama yang tidak diketahui. Script berhenti bila mendeteksi tabel yang sama
@@ -57,8 +54,8 @@ Objek utama:
 | Objek | Fungsi |
 |---|---|
 | products | Katalog, galeri/varian, status aktif, stok opsional, version concurrency |
-| settings | Nama/banner/kategori/WhatsApp/ongkir dan konfigurasi Midtrans PUBLIC |
-| payment_methods | Bank, E-Wallet, QRIS manual, dan Midtrans opsional |
+| settings | Nama/banner/kategori/WhatsApp/ongkir |
+| payment_methods | Bank, E-Wallet, dan QRIS manual |
 | orders | Snapshot harga/item/pembayaran dan status pesanan privat |
 | admin_users | Allowlist Admin yang terhubung auth.users |
 | order_events | Audit perubahan status, alasan, dan aktor |
@@ -74,7 +71,47 @@ INSERT/UPDATE pada tabel Admin dan tidak dapat mengangkat dirinya melalui signup
 Nonaktifkan Admin melalui is_active=false. Jangan menonaktifkan seluruh Admin tanpa
 memastikan pemilik project masih dapat mengakses Supabase untuk pemulihan.
 
-## 3. Konfigurasi Auth dan environment frontend
+## 3. Tambahkan migration fitur pertumbuhan toko
+
+Setelah menjalankan `supabase-setup.sql` di project baru, jalankan seluruh isi
+`supabase/migrations/20261010000000_store_growth.sql` satu kali melalui SQL Editor
+Supabase atau Supabase CLI yang terhubung ke project target. Migration menambahkan
+wishlist, artikel, informasi footer, kupon/pemakaian kupon, serta tautan pesanan ke
+user Auth. Ia bergantung
+pada fungsi dan tabel yang dibuat setup awal; jangan jalankan lebih dahulu. Migration
+bersifat transactional dan aman diulang pada skema ZYHA ini, tetapi tetap tinjau
+diff/backup sebelum mengubah project yang sudah berisi data. Perintah ini tidak
+dijalankan pada project pengguna dalam proses pengerjaan.
+
+Untuk signup pelanggan tanpa verifikasi email, buka Authentication > Providers >
+Email pada project Supabase dan aktifkan **Confirm email** dalam keadaan nonaktif
+(Supabase dapat menamai opsi itu “Enable email confirmations”). Ini mengizinkan sesi
+langsung setelah signup, sesuai perilaku aplikasi. Gunakan password kuat, batasi
+akses project, dan pastikan aturan signup yang dipilih sesuai kebijakan toko. Jika
+verifikasi email tetap aktif, akun yang baru dibuat belum dapat memakai fitur akun
+sampai Supabase mengeluarkan sesi; aplikasi akan menampilkan pesan konfigurasi.
+
+Pesanan yang checkout saat login ditautkan ke akun melalui Edge Function; checkout
+sebagai tamu tetap tersedia dan tidak ditampilkan di riwayat akun. Wishlist hanya
+tersedia untuk user login dan RLS membatasi datanya ke pemilik akun. Artikel/footer
+dapat diatur pada menu “Artikel & footer” di backoffice; artikel draf tidak publik.
+Kupon dikelola lewat menu “Kupon”, satu kode per checkout. Sistem menghitung ulang
+diskon dan batas pemakaian di database pada saat checkout, menggunakan hash nomor
+WhatsApp untuk batas per pelanggan. Pembatalan order tidak otomatis mengembalikan
+pemakaian kupon. Menu Produk & katalog menyediakan impor CSV maksimal 250 produk
+sekali operasi; galeri/varian tidak termasuk impor massal.
+
+Setelah migration pertumbuhan, jalankan `supabase/migrations/20261011000000_remove_midtrans.sql`
+untuk membersihkan skema lama yang mungkin tertinggal. Backup dahulu: kolom
+konfigurasi/token/transaksi dihapus, tetapi pesanan dan snapshot metode pembayaran
+tetap tersimpan. Project baru juga boleh menjalankannya agar seluruh environment
+menggunakan urutan migration yang sama.
+
+Integrasi tarif kurir Komerce belum diaktifkan karena kontrak endpoint/authentication
+dan format tarif resmi belum dapat diverifikasi. Jangan mengisi tarif seolah-olah
+hasil kurir otomatis; checkout saat ini menggunakan ongkir datar yang diatur Admin.
+
+## 4. Konfigurasi Auth dan environment frontend
 
 Atur Auth Site URL ke domain toko yang sebenarnya. Tambahkan redirect pemulihan:
 
@@ -83,10 +120,12 @@ https://DOMAIN-TOKO-ANDA/backoffice/recovery
 http://localhost:5173/backoffice/recovery
 ```
 
-Sesuai kebutuhan toko, nonaktifkan public email signup; checkout tamu tidak memakai
-signup. Login Admin dan pemulihan password memakai Supabase Auth. Konfigurasi
-pengiriman email Auth mengikuti akun Supabase Anda; tidak ada provider baru yang
-ditambahkan oleh aplikasi ini.
+Aktifkan **Allow new users to sign up** dan nonaktifkan **Confirm email** untuk
+mengizinkan akun pelanggan langsung digunakan. Login Admin dilindungi allowlist
+database secara terpisah. Konfigurasi pengiriman email Auth mengikuti akun Supabase
+Anda; tidak ada provider baru yang ditambahkan oleh aplikasi ini. Jika nanti ingin
+membatasi pembuatan akun, ubah kebijakan signup dengan sengaja karena halaman daftar
+pelanggan saat ini mengandalkan signup email/password Supabase.
 
 Salin `.env.example` menjadi `.env.local`:
 
@@ -97,8 +136,8 @@ VITE_SUPABASE_ANON_KEY=PUBLIC_PUBLISHABLE_ATAU_LEGACY_ANON_KEY_PROJECT_BARU
 
 Gunakan URL dan key dari project YANG SAMA. Nama variabel ANON_KEY tetap digunakan
 meski nilainya publishable key. Tidak menggunakan URL/anon key project lama sebagai
-fallback. Jangan memasukkan service_role, sb_secret, password database, atau Midtrans
-server key pada variabel VITE_*. Variabel frontend menjadi bagian bundle browser.
+fallback. Jangan memasukkan service_role, sb_secret, atau password database pada
+variabel VITE_*. Variabel frontend menjadi bagian bundle browser.
 
 Tawk yang sudah ada pada source asli kini opsional. Isi VITE_TAWK_PROPERTY_ID dan
 VITE_TAWK_WIDGET_ID hanya bila Anda masih menguasai property itu. Script dimuat setelah
@@ -106,7 +145,7 @@ pembeli menekan Chat langsung. Tanpa konfigurasi, gunakan WhatsApp; tidak ada wi
 milik akun lama yang dipasang otomatis. Antarmuka vendor Tawk bukan komponen yang
 kita desain ulang; secara default integrasinya tidak aktif.
 
-## 4. Pasang Supabase Edge Functions — diperlukan untuk checkout
+## 5. Pasang Supabase Edge Functions — diperlukan untuk checkout
 
 SQL membangun database, bukan men-deploy function server. Bahkan pembayaran manual
 memerlukan `rapid-api` karena validasi checkout/nominal tidak dipercayakan ke browser.
@@ -138,19 +177,33 @@ Ganti PROJECT_REF_BARU pada perintah berikut dengan ref project yang benar:
 ```bash
 npx supabase secrets set --env-file .env.edge --project-ref PROJECT_REF_BARU
 npx supabase functions deploy rapid-api --project-ref PROJECT_REF_BARU --use-api
-npx supabase functions deploy midtrans-webhook --project-ref PROJECT_REF_BARU --use-api
 ```
 
 `--use-api` meminta bundling via API CLI. Konfigurasi verify_jwt=false disertakan:
 checkout memang dapat diakses tamu; kontrol yang tepat diterapkan sendiri di handler.
 Permintaan pengubahan oleh Admin memvalidasi bearer token ke Auth dan active Admin;
-akses bukti tamu membutuhkan UUID request + token acak 256-bit; webhook memverifikasi
-signature dan GET status Midtrans. Jangan mengganti handler dengan proxy service key.
+akses bukti tamu membutuhkan UUID request + token acak 256-bit. Jangan mengganti
+handler dengan proxy service key.
 
-## 5. Jalankan dan bangun frontend
+Jika project sebelumnya telah memakai skema lama, backup database lalu jalankan
+`supabase/migrations/20261011000000_remove_midtrans.sql` setelah migration pertumbuhan
+toko. Migration ini menghapus konfigurasi, token, ID transaksi dan fungsi pembayaran
+otomatis; snapshot instruksi pembayaran pesanan lama tetap dipertahankan. Metode lama
+dinonaktifkan agar tidak muncul lagi di checkout. Setelah redeploy `rapid-api`, hapus
+function dan secrets lama secara terpisah:
 
 ```bash
-npm install
+npx supabase functions delete midtrans-webhook --project-ref PROJECT_REF_BARU
+npx supabase secrets unset MIDTRANS_SERVER_KEY_SANDBOX MIDTRANS_SERVER_KEY_PRODUCTION --project-ref PROJECT_REF_BARU
+```
+
+Jangan jalankan migration sebelum backup, dan jangan anggap penghapusan resource cloud
+terjadi hanya karena source code dihapus dari repository.
+
+## 6. Jalankan dan bangun frontend
+
+```bash
+npm ci
 npm run check:files
 npm test
 npm run typecheck
@@ -162,13 +215,13 @@ PowerShell: gunakan Copy-Item .env.example .env.local untuk menyalin file enviro
 Isi nilainya dahulu. Tanpa konfigurasi yang valid, aplikasi menampilkan layar penjelasan,
 bukan mencoba terhubung ke project lama. Build tetap menjalankan typecheck strict.
 
-GitHub workflow `.github/workflows/ci.yml` melakukan install/test/build pada PR/push.
-Workflow tidak menjalankan SQL, tidak men-deploy Edge Function, dan tidak memanggil
-pembayaran. Bila lockfile belum ada ia menjalankan npm install; setelah lockfile
-nyata dikomit ia menggunakan npm ci. Hasil workflow belum dijalankan dari lingkungan
-penyerahan ini. Build yang gagal tidak boleh dianggap deployment berhasil.
+GitHub workflow `.github/workflows/ci.yml` melakukan clean install/test/build pada
+pull request dan push ke branch `main`. Workflow tidak menjalankan SQL, tidak
+men-deploy Edge Function, dan tidak memanggil pembayaran. Build CI GitHub tetap perlu
+diperiksa setelah workflow pertama berjalan. Build yang gagal tidak boleh dianggap
+deployment berhasil.
 
-## 6. Deploy Vercel
+## 7. Deploy Vercel
 
 Hubungkan repository WEB SHOP ke project Vercel, atau perbarui branch project webshop
 yang sama. Root Directory menunjuk folder package.json; Framework Preset: Vite;
@@ -184,7 +237,7 @@ ZIP sebagai satu file repository. Periksa import dan filename kapitalisasi denga
 npm run check:files sebelum push. Pengaturan GitHub/Vercel nyata tidak diubah oleh
 penyerahan file ini.
 
-## 7. Lengkapi toko melalui /backoffice
+## 8. Lengkapi toko melalui /backoffice
 
 Login dengan Admin yang dibootstrap. Pada Pengaturan, isi nama toko, kategori, banner,
 nomor WhatsApp, ongkos kirim tetap, dan ambang gratis ongkir opsional. Nilai ongkir
@@ -209,54 +262,26 @@ Pembeli membuat pesanan, meninjau total FINAL server, lalu membayar. WhatsApp me
 click-to-chat atas pilihan pembeli, bukan bukti bahwa pesan sudah terkirim. Admin
 memverifikasi mutasi rekening, bukan hanya mempercayai screenshot pembeli.
 
-## 8. Aktifkan Midtrans secara opsional, mulai dari sandbox
-
-Source asli menggunakan Midtrans. Integrasi dipertahankan tetapi kode rapid-api lama
-berikut secrets tidak tersedia dalam unggahan; implementasi server baru disertakan.
-
-Atur MIDTRANS_SERVER_KEY_SANDBOX pada Edge Function Secrets untuk sandbox. Isi client
-key sandbox di Pengaturan toko, pilih mode sandbox, aktifkan Midtrans, lalu tambahkan
-metode bayar bertipe Midtrans. Jangan memasukkan server key ke formulir Admin.
-
-Di konfigurasi Midtrans untuk environment yang sama, atur HTTP notification URL:
-
-```text
-https://PROJECT_REF_BARU.supabase.co/functions/v1/midtrans-webhook
-```
-
-Uji sandbox sampai tuntas: token, pending, capture/settlement, gagal, cancel/expire,
-refund, notifikasi ulang, dan status diperiksa kembali setelah browser ditutup.
-Frontend callback hanya memicu pemeriksaan; tidak bisa mengubah status paid sendiri.
-Server memeriksa signature webhook lalu GET status, order ID, transaction ID, nominal,
-dan currency bila fieldnya tersedia. Notifikasi duplikat tidak mengurangi stok lagi. Item IDs dibuat unik per baris varian; alamat ke provider dibatasi 255 karakter sementara alamat asli tetap utuh di orders.
-
-Untuk production, gunakan server key production di Edge Secrets dan client key
-production di Pengaturan dengan mode production. Pasang URL webhook juga pada
-konfigurasi production Midtrans. Kunci/mode lama harus tetap tersedia bila masih ada
-pesanan dari mode sebelumnya: tiap pesanan menyimpan snapshot mode/client key-nya.
-Jangan menerima pembayaran nyata sebelum alur staging, RLS, dan payment lolos.
-
 ## 9. Mengelola pesanan dan batas operasional
 
-Manual: pending -> lunas setelah Admin memeriksa dana; atau pending -> dibatalkan
+Pembayaran manual: pending -> lunas setelah Admin memeriksa dana; atau pending -> dibatalkan
 beserta pengembalian stok sekali saja. Pesanan lunas dapat diproses -> dikirim
 (kurir + resi wajib) -> selesai. Alasan perubahan disimpan pada order_events.
 
-Midtrans: pembatalan/refund transaksi yang sudah dimulai dilakukan melalui merchant
-Midtrans; tombol Periksa Midtrans mengambil status server. Aplikasi tidak memalsukan
-cancel untuk pesanan yang masih dapat menerima pembayaran. Pengecualian aman tersedia
-untuk pesanan minimal 5 menit tanpa token/transaksi/claim aktif dan GET status 404.
-Pesanan dengan token tetapi tanpa transaksi provider dapat tetap pending; rekonsiliasi
-melalui status/provider diperlukan. Tidak ada auto-expiry berdasarkan jam browser.
-
-Late settlement setelah pelepasan stok tetap dicatat sebagai pembayaran nyata.
-Aplikasi mencoba reservasi kembali dan memberi catatan rekonsiliasi bila stok kurang.
-Refund tidak otomatis berarti barang sudah kembali secara fisik; stok barang yang
-sudah dikirim harus ditinjau Admin, bukan otomatis ditambah saat refund.
+Tidak ada verifikasi pembayaran otomatis atau gateway di aplikasi. Untuk pesanan
+provider lama yang masih tertunda, cocokkan mutasi dan status merchant di luar aplikasi
+sebelum Admin memilih konfirmasi atau pembatalan. Migration tidak mengubah status atau
+stok pesanan lama secara otomatis. Status refund lama dipertahankan sebagai riwayat;
+rekonsiliasi dana/barang dilakukan manual.
 
 Bukti pesanan tamu disimpan dengan secret proof di sessionStorage tab; tidak di URL.
-Akses server dibatasi 30 hari. Alamat/nomor pelanggan tidak dipersist dalam bukti
-browser baru. Cart di localStorage berisi data katalog/qty, bukan credential pelanggan.
+Di halaman bukti pesanan, unduh file kunci pemulihan untuk membuka kembali bukti setelah
+tab/penyimpanan browser hilang: pilih file tersebut pada halaman Pesanan terakhir.
+Simpan file secara pribadi; siapa pun yang memilikinya dapat membuka ringkasan pesanan.
+File hanya berisi token akses acak, ID request, tanda tangan request dan nomor pesanan,
+bukan alamat atau nomor telepon. Akses server dibatasi 30 hari. Tanpa file pemulihan,
+bukti hanya tersedia pada tab saat pesanan dibuat. Cart di localStorage berisi data
+katalog/qty, bukan credential pelanggan.
 Harga cart hanya estimasi; server mengambil ulang harga/varian/stok saat checkout.
 Tab hilang/penyimpanan diblokir dapat menghilangkan akses bukti; pembeli menyimpan nomor
 pesanan untuk menghubungi Admin. Tidak ada akun pembeli/riwayat publik berdasarkan
@@ -284,14 +309,14 @@ penyerahan yang tidak menyediakan PostgreSQL.
 
 Uji anon/non-Admin ditolak membuka orders/Admin RPC, Admin berhasil menyimpan master,
 checkout harga dimanipulasi, stok terakhir dipesan dua sesi, retry timeout request
-sama, salah proof, galeri5gambar, stock0, pembayaran manual, resi, Midtranssandbox,
+sama, salah proof, galeri5gambar, stock0, pembayaran Bank/E-Wallet/QRIS manual, resi,
 logout/perubahanAdmin, reloadURL, serta tampilan perangkat Anda. Uji pemulihan password
 melalui email dan izin Storage. Baru lanjutkan production setelah hasil nyata lulus.
 
 Masalah konfigurasi umum: “relation does not exist” = SQL belum selesai/project salah;
 401/403 Admin = Auth/allowlist/RLS; function not found = rapid-api belum dideploy;
-CORS = ALLOWED_ORIGINS tidak memuat origin; Midtrans unavailable = keys/mode belum
-konsisten; vite/client not found = dependencies belum terpasang, bukan API key salah.
+CORS = ALLOWED_ORIGINS tidak memuat origin; vite/client not found = dependencies
+belum terpasang, bukan API key salah.
 Jangan menyelesaikan error dengan service key di browser atau mematikan strict/RLS.
 
 ## 11. Rujukan teknis resmi
@@ -303,7 +328,4 @@ Rujukan berikut dipakai untuk desain integrasi, bukan bukti konfigurasi akun And
 - Supabase SQL functions: https://supabase.com/docs/guides/database/functions
 - Supabase CLI deploy: https://supabase.com/docs/reference/cli/supabase-functions-deploy
 - Supabase Storage RLS: https://supabase.com/docs/guides/storage/security/access-control
-- Midtrans webhook: https://docs.midtrans.com/docs/https-notification-webhooks
-- Midtrans status: https://docs.midtrans.com/reference/get-transaction-status
-- Midtrans field limits: https://docs.midtrans.com/reference/json-objects
 - Tailwind3/Vite: https://v3.tailwindcss.com/docs/guides/vite

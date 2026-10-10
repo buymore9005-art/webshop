@@ -2,7 +2,7 @@ import type { FormEvent } from 'react';
 import { useRef, useState } from 'react';
 import type { CartLine, Customer, OrderAccess, PaymentMethod, Receipt, Settings } from '../types';
 import { cartTotals, money, validateCustomer, errorMessage } from '../lib/domain';
-import { submitOrder, readOrderAccess } from '../lib/api';
+import { readOrderAccess, submitOrder, validateCoupon } from '../lib/api';
 import { Field, Message, Photo } from '../components/UI';
 export function Checkout({ cart, settings, methods, onDone, onBack }: {
   cart: CartLine[];
@@ -14,8 +14,30 @@ export function Checkout({ cart, settings, methods, onDone, onBack }: {
   const [customer, setCustomer] = useState<Customer>({ name: '', phone: '', address: '', note: '' });
   const [payment, setPayment] = useState('');
   const [error, setError] = useState(''), [busy, setBusy] = useState(false);
+  const [couponCode, setCouponCode] = useState(''), [couponBusy, setCouponBusy] = useState(false);
+  const [couponQuote, setCouponQuote] = useState<{ code: string; discount_amount: number; subtotal: number; phone: string } | null>(null);
   const flight = useRef(false);
   const totals = cartTotals(cart, Number(settings.shipping_fee), settings.free_shipping_min === null ? null : Number(settings.free_shipping_min));
+  const activeCoupon = couponQuote && couponQuote.subtotal === totals.subtotal && couponQuote.phone === customer.phone && couponQuote.code === couponCode.trim().toUpperCase() ? couponQuote : null;
+  const finalEstimate = totals.total - (activeCoupon?.discount_amount || 0);
+  async function applyCoupon() {
+    if (couponBusy || busy)
+      return;
+    setCouponBusy(true);
+    setError('');
+    setCouponQuote(null);
+    try {
+      const valid = validateCustomer(customer);
+      const result = await validateCoupon(couponCode, totals.subtotal, valid.phone);
+      setCouponQuote({ ...result, subtotal: totals.subtotal, phone: customer.phone });
+    }
+    catch (e) {
+      setError(errorMessage(e));
+    }
+    finally {
+      setCouponBusy(false);
+    }
+  }
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (flight.current)
@@ -27,7 +49,9 @@ export function Checkout({ cart, settings, methods, onDone, onBack }: {
       const valid = validateCustomer(customer);
       if (!payment)
         throw new Error('Pilih metode pembayaran.');
-      const result = await submitOrder(cart, valid, payment, readOrderAccess());
+      if (couponCode.trim() && !activeCoupon)
+        throw new Error('Periksa dan gunakan kembali kupon setelah perubahan nomor WhatsApp atau isi keranjang.');
+      const result = await submitOrder(cart, valid, payment, readOrderAccess(), activeCoupon?.code || '');
       onDone(result.receipt, result.access, valid);
     }
     catch (e) {
@@ -73,7 +97,7 @@ export function Checkout({ cart, settings, methods, onDone, onBack }: {
                 {m.name}
               </strong>
               <small>
-                {m.type === 'Midtrans' ? 'Pembayaran online melalui Midtrans' : m.type === 'QRIS' ? 'QRIS, konfirmasi manual Admin' : m.account_number + ' · ' + m.account_holder}
+                {m.type === 'QRIS' ? 'QRIS, konfirmasi manual Admin' : m.account_number + ' · ' + m.account_holder}
               </small>
             </span>
           </label>)}
@@ -103,15 +127,22 @@ export function Checkout({ cart, settings, methods, onDone, onBack }: {
             {money(totals.shipping)}
           </span>
         </div>
+        <div className="coupon-entry">
+          <Field label="Kode kupon (opsional)">
+            <input maxLength={40} autoCapitalize="characters" value={couponCode} onChange={e => { setCouponCode(e.target.value.toUpperCase()); setCouponQuote(null); }} />
+          </Field>
+          <button type="button" className="button secondary" disabled={busy || couponBusy || !couponCode.trim()} onClick={() => void applyCoupon()}>{couponBusy ? 'Memeriksa…' : activeCoupon ? 'Terapkan ulang' : 'Gunakan kupon'}</button>
+        </div>
+        {activeCoupon && <div className="split"><span>Diskon kupon ({activeCoupon.code})</span><strong>−{money(activeCoupon.discount_amount)}</strong></div>}
         <div className="split total">
-          <span>Estimasi total</span>
+          <span>Estimasi total{activeCoupon ? ' setelah diskon' : ''}</span>
           <strong>
-            {money(totals.total)}
+            {money(finalEstimate)}
           </strong>
         </div>
         <p className="muted">Harga dan ketersediaan diperiksa kembali di server. Tinjau total final pada halaman berikutnya sebelum membayar.</p>
         <Message error={error} />
-        <button className="button wide" disabled={busy || !methods.length}>
+        <button className="button wide" disabled={busy || couponBusy || !methods.length}>
           {busy ? 'Menyimpan pesanan…' : 'Buat pesanan'}
         </button>
         <small>Data pengiriman digunakan untuk memproses pesanan dan dapat dikirim ke WhatsApp Admin atas pilihan Anda.</small>

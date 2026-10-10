@@ -1,4 +1,4 @@
-import { HttpError, object, integerMoney, gatewayStatus, verifyGatewayData } from './validation.ts';
+import { HttpError, object } from './validation.ts';
 export function env(name: string): string { const v = Deno.env.get(name)?.trim(); if (!v)
     throw new HttpError(503, `Konfigurasi server ${name} belum tersedia.`); return v; }
 export async function hash(value: string, algorithm = 'SHA-256'): Promise<string> {
@@ -79,53 +79,4 @@ export class Database {
         if (!await this.rpc<boolean>('zyha_rate_limit', { p_key: key, p_limit: count, p_seconds: seconds }))
             throw new HttpError(429, 'Terlalu banyak permintaan. Coba kembali setelah satu menit.');
     }
-}
-export interface GatewayOrder {
-    id: string;
-    gateway_order_id: string;
-    gateway_transaction_id: string | null;
-    status: string;
-    total_price: number;
-    shipping_fee: number;
-    items: Array<{
-        product_id: string;
-        title: string;
-        unit_price: number;
-        quantity: number;
-    }>;
-    customer_name: string;
-    customer_phone: string;
-    customer_address: string;
-    payment_snapshot: {
-        type: string;
-        gateway_mode: 'sandbox' | 'production';
-        gateway_client_key: string;
-    };
-}
-export function gateway(mode: string) {
-    if (!['sandbox', 'production'].includes(mode))
-        throw new HttpError(503, 'Mode Midtrans pesanan tidak valid.');
-    const key = env(mode === 'production' ? 'MIDTRANS_SERVER_KEY_PRODUCTION' : 'MIDTRANS_SERVER_KEY_SANDBOX');
-    const domain = mode === 'production' ? 'midtrans.com' : 'sandbox.midtrans.com';
-    return { api: `https://api.${domain}/v2`, snap: `https://app.${domain}/snap/v1/transactions`, key, auth: 'Basic ' + btoa(key + ':') };
-}
-export async function gatewayData(order: GatewayOrder, lookupId?: string): Promise<Record<string, unknown> | null> {
-    const g = gateway(order.payment_snapshot.gateway_mode);
-    const res = await fetch(`${g.api}/${encodeURIComponent(lookupId || order.gateway_transaction_id || order.gateway_order_id)}/status`, { headers: { Authorization: g.auth, Accept: 'application/json' }, signal: AbortSignal.timeout(12000) });
-    const data = await res.json().catch(() => null);
-    if (res.status === 404 || data?.status_code === '404')
-        return null;
-    if (!res.ok || !data)
-        throw new HttpError(502, 'Status Midtrans belum dapat diperiksa.');
-    verifyGatewayData(data, order.gateway_order_id, Number(order.total_price));
-    return data;
-}
-export async function syncPayment(db: Database, order: GatewayOrder, lookupId?: string): Promise<void> {
-    if (order.payment_snapshot.type !== 'Midtrans')
-        return;
-    const data = await gatewayData(order, lookupId);
-    if (!data)
-        return;
-    const status = gatewayStatus(data);
-    await db.rpc('zyha_apply_gateway_status', { p_id: order.id, p_status: status, p_amount: integerMoney(data.gross_amount), p_transaction: data.transaction_id, p_gateway_state: String(data.transaction_status || ''), p_refund: status === 'refunded' ? Number(order.total_price) : integerMoney(data.refund_amount ?? (status === 'partial_refund' ? null : 0)) });
 }

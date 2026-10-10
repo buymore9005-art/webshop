@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.test-build/
+coverage/
+
+.env
+.env.*
+!.env.example
+supabase/functions/.env
+supabase/functions/.env.*
+!supabase/functions/.env.example
+
+.vercel/
