@@ -9,14 +9,14 @@ import { useResource } from '../lib/useResource';
 import { Field, Message, Modal, Pagination } from '../components/UI';
 export default function Orders() {
   const [page, setPage] = useState(0), [status, setStatus] = useState(''), [search, setSearch] = useState(''), [start, setStart] = useState(''), [end, setEnd] = useState(''), [rev, setRev] = useState(0);
-  const result = useResource(JSON.stringify([page, status, search, start, end, rev]), () => getOrders(page, status, search, start, end));
+  const result = useResource(JSON.stringify([page, status, search, start, end, rev]), () => getOrders(page, status, search, start, end), JSON.stringify(['admin-orders', page, status, search, start, end]));
   const [editing, setEditing] = useState<Order | null>(null), [action, setAction] = useState(''), [reason, setReason] = useState(''), [tracking, setTracking] = useState(''), [carrier, setCarrier] = useState('');
   const [busy, setBusy] = useState(false), [error, setError] = useState(''), [message, setMessage] = useState('');
   const events = useResource('events:' + editing?.id + ':' + rev, async () => {
     if (!editing)
       return []; const { data, error: e } = await client().from('order_events').select('id,event,old_status,new_status,note,created_at').eq('order_id', editing.id).order('created_at', { ascending: false }).limit(50); if (e)
       throw e; return data || [];
-  });
+  }, 'admin-order-events:' + editing?.id);
   useEffect(() => { const channel = client().channel('admin-orders').on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => setRev(n => n + 1)).subscribe(); return () => { void client().removeChannel(channel); }; }, []);
   function edit(o: Order) { setEditing(o); setAction(''); setReason(''); setTracking(o.tracking_number); setCarrier(o.carrier); setError(''); }
   async function save(event: FormEvent) {

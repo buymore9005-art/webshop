@@ -14,8 +14,8 @@ const blankFooter = (): Omit<FooterInfo, 'id'> => ({ title: '', content: '', hre
 export default function Content() {
     const [tab, setTab] = useState<'articles' | 'footer'>('articles');
     const [revision, setRevision] = useState(0);
-    const articles = useResource('admin-articles:' + revision, getAdminArticles);
-    const footer = useResource('admin-footer:' + revision, getAdminFooterInfo);
+    const articles = useResource('admin-articles:' + revision, getAdminArticles, 'admin-articles');
+    const footer = useResource('admin-footer:' + revision, getAdminFooterInfo, 'admin-footer-info');
     const [articleOpen, setArticleOpen] = useState(false);
     const [articleId, setArticleId] = useState<string | undefined>();
     const [articleDraft, setArticleDraft] = useState(blankArticle);

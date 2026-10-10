@@ -8,8 +8,8 @@ import { Field, Message, Photo } from '../components/UI';
 export default function Settings({ whatsappOnly = false }: {
   whatsappOnly?: boolean;
 }) {
-  const result = useResource('settings-admin:' + whatsappOnly, () => getSettings());
-  const originResult = useResource('shipping-origin-admin:' + whatsappOnly, () => getShippingOrigin());
+  const result = useResource('settings-admin:' + whatsappOnly, () => getSettings(), 'store-settings');
+  const originResult = useResource('shipping-origin-admin:' + whatsappOnly, () => getShippingOrigin(), 'admin-shipping-origin');
   const [draft, setDraft] = useState<SettingsType | null>(null), [newCategory, setNewCategory] = useState(''), [error, setError] = useState(''), [message, setMessage] = useState(''), [busy, setBusy] = useState(false);
   const [originDraft, setOriginDraft] = useState<ShippingOrigin | null>(null);
   useEffect(() => {

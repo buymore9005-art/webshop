@@ -22,7 +22,7 @@ const blank = (): Draft => ({ code: '', discount_type: 'percent', discount_value
 
 export default function Coupons() {
     const [revision, setRevision] = useState(0);
-    const coupons = useResource('admin-coupons:' + revision, getAdminCoupons);
+    const coupons = useResource('admin-coupons:' + revision, getAdminCoupons, 'admin-coupons');
     const [open, setOpen] = useState(false), [editing, setEditing] = useState<Coupon | undefined>();
     const [draft, setDraft] = useState<Draft>(blank), [busy, setBusy] = useState(false);
     const [error, setError] = useState(''), [message, setMessage] = useState('');

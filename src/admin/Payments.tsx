@@ -9,7 +9,7 @@ type Draft = Omit<PaymentMethod, 'id'>;
 const blank = (): Draft => ({ name: '', account_number: '', account_holder: '', type: 'Bank', qris_url: '', is_active: true, sort_order: 0 });
 export default function Payments() {
   const [rev, setRev] = useState(0);
-  const result = useResource('payments:' + rev, () => getMethods(true));
+  const result = useResource('payments:' + rev, () => getMethods(true), 'admin-payment-methods');
   const [open, setOpen] = useState(false), [id, setId] = useState<string | undefined>(), [draft, setDraft] = useState<Draft>(blank), [busy, setBusy] = useState(false), [error, setError] = useState(''), [message, setMessage] = useState('');
   function edit(method?: PaymentMethod) { setId(method?.id); setDraft(method ? { name: method.name, account_number: method.account_number, account_holder: method.account_holder, type: method.type, qris_url: method.qris_url, is_active: method.is_active, sort_order: method.sort_order } : blank()); setError(''); setOpen(true); }
   async function save(event: FormEvent) {

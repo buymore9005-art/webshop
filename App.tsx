@@ -32,13 +32,13 @@ export default function App() {
   const search = params.get('q') || '', category = params.get('category') || '', sort = params.get('sort') || 'newest';
   const page = Math.max(0, Math.min(100000, Math.floor(Number(params.get('page'))) || 0));
   const view = params.get('view') || 'shop', detailId = params.get('product') || '';
-  const settings = useResource('settings:' + revision, () => getSettings());
-  const methods = useResource('methods:' + revision, () => getMethods());
-  const catalog = useResource(JSON.stringify([search, category, sort, page, revision]), signal => getProducts({ search, category, sort, page }, signal));
-  const detail = useResource('product:' + detailId + ':' + revision, () => detailId ? getProduct(detailId) : Promise.resolve(null));
+  const settings = useResource('settings:' + revision, () => getSettings(), 'store-settings');
+  const methods = useResource('methods:' + revision, () => getMethods(), 'store-payment-methods');
+  const catalog = useResource(JSON.stringify([search, category, sort, page, revision]), signal => getProducts({ search, category, sort, page }, signal), JSON.stringify(['catalog', search, category, sort, page]), true);
+  const detail = useResource('product:' + detailId + ':' + revision, () => detailId ? getProduct(detailId) : Promise.resolve(null), 'product-detail:' + detailId, true);
   const wishlist = useResource('wishlist:' + (session?.user.id || ''), () => session ? getWishlist() : Promise.resolve([]));
-  const articles = useResource('published-articles', getPublishedArticles);
-  const footer = useResource('footer-info', getFooterInfo);
+  const articles = useResource('published-articles', getPublishedArticles, 'store-published-articles', true);
+  const footer = useResource('footer-info', getFooterInfo, 'store-footer-info', true);
   useEffect(() => {
     try {
       localStorage.setItem(projectStorageKey + 'cart', JSON.stringify(cart));
@@ -241,7 +241,7 @@ export default function App() {
               <p className="eyebrow">{store?.store_name || 'ZYHA ID'}</p>
               <h2>Katalog produk</h2>
             </div>
-            <span className="catalog-count muted">{catalog.loading ? 'Memuat koleksi…' : (catalog.data?.count ?? 0) + ' produk'}</span>
+            <span className="catalog-count muted">{catalog.data ? catalog.data.count + ' produk' : ''}</span>
           </div>
           <div className="catalog-filters">
             <div className="search-field">

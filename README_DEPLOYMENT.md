@@ -277,6 +277,13 @@ npm run build
 npm run dev
 ```
 
+Cache halaman memakai cache memori berumur lima menit untuk navigasi, serta cache
+`localStorage` berumur lima menit khusus katalog, detail produk, artikel terbit, dan
+informasi footer publik. Data admin, pesanan, wishlist, dan akun tidak disimpan ke
+`localStorage`. Data cache tetap diperbarui dari Supabase saat halaman dibuka; cache
+ini mempercepat tampilan awal, bukan mode offline permanen. Browser yang menolak atau
+kehabisan ruang `localStorage` tetap menggunakan cache memori dan mengambil data normal.
+
 PowerShell: gunakan Copy-Item .env.example .env.local untuk menyalin file environment.
 Isi nilainya dahulu. Tanpa konfigurasi yang valid, aplikasi menampilkan layar penjelasan,
 bukan mencoba terhubung ke project lama. Build tetap menjalankan typecheck strict.

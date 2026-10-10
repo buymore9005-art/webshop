@@ -7,7 +7,7 @@ export default function Dashboard({ analytics = false }: {
   analytics?: boolean;
 }) {
   const [start, setStart] = useState(''), [end, setEnd] = useState('');
-  const resource = useResource('summary:' + start + ':' + end, () => getSummary(start, end));
+  const resource = useResource('summary:' + start + ':' + end, () => getSummary(start, end), 'admin-summary:' + start + ':' + end);
   const s = resource.data;
   return <section className="stack">
     <div className="section-heading">

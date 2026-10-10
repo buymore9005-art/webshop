@@ -5,8 +5,8 @@ export function Message({ error = '', success = '', loading = false }: {
   success?: string;
   loading?: boolean;
 }) {
+  void loading;
   return <>
-    {loading && <p className="message" role="status">Memuat data…</p>}
     {error && <p className="message error" role="alert">
       {error}
     </p>}

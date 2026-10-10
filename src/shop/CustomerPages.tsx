@@ -16,7 +16,7 @@ export function CustomerAccount({ session, loading, sessionError }: { session: S
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
     const [busy, setBusy] = useState(false);
-    const orders = useResource('customer-orders:' + session?.user.id, () => session ? getCustomerOrderHistory() : Promise.resolve([]));
+    const orders = useResource('customer-orders:' + session?.user.id, () => session ? getCustomerOrderHistory() : Promise.resolve([]), 'customer-orders:' + session?.user.id);
     async function submit(event: FormEvent) {
         event.preventDefault();
         if (busy)
@@ -131,7 +131,7 @@ export function WishlistPage({ session, products, loading, error, onRemove, onPr
 }
 
 export function ArticleIndex({ onOpen }: { onOpen: (slug: string) => void }) {
-    const articles = useResource('published-articles', getPublishedArticles);
+    const articles = useResource('published-articles', getPublishedArticles, 'store-published-articles', true);
     return <section className="container section">
         <p className="eyebrow">Cerita & panduan</p><h1>Artikel</h1>
         <Message error={articles.error} loading={articles.loading} />
@@ -147,7 +147,7 @@ export function ArticleIndex({ onOpen }: { onOpen: (slug: string) => void }) {
 }
 
 export function ArticleDetail({ slug, onBack }: { slug: string; onBack: () => void }) {
-    const article = useResource('published-article:' + slug, () => getPublishedArticle(slug));
+    const article = useResource('published-article:' + slug, () => getPublishedArticle(slug), 'store-article:' + slug, true);
     useEffect(() => {
         if (article.data)
             document.title = article.data.title;

@@ -10,8 +10,8 @@ type Draft = Pick<Product, 'title' | 'price' | 'description' | 'category' | 'ima
 const blank = (): Draft => ({ title: '', price: 0, description: '', category: '', image_url: '', images: [], variants: [], stock: null, weight_grams: 0, is_active: true });
 export default function Products() {
   const [page, setPage] = useState(0), [search, setSearch] = useState(''), [revision, setRevision] = useState(0);
-  const result = useResource(JSON.stringify([page, search, revision]), s => getProducts({ page, search, category: '', sort: 'newest', admin: true }, s));
-  const settings = useResource('product-categories', () => getSettings());
+  const result = useResource(JSON.stringify([page, search, revision]), s => getProducts({ page, search, category: '', sort: 'newest', admin: true }, s), JSON.stringify(['admin-products', page, search]));
+  const settings = useResource('product-categories', () => getSettings(), 'store-settings');
   const [open, setOpen] = useState(false), [original, setOriginal] = useState<Product | undefined>(), [draft, setDraft] = useState<Draft>(blank);
   const [busy, setBusy] = useState(false), [uploading, setUploading] = useState(false), [error, setError] = useState(''), [message, setMessage] = useState('');
   const [showImport, setShowImport] = useState(false), [importRows, setImportRows] = useState<ProductImportRow[]>([]);

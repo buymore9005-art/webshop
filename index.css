@@ -1543,6 +1543,73 @@ meter {
   .coupon-entry { grid-template-columns: minmax(0,1fr); }
   .customer-order-list .panel { padding: 18px; }
 }
+
+@media (max-width: 640px) {
+  .storefront .header-inner {
+    display: grid;
+    grid-template-columns: minmax(0,1fr);
+    grid-template-rows: auto auto;
+    gap: 2px;
+    min-height: 0;
+    padding-block: 8px 4px;
+  }
+  .storefront .header-inner > .brand {
+    grid-column: 1;
+    grid-row: 1;
+    justify-self: center;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 1.3rem;
+  }
+  .storefront .header-inner nav {
+    grid-column: 1;
+    grid-row: 2;
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    align-items: center;
+    justify-content: space-between;
+    gap: clamp(8px, 3vw, 18px);
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 7px 3px 9px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .storefront .header-inner nav::-webkit-scrollbar { display: none; }
+  .storefront .header-inner .store-nav-link {
+    display: inline-flex;
+    flex: 0 0 auto;
+    min-height: 40px;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 2px;
+    font-size: .78rem;
+    white-space: nowrap;
+  }
+  .storefront .header-inner .icon-nav-link {
+    width: 40px;
+    min-width: 40px;
+    padding: 4px;
+  }
+  .storefront .header-inner .icon-nav-link .store-nav-label,
+  .storefront .header-inner .store-receipt-link { display: none; }
+  .storefront .header-inner .store-cart-button {
+    flex: 0 0 42px;
+    width: 42px;
+    min-width: 42px;
+    height: 42px;
+    min-height: 42px;
+    margin: 0;
+  }
+  .storefront .header-inner .nav-count {
+    top: 0;
+    left: auto;
+    right: 0;
+  }
+}
 .storefront .header-inner nav { gap: clamp(12px,2vw,24px); }
 .storefront .store-nav-link.icon-nav-link { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
 .storefront .store-nav-link .store-icon { width: 19px; height: 19px; flex-basis: 19px; stroke-width: 1.6; }

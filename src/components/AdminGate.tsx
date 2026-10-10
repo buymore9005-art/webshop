@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { client } from '../../supabaseClient';
 import { Field, Message } from './UI';
+import { clearResourceCache } from '../lib/useResource';
 export default function AdminGate({ children }: {
   children: ReactNode;
 }) {
@@ -51,11 +52,13 @@ export default function AdminGate({ children }: {
       if (event === 'PASSWORD_RECOVERY')
         recovery.current = true;
       if (event === 'SIGNED_OUT') {
+        clearResourceCache();
         recovery.current = false;
         setState('login');
         setPassword('');
       }
       else if (event === 'SIGNED_IN' && authUser.current !== nextSession?.user.id) {
+        clearResourceCache();
         setState('loading');
       }
       window.setTimeout(() => {
@@ -124,9 +127,7 @@ export default function AdminGate({ children }: {
       {children}
     </>;
   if (state === 'loading')
-    return <main className="auth-page">
-      <p role="status">Memeriksa akses Admin…</p>
-    </main>;
+    return null;
   if (state === 'denied')
     return <main className="auth-page">
       <section className="panel auth-panel">
