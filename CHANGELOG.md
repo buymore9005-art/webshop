@@ -1,5 +1,13 @@
 # CHANGELOG — ZYHA ID 1.2.0
 
+## Perapihan header mobile
+
+- Menata header storefront menjadi dua baris yang konsisten: brand di baris atas dan
+  navigasi pada satu baris gulir horizontal, tanpa membungkus tombol ke posisi acak.
+- Menyamakan target sentuh Wishlist, Akun, dan Keranjang menjadi 42 px, merapikan
+  ukuran ikon dan posisi badge, serta membatasi nama brand panjang agar tidak
+  mendorong navigasi keluar layar.
+
 ## Inventaris stok per varian
 
 - Menambahkan stok dan ambang peringatan terpisah untuk tiap varian; produk tanpa

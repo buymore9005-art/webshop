@@ -42,6 +42,12 @@ Supabase. Sebanyak 76 tes, strict typecheck, build production, pemeriksaan impor
 git diff check lulus. Browser belum dapat menguji data katalog langsung karena
 environment Supabase lokal tidak dikonfigurasi.
 
+Perbaikan lanjutan merapikan header mobile menjadi dua baris dengan navigasi horizontal
+yang tidak membungkus, target ikon 42 px, dan badge yang disejajarkan. Test suite (83
+tes), strict typecheck, serta production build lokal lulus. Browser yang tersedia
+menampilkan halaman konfigurasi karena environment Supabase tidak disetel, sehingga
+preview storefront langsung tidak dapat diverifikasi di browser.
+
 Perubahan stok per varian yang lebih baru melewati 83 tes, strict typecheck,
 production build, dan `git diff --check`. Pemeriksaan mencakup perilaku stok tiap
 varian dan assertion source migration; hasil tersebut bukan eksekusi SQL.
