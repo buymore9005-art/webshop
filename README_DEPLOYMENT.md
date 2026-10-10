@@ -170,6 +170,16 @@ Terapkan migration ke Supabase sebelum deploy frontend yang membaca kolom baru.
 SQL disediakan di file migration; belum dijalankan pada project pengguna dan perlu
 divalidasi dahulu pada staging/backup.
 
+**Pemulihan jika sebelumnya hanya menjalankan SQL penambahan kolom atau tabel:**
+langkah itu tidak memperbarui trigger `zyha_product_guard` dari setup awal. Trigger
+lama membentuk ulang JSON varian hanya dari nama dan gambar, sehingga nilai stok yang
+disimpan dari Admin dibuang saat update. Jalankan SELURUH isi
+`supabase/migrations/20261014000000_variant_inventory.sql` di SQL Editor (jangan
+hanya menambahkan kolom `stock_alert_threshold` atau tabel `inventory_movements`).
+Migration memakai `if not exists`/penggantian fungsi dan membuat trigger penyimpan stok
+varian. Setelah berhasil, refresh halaman, buka kembali produk, isi stok tiap varian,
+lalu simpan dan cek ulang nilainya.
+
 Setelah migration, Admin > Pengaturan > Pengiriman tetap menggunakan ongkir tetap
 sebagai tarif checkout aktif. Simpan alamat asal/pengirim di panel Alamat asal /
 gudang; tabelnya dilindungi RLS dan tidak dapat dibaca pengunjung toko. Produk >
