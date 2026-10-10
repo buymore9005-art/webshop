@@ -38,13 +38,13 @@ export default function Orders() {
     try {
       exportOrderPage(result.data?.rows || []);
     }
-    function printSlip(order: Order) {
-      try {
-        printPackingSlip(order);
-      }
-      catch (e) {
-        setError(errorMessage(e));
-      }
+    catch (e) {
+      setError(errorMessage(e));
+    }
+  }
+  function printSlip(order: Order) {
+    try {
+      printPackingSlip(order);
     }
     catch (e) {
       setError(errorMessage(e));
