@@ -17,6 +17,11 @@ test('legacy cleanup preserves orders but drops obsolete payment state',()=>{
   assert.match(migration,/set payment_snapshot = payment_snapshot - 'gateway_mode'/);
   assert.doesNotMatch(migration,/delete from public\.orders/i);
 });
+test('coupon checkout function grants use its declared argument types',()=>{
+  const migration=read('supabase/migrations/20261010000000_store_growth.sql');
+  assert.match(migration,/zyha_place_order_with_coupon\(uuid, text, text, jsonb, jsonb, uuid, text, text\) from public, anon, authenticated/);
+  assert.match(migration,/zyha_place_order_with_coupon\(uuid, text, text, jsonb, jsonb, uuid, text, text\) to service_role/);
+});
 test('storefront has no automatic payment action or Snap loader',()=>{
   assert.doesNotMatch(read('src/shop/OrderReceipt.tsx'),/openSnap|action: 'payment'/);
   assert.doesNotMatch(read('src/shop/payment.ts'),/snap|midtrans/i);

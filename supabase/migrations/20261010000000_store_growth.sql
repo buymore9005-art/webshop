@@ -232,8 +232,8 @@ begin
   update public.coupons set times_used = times_used + 1 where id = c.id;
   return oid;
 end $$;
-revoke all on function public.zyha_place_order_with_coupon(uuid, uuid, text, jsonb, jsonb, uuid, text, text) from public, anon, authenticated;
-grant execute on function public.zyha_place_order_with_coupon(uuid, uuid, text, jsonb, jsonb, uuid, text, text) to service_role;
+revoke all on function public.zyha_place_order_with_coupon(uuid, text, text, jsonb, jsonb, uuid, text, text) from public, anon, authenticated;
+grant execute on function public.zyha_place_order_with_coupon(uuid, text, text, jsonb, jsonb, uuid, text, text) to service_role;
 
 create or replace function public.zyha_receipt(p_request_id uuid, p_receipt_token text)
 returns jsonb language plpgsql security definer set search_path = '' as $$
