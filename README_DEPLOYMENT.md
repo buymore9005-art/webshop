@@ -98,9 +98,10 @@ tersedia untuk user login dan RLS membatasi datanya ke pemilik akun. Artikel/foo
 dapat diatur pada menu “Artikel & footer” di backoffice; artikel draf tidak publik.
 Footer menampilkan nama dari metode pembayaran aktif yang dikelola pada menu
 “Metode bayar” (tanpa membocorkan nomor rekening). Cerita brand pada footer memakai
-kolase hingga lima foto proses, model, atau preview produk; kelola unggahan, keterangan,
-status tampil, dan urutan foto melalui tab “Kolase foto footer” pada menu “Artikel &
-informasi toko”. Artikel tetap dikelola terpisah dan tidak mengubah kolase. Tautan
+showcase portofolio berupa bagian visual tersendiri di atas kolom footer, dengan hingga
+lima foto proses, model, hasil kerja, atau preview produk. Kelola unggahan, keterangan,
+status tampil, dan urutan foto melalui tab “Showcase / portofolio” pada menu “Artikel &
+informasi toko”. Artikel tetap dikelola terpisah dan tidak mengubah showcase. Tautan
 Bagikan di kartu maupun detail produk
 menggunakan fitur berbagi perangkat, atau menyalin tautan jika fitur berbagi tidak
 tersedia. Nomor dan tombol WhatsApp berasal dari pengaturan WhatsApp Admin.

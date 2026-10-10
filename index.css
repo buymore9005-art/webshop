@@ -1360,8 +1360,8 @@ meter {
 .storefront .selection-summary strong { color: var(--shop-ink); font-weight: 650; }
 .storefront .product-purchase { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; border-top: 1px solid var(--shop-border); padding-top: 24px; }
 .storefront .product-purchase .button { padding-inline: 12px; min-height: 52px; }
-.storefront .store-footer { padding: 38px 0; background: #f7f8f5; border-color: #e4e9e4; }
-.storefront .footer-inner { color: var(--shop-muted); gap: 32px; }
+.storefront .store-footer { padding: 0; background: #f7f8f5; border-color: #e4e9e4; }
+.storefront .footer-inner { padding-block: 38px; color: var(--shop-muted); gap: 32px; }
 .storefront .footer-brand { display: block; color: var(--shop-ink); font-size: 1.15rem; letter-spacing: -.04em; margin-bottom: 5px; }
 .storefront .footer-inner p { font-size: .8rem; }
 .storefront .footer-inner a { display: inline-flex; align-items: center; min-height: 44px; text-decoration: none; }
@@ -1627,16 +1627,17 @@ meter {
 .storefront .footer-brand-block { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
 .storefront .footer-whatsapp { display: inline-flex; align-items: center; gap: 8px; margin-top: 8px; color: var(--shop-ink); font-size: .82rem; }
 .storefront .footer-whatsapp .store-icon { width: 19px; height: 19px; }
-.storefront .footer-gallery { grid-column: 2; min-width: 0; }
-.storefront .footer-gallery-heading { display: grid; gap: 5px; margin-bottom: 12px; }
-.storefront .footer-gallery-heading h2 { font-size: 1rem; line-height: 1.25; }
-.storefront .footer-gallery-heading > p:last-child { color: var(--shop-muted); font-size: .75rem; line-height: 1.5; }
-.storefront .footer-gallery-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); grid-auto-rows: clamp(62px,7vw,88px); gap: 7px; }
-.storefront .footer-gallery-item { position: relative; min-width: 0; min-height: 0; margin: 0; overflow: hidden; border-radius: 8px; background: #e9eeeb; }
-.storefront .footer-gallery-item:first-child { grid-row: span 2; }
-.storefront .footer-gallery-photo { position: absolute; inset: 0; width: 100%; height: 100%; min-height: 0; max-height: none; object-fit: cover; transition: transform .35s ease; }
-.storefront .footer-gallery-item:hover .footer-gallery-photo { transform: scale(1.04); }
-.storefront .footer-gallery-item figcaption { position: absolute; inset: auto 0 0; padding: 18px 8px 7px; overflow: hidden; background: linear-gradient(transparent, #111a); color: #fff; font-size: .68rem; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }
+.storefront .footer-showcase { padding: 42px 0 46px; border-bottom: 1px solid #ffffff24; background: #202b29; color: #f7f8f5; }
+.storefront .footer-showcase-heading { display: grid; gap: 8px; margin: 0 0 22px; }
+.storefront .footer-showcase-heading .eyebrow { color: #c6d0c9; font-size: .7rem; letter-spacing: .16em; text-transform: uppercase; }
+.storefront .footer-showcase-heading h2 { max-width: 720px; color: #fff; font-family: Georgia, "Times New Roman", serif; font-size: clamp(1.55rem,3.3vw,2.45rem); font-weight: 500; line-height: 1.12; letter-spacing: -.025em; }
+.storefront .footer-showcase-heading > p:last-child { color: #c3cec8; font-size: .84rem; line-height: 1.55; }
+.storefront .footer-showcase-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); grid-auto-rows: clamp(125px,16vw,205px); gap: 10px; }
+.storefront .footer-showcase-item { position: relative; min-width: 0; min-height: 0; margin: 0; overflow: hidden; border-radius: 3px; background: #384440; }
+.storefront .footer-showcase-item:first-child { grid-column: span 2; grid-row: span 2; }
+.storefront .footer-showcase-photo { position: absolute; inset: 0; width: 100%; height: 100%; min-height: 0; max-height: none; object-fit: cover; opacity: .94; transition: transform .45s ease, opacity .3s ease; }
+.storefront .footer-showcase-item:hover .footer-showcase-photo { transform: scale(1.035); opacity: 1; }
+.storefront .footer-showcase-item figcaption { position: absolute; inset: auto 0 0; padding: 34px 13px 11px; overflow: hidden; background: linear-gradient(transparent, #101614c9); color: #fff; font-size: .76rem; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
 .admin-gallery-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
 .admin-gallery-card { display: grid; grid-template-columns: minmax(110px,.75fr) minmax(0,1.25fr); align-items: start; gap: 16px; }
 .admin-gallery-photo { width: 100%; height: 145px; min-height: 0; border-radius: 10px; object-fit: cover; }
@@ -1678,8 +1679,8 @@ meter {
 @media (max-width: 800px) {
   .storefront .footer-inner { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 24px; }
   .storefront .footer-info-grid { grid-column: 1/-1; }
-  .storefront .footer-gallery { grid-column: 1/-1; max-width: 680px; }
   .storefront .footer-payments { grid-column: 1/-1; }
+  .storefront .footer-showcase-grid { grid-template-columns: repeat(3,minmax(0,1fr)); grid-auto-rows: clamp(120px,23vw,180px); }
 }
 @media (max-width: 640px) {
   .storefront .header-inner nav { grid-column: 1/-1; grid-row: 2; display: flex; width: 100%; min-width: 0; justify-content: flex-start; gap: 16px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; padding: 2px 2px 6px; }
@@ -1688,8 +1689,12 @@ meter {
   .storefront .header-inner .icon-nav-link .store-nav-label { display: none; }
   .storefront .header-inner .store-cart-button { flex: 0 0 42px; width: 42px; min-width: 42px; height: 42px; min-height: 42px; margin-inline: 4px; }
   .storefront .footer-inner { grid-template-columns: minmax(0,1fr); gap: 22px; }
-  .storefront .footer-gallery { grid-column: 1; }
-  .storefront .footer-gallery-grid { grid-auto-rows: clamp(68px,20vw,96px); }
+  .storefront .footer-inner { padding-block: 28px; }
+  .storefront .footer-showcase { padding: 32px 0; }
+  .storefront .footer-showcase-heading { margin-bottom: 16px; }
+  .storefront .footer-showcase-grid { grid-template-columns: repeat(2,minmax(0,1fr)); grid-auto-rows: clamp(105px,36vw,165px); gap: 7px; }
+  .storefront .footer-showcase-item:first-child { grid-column: span 2; grid-row: span 1; }
+  .storefront .footer-showcase-item figcaption { padding: 28px 9px 8px; font-size: .7rem; }
   .admin-gallery-grid { grid-template-columns: minmax(0,1fr); }
   .admin-gallery-card { grid-template-columns: minmax(92px,.7fr) minmax(0,1.3fr); gap: 12px; }
   .admin-gallery-photo { height: 125px; }

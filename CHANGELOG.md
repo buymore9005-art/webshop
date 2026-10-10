@@ -2,13 +2,14 @@
 
 ## Kolase foto brand di footer
 
-- Mengganti kartu cerita brand berbasis artikel menjadi kolase foto editorial untuk
-  menampilkan proses produksi, model, dan preview produk.
-- Menambahkan tab “Kolase foto footer” pada panel Artikel & informasi toko untuk
+- Mengganti kartu cerita brand berbasis artikel menjadi bagian Showcase / Portfolio
+  tersendiri di atas kolom informasi footer, untuk menampilkan proses produksi, hasil
+  kerja, model, dan preview produk.
+- Menambahkan tab “Showcase / portofolio” pada panel Artikel & informasi toko untuk
   upload foto, pratinjau, keterangan, urutan, status tampil, edit, dan hapus.
 - Menambahkan tabel `brand_gallery` dengan RLS publik-baca/Admin-kelola serta
   sinkronisasi Supabase Realtime melalui migration `20261013000000_brand_gallery.sql`.
-- Kolase storefront responsif menampilkan hingga lima foto aktif dengan urutan terendah.
+- Showcase storefront responsif menampilkan hingga lima foto aktif dengan urutan terendah.
 
 ## Fondasi pengiriman provider-neutral
 

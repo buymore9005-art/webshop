@@ -179,16 +179,16 @@ export default function Content() {
     }
     const activeError = error || (tab === 'articles' ? articles.error : tab === 'footer' ? footer.error : gallery.error);
     return <section className="stack">
-        <div className="section-heading"><div><h1>Artikel & informasi toko</h1><p className="muted">Kelola artikel, informasi footer, dan kolase foto brand.</p></div>
-            <button className="button" onClick={() => tab === 'articles' ? editArticle() : tab === 'footer' ? editFooter() : editGalleryImage()}>{tab === 'articles' ? 'Tambah artikel' : tab === 'footer' ? 'Tambah informasi footer' : 'Tambah foto kolase'}</button>
+        <div className="section-heading"><div><h1>Artikel & informasi toko</h1><p className="muted">Kelola artikel, informasi footer, dan showcase portofolio brand.</p></div>
+            <button className="button" onClick={() => tab === 'articles' ? editArticle() : tab === 'footer' ? editFooter() : editGalleryImage()}>{tab === 'articles' ? 'Tambah artikel' : tab === 'footer' ? 'Tambah informasi footer' : 'Tambah foto showcase'}</button>
         </div>
         <div className="actions content-tabs" role="tablist" aria-label="Konten toko">
             <button className={'button ' + (tab === 'articles' ? '' : 'secondary')} role="tab" aria-selected={tab === 'articles'} onClick={() => setTab('articles')}>Artikel</button>
             <button className={'button ' + (tab === 'footer' ? '' : 'secondary')} role="tab" aria-selected={tab === 'footer'} onClick={() => setTab('footer')}>Informasi footer</button>
-            <button className={'button ' + (tab === 'gallery' ? '' : 'secondary')} role="tab" aria-selected={tab === 'gallery'} onClick={() => setTab('gallery')}>Kolase foto footer</button>
+            <button className={'button ' + (tab === 'gallery' ? '' : 'secondary')} role="tab" aria-selected={tab === 'gallery'} onClick={() => setTab('gallery')}>Showcase / portofolio</button>
         </div>
         <Message error={activeError} success={message} loading={tab === 'articles' ? articles.loading : tab === 'footer' ? footer.loading : gallery.loading} />
-        {tab === 'articles' && <p className="content-admin-hint">Kelola artikel publik dan draf toko di sini. Artikel terbit tidak otomatis mengubah kolase foto footer.</p>}
+        {tab === 'articles' && <p className="content-admin-hint">Kelola artikel publik dan draf toko di sini. Artikel terbit tidak otomatis mengubah showcase portofolio footer.</p>}
         {tab === 'articles' && <div className="admin-content-list">
             {articles.data?.map(article => <article className="panel content-admin-card" key={article.id}>
                 {article.cover_image_url && <Photo src={article.cover_image_url} alt="" className="content-admin-cover" />}
@@ -211,11 +211,11 @@ export default function Content() {
             {!footer.loading && !footer.error && !footer.data?.length && <p className="empty">Belum ada informasi footer. Tambahkan kebijakan, kontak, jam operasional, atau tautan toko.</p>}
         </div>}
         {tab === 'gallery' && <>
-            <p className="content-admin-hint">Unggah dan atur foto proses produksi, model, atau preview produk. Lima foto aktif dengan urutan terendah tampil sebagai kolase di footer. JPG, PNG, atau WebP maksimal 5 MB per foto.</p>
+            <p className="content-admin-hint">Unggah dan atur foto proses produksi, model, hasil kerja, atau preview produk. Showcase terpisah tampil di atas informasi footer dan menampilkan hingga lima foto aktif dengan urutan terendah. JPG, PNG, atau WebP maksimal 5 MB per foto.</p>
             <div className="admin-gallery-grid">
                 {gallery.data?.map(image => <article className="panel admin-gallery-card" key={image.id}>
                     <Photo src={image.image_url} alt={image.title} className="admin-gallery-photo" />
-                    <div className="stack"><div className="split"><h2>{image.title}</h2><span className={'status ' + (image.is_active ? 'paid' : 'cancelled')}>{image.is_active ? 'Tampil' : 'Disembunyikan'}</span></div>
+                    <div className="stack"><div className="split"><h2>{image.title}</h2><span className={'status ' + (image.is_active ? 'paid' : 'cancelled')}>{image.is_active ? 'Tampil di showcase' : 'Disembunyikan'}</span></div>
                         {image.caption && <p>{image.caption}</p>}
                         <small>Urutan: {image.sort_order}</small>
                         <div className="actions"><button className="button secondary" onClick={() => editGalleryImage(image)}>Ubah</button><button className="text-button danger" onClick={() => void removeGalleryImage(image)}>Hapus</button></div>
@@ -258,7 +258,7 @@ export default function Content() {
                 <Field label="Unggah foto"><input type="file" accept="image/jpeg,image/png,image/webp" disabled={uploading || busy} onChange={e => { void uploadGalleryPhoto(e.target.files?.[0]); e.target.value = ''; }} /></Field>
                 <Field label="Atau URL foto HTTPS"><input type="url" maxLength={2048} value={galleryDraft.image_url} onChange={e => setGalleryDraft({ ...galleryDraft, image_url: e.target.value })} /></Field>
                 <Field label="Urutan tampilan"><input type="number" step={1} value={galleryDraft.sort_order} onChange={e => setGalleryDraft({ ...galleryDraft, sort_order: Number(e.target.value) })} /></Field>
-                <label className="check"><input type="checkbox" checked={galleryDraft.is_active} onChange={e => setGalleryDraft({ ...galleryDraft, is_active: e.target.checked })} />Tampilkan di kolase footer</label>
+                <label className="check"><input type="checkbox" checked={galleryDraft.is_active} onChange={e => setGalleryDraft({ ...galleryDraft, is_active: e.target.checked })} />Tampilkan di showcase footer</label>
                 <Message error={error} />
                 <button className="button" disabled={busy || uploading}>{busy ? 'Menyimpan…' : uploading ? 'Mengunggah…' : 'Simpan foto'}</button>
             </form>

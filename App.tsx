@@ -297,21 +297,27 @@ export default function App() {
       </>}
     </main>
     <footer className="store-footer">
+      {!!brandGallery.data?.length && <section className="footer-showcase" aria-labelledby="footer-showcase-title">
+        <div className="container">
+          <div className="footer-showcase-heading">
+            <p className="eyebrow">Showcase / Portfolio</p>
+            <h2 id="footer-showcase-title">Hasil karya, dari proses hingga produk</h2>
+            <p>Potret proses produksi, model, dan koleksi pilihan kami.</p>
+          </div>
+          <div className="footer-showcase-grid">
+            {brandGallery.data.slice(0, 5).map(image => <figure className="footer-showcase-item" key={image.id}>
+              <Photo src={image.image_url} alt={image.title} className="footer-showcase-photo" />
+              {(image.caption || image.title) && <figcaption>{image.caption || image.title}</figcaption>}
+            </figure>)}
+          </div>
+        </div>
+      </section>}
       <div className="container footer-inner">
         <div className="footer-brand-block">
           <strong className="footer-brand">{store?.store_name || 'ZYHA ID'}</strong>
           <p>Katalog dan pemesanan online.</p>
           {wa && <a className="footer-whatsapp" href={wa} target="_blank" rel="noopener noreferrer" aria-label="Hubungi toko melalui WhatsApp"><StoreIcon name="whatsapp" /><span>WhatsApp</span></a>}
         </div>
-        {!!brandGallery.data?.length && <section className="footer-gallery" aria-labelledby="footer-gallery-title">
-          <div className="footer-gallery-heading"><p className="eyebrow">Dari proses ke koleksi</p><h2 id="footer-gallery-title">Di balik karya</h2><p>Potret proses, model, dan detail koleksi kami.</p></div>
-          <div className="footer-gallery-grid">
-            {brandGallery.data.slice(0, 5).map(image => <figure className="footer-gallery-item" key={image.id}>
-              <Photo src={image.image_url} alt={image.title} className="footer-gallery-photo" />
-              {(image.caption || image.title) && <figcaption>{image.caption || image.title}</figcaption>}
-            </figure>)}
-          </div>
-        </section>}
         <div className="footer-info-grid">
           {footer.data?.map(item => <section key={item.id}>
             <h2>{item.href ? <a href={item.href} target={item.href.startsWith('https://') ? '_blank' : undefined} rel={item.href.startsWith('https://') ? 'noopener noreferrer' : undefined}>{item.title}</a> : item.title}</h2>

@@ -1,7 +1,7 @@
 {
   "project": "ZYHA ID webshop",
   "version": "1.2.0",
-  "status": "Admin-managed production-photo collage added to the storefront footer; 76 local tests and production build pass; Supabase migration still needs deployment.",
+  "status": "Showcase / Portfolio is now a standalone responsive section above the footer columns; 76 tests and production build pass; Supabase deployment remains pending.",
   "files": [
     {
       "path": ".env.example",
@@ -25,13 +25,13 @@
     },
     {
       "path": "App.tsx",
-      "bytes": 28572,
-      "sha256": "3092a03ee31ea5324c011b0b1ef566351733424f2a52c94690171d232a8f9231"
+      "bytes": 28714,
+      "sha256": "e9d6e86a2ca4551a031a473006627e1f61c20d3860506d7ba09f83b654ed48c1"
     },
     {
       "path": "CHANGELOG.md",
-      "bytes": 11388,
-      "sha256": "85a55040d49987b1305a20c92ba5cb53543cde43b85ea0b3592d08f94e8e0c17"
+      "bytes": 11458,
+      "sha256": "f9143ace368b16885d32c8c7e9cf3405ab71627abfb7b390371e7bbbf29a4c10"
     },
     {
       "path": "docs/FILE_MAP.md",
@@ -170,8 +170,8 @@
     },
     {
       "path": "index.css",
-      "bytes": 57386,
-      "sha256": "7dbd5927fa6e92e4fad098e63421e5d9563711aa3f8fe4e97909a8c177ceca94"
+      "bytes": 58249,
+      "sha256": "e04e4ffcb2f6efdbd9f69d4283e88e563dc5d0c2e65bd6f1eb16681a917731cb"
     },
     {
       "path": "index.html",
@@ -205,8 +205,8 @@
     },
     {
       "path": "QA_REPORT.md",
-      "bytes": 10533,
-      "sha256": "0218bf0e97150fa5b91205f5e816c0381d2db908e72cfa59200d1b3caa28a75f"
+      "bytes": 10583,
+      "sha256": "5f0a1b87ac8686062b6b56683da5b58cdc81015dfe1c7697b5b3795f4dd39b9e"
     },
     {
       "path": "README.md",
@@ -215,8 +215,8 @@
     },
     {
       "path": "README_DEPLOYMENT.md",
-      "bytes": 23918,
-      "sha256": "7283d4b8125befa8f94915634eb6a830ec9206556609a4a20f635f154751555d"
+      "bytes": 24011,
+      "sha256": "b661fe367afa1eec60a38923d0fb8af036518ec8e6badf0b73a527f81013b3b3"
     },
     {
       "path": "scripts/check-files.cjs",
@@ -240,8 +240,8 @@
     },
     {
       "path": "src/admin/Content.tsx",
-      "bytes": 18370,
-      "sha256": "4a15c7f12e6f95aeaead5debaa9b891976170613e6538f4e91e52327f5b67665"
+      "bytes": 18459,
+      "sha256": "a621f0dbbbd066a8688e0f7fd68bae93c64278a01f590617e97dbced4614990d"
     },
     {
       "path": "src/admin/Coupons.tsx",
@@ -410,8 +410,8 @@
     },
     {
       "path": "tests/source.test.cjs",
-      "bytes": 11095,
-      "sha256": "eb649d27be04ef04604687623f35b07583c8a9aa82dcc828d12ad7487c70111a"
+      "bytes": 11281,
+      "sha256": "ef6485922ca5156e73be351617dc67c67210524f17692c234c050508c40a6d0c"
     },
     {
       "path": "tsconfig.json",

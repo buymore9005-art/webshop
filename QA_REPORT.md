@@ -22,9 +22,10 @@ strict typecheck dan Vite production bundle. Lingkungan ini memakai Node 24.14.0
 menggantikan pemeriksaan runner Node 22. Tidak ada SQL, Supabase, shipping provider,
 GitHub Actions remote, atau deployment Vercel yang dijalankan.
 
-Pembaruan storefront terbaru mengganti cerita brand satu foto dari artikel menjadi
-kolase foto produksi/model/preview produk dari tabel `brand_gallery`. Panel Artikel &
-informasi toko memiliki tab upload/edit/hapus, keterangan, urutan, dan visibilitas.
+Pembaruan storefront terbaru menampilkan Showcase / Portfolio sebagai bagian visual
+tersendiri di atas kolom footer utama, dengan hingga lima foto produksi/model/hasil kerja
+dari tabel `brand_gallery`. Panel Artikel & informasi toko memiliki tab
+upload/edit/hapus, keterangan, urutan, dan visibilitas.
 Migration RLS `20261013000000_brand_gallery.sql` ditambahkan; belum diterapkan ke
 Supabase. Sebanyak 76 tes, strict typecheck, build production, pemeriksaan import, dan
 git diff check lulus. Browser belum dapat menguji data katalog langsung karena
