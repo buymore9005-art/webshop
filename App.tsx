@@ -129,6 +129,30 @@ export default function App() {
       setError(errorMessage(e));
     }
   }
+  async function shareProduct(product: Product) {
+    const url = new URL(window.location.href);
+    url.searchParams.delete('view');
+    url.searchParams.delete('slug');
+    url.searchParams.set('product', product.id);
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: product.title, text: product.description || product.title, url: url.toString() });
+        return;
+      }
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url.toString());
+        setNotice('Tautan produk berhasil disalin.');
+        setError('');
+        return;
+      }
+      window.prompt('Salin tautan produk ini:', url.toString());
+    }
+    catch (e) {
+      if (e instanceof DOMException && e.name === 'AbortError')
+        return;
+      setError(errorMessage(e));
+    }
+  }
   const store = settings.data;
   let wa = '';
   try {
@@ -145,13 +169,12 @@ export default function App() {
         <nav aria-label="Navigasi toko">
           <button className="text-button store-nav-link" aria-current={view === 'shop' && !detailId ? 'page' : undefined} onClick={() => navigate()}>Katalog</button>
           <button className="text-button store-nav-link" aria-current={view === 'article' ? 'page' : undefined} onClick={() => navigateArticle()}>Artikel</button>
-          <button className="text-button store-nav-link" aria-current={view === 'wishlist' ? 'page' : undefined} onClick={() => navigate('wishlist')}>Wishlist ({wishlist.data?.length || 0})</button>
-          <button className="text-button store-nav-link" aria-current={view === 'account' ? 'page' : undefined} onClick={() => navigate('account')}>{session?.user.email || 'Akun'}</button>
-          {access && <button className="text-button store-nav-link" aria-current={view === 'receipt' ? 'page' : undefined} onClick={() => navigate('receipt')}>Pesanan terakhir</button>}
-          <button className="button store-cart-button" onClick={() => setShowCart(true)}>
+          <button className="text-button store-nav-link icon-nav-link" aria-label={'Wishlist, ' + (wishlist.data?.length || 0) + ' produk'} title="Wishlist" aria-current={view === 'wishlist' ? 'page' : undefined} onClick={() => navigate('wishlist')}><StoreIcon name="heart" /><span className="store-nav-label">Wishlist</span>{!!wishlist.data?.length && <span className="nav-count">{wishlist.data.length}</span>}</button>
+          <button className="text-button store-nav-link icon-nav-link" aria-label={session?.user.email ? 'Akun: ' + session.user.email : 'Akun'} title="Akun" aria-current={view === 'account' ? 'page' : undefined} onClick={() => navigate('account')}><StoreIcon name="user" /><span className="store-nav-label">{session?.user.email || 'Akun'}</span></button>
+          {access && <button className="text-button store-nav-link store-receipt-link" aria-current={view === 'receipt' ? 'page' : undefined} onClick={() => navigate('receipt')}>Pesanan terakhir</button>}
+          <button className="button store-cart-button" aria-label={'Keranjang belanja, ' + cart.reduce((s, x) => s + x.quantity, 0) + ' barang'} title="Keranjang belanja" onClick={() => setShowCart(true)}>
             <StoreIcon name="bag" />
-            <span>Keranjang</span>
-            <span className="cart-count">{cart.reduce((s, x) => s + x.quantity, 0)}</span>
+            {!!cart.length && <span className="cart-count">{cart.reduce((s, x) => s + x.quantity, 0)}</span>}
           </button>
         </nav>
       </div>
@@ -196,7 +219,7 @@ export default function App() {
       </> : detailId ? <section className="container section product-section">
         <button className="text-button back-link" onClick={() => navigate()}><StoreIcon name="arrow-left" />Kembali ke katalog</button>
         <Message error={detail.error} loading={detail.loading} />
-        {detail.data ? <ProductDetail key={detail.data.id} product={detail.data} onAdd={add} wishlisted={wishlist.data?.some(item => item.id === detail.data?.id) || false} onWishlist={() => detail.data && void toggleWishlist(detail.data)} /> : !detail.loading && <p className="empty">Produk tidak ditemukan atau sudah tidak aktif.</p>}
+        {detail.data ? <ProductDetail key={detail.data.id} product={detail.data} whatsappPhone={store?.admin_phone || ''} onAdd={add} onShare={() => detail.data && void shareProduct(detail.data)} wishlisted={wishlist.data?.some(item => item.id === detail.data?.id) || false} onWishlist={() => detail.data && void toggleWishlist(detail.data)} /> : !detail.loading && <p className="empty">Produk tidak ditemukan atau sudah tidak aktif.</p>}
       </section> : <>
         <section className="container hero-section" aria-label="Koleksi pilihan">
           <div className={'hero ' + (store?.banner_url ? 'with-image' : '')}>
@@ -256,7 +279,10 @@ export default function App() {
                 <h3><button className="product-name" onClick={() => navigate('shop', p.id)}>{p.title}</button></h3>
                 <strong>{money(p.price)}</strong>
                 {p.stock === 0 && <small className="stock-unavailable">Stok habis</small>}
-                <button type="button" className="button secondary wide" aria-pressed={wishlist.data?.some(item => item.id === p.id) || false} onClick={() => void toggleWishlist(p)}>{wishlist.data?.some(item => item.id === p.id) ? '♥ Tersimpan' : '♡ Simpan ke wishlist'}</button>
+                <div className="product-quick-actions">
+                  <button type="button" className="button secondary" aria-pressed={wishlist.data?.some(item => item.id === p.id) || false} aria-label={wishlist.data?.some(item => item.id === p.id) ? 'Hapus ' + p.title + ' dari wishlist' : 'Simpan ' + p.title + ' ke wishlist'} onClick={() => void toggleWishlist(p)}><StoreIcon name="heart" /><span>{wishlist.data?.some(item => item.id === p.id) ? 'Tersimpan' : 'Wishlist'}</span></button>
+                  <button type="button" className="button secondary" onClick={() => void shareProduct(p)} aria-label={'Bagikan ' + p.title}><StoreIcon name="share" /><span>Bagikan</span></button>
+                </div>
                 <button type="button" className="button secondary wide product-action" disabled={p.stock === 0} onClick={() => p.variants.length ? navigate('shop', p.id) : add(p)}>
                   {p.variants.length ? 'Pilih varian' : 'Tambah ke keranjang'}
                 </button>
@@ -269,10 +295,18 @@ export default function App() {
     </main>
     <footer className="store-footer">
       <div className="container footer-inner">
-        <div>
+        <div className="footer-brand-block">
           <strong className="footer-brand">{store?.store_name || 'ZYHA ID'}</strong>
           <p>Katalog dan pemesanan online.</p>
+          {wa && <a className="footer-whatsapp" href={wa} target="_blank" rel="noopener noreferrer" aria-label="Hubungi toko melalui WhatsApp"><StoreIcon name="whatsapp" /><span>WhatsApp</span></a>}
         </div>
+        {(() => {
+          const story = articles.data?.find(article => !!article.cover_image_url);
+          return story ? <button type="button" className="footer-story" onClick={() => navigateArticle(story.slug)} aria-label={'Baca cerita: ' + story.title}>
+            <Photo src={story.cover_image_url} alt="" className="footer-story-image" />
+            <span className="footer-story-copy"><span className="eyebrow">Cerita & proses</span><strong>{story.title}</strong><span>{story.excerpt || 'Kenali lebih dekat cerita di balik koleksi kami.'}</span><span className="footer-story-link">Baca cerita <StoreIcon name="arrow-right" /></span></span>
+          </button> : null;
+        })()}
         <div className="footer-info-grid">
           {footer.data?.map(item => <section key={item.id}>
             <h2>{item.href ? <a href={item.href} target={item.href.startsWith('https://') ? '_blank' : undefined} rel={item.href.startsWith('https://') ? 'noopener noreferrer' : undefined}>{item.title}</a> : item.title}</h2>
@@ -281,10 +315,13 @@ export default function App() {
           {articles.data?.length ? <section><h2>Artikel</h2>{articles.data.slice(0, 5).map(article => <button type="button" className="text-button" key={article.id} onClick={() => navigateArticle(article.slug)}>{article.title}</button>)}<button type="button" className="text-button" onClick={() => navigateArticle()}>Lihat semua artikel</button></section> : null}
           {(footer.error || articles.error) && <p className="message error">Informasi footer/artikel belum dapat dimuat.</p>}
         </div>
-        <div className="actions">
-          {wa && <a href={wa} target="_blank" rel="noopener noreferrer">Hubungi WhatsApp</a>}
-          {import.meta.env.VITE_TAWK_PROPERTY_ID && <button className="text-button" onClick={() => void openLiveChat().catch(e => setError(errorMessage(e)))}>Chat langsung</button>}
-        </div>
+        {methods.data?.length ? <section className="footer-payments" aria-label="Metode pembayaran tersedia">
+          <h2>Metode pembayaran</h2>
+          <div className="footer-payment-list">{methods.data.map(method => <span className="footer-payment" key={method.id}><StoreIcon name={method.type === 'Bank' ? 'bank' : method.type === 'QRIS' ? 'qris' : 'wallet'} /><span>{method.name}</span></span>)}</div>
+        </section> : null}
+        {import.meta.env.VITE_TAWK_PROPERTY_ID && <div className="actions">
+          <button className="text-button" onClick={() => void openLiveChat().catch(e => setError(errorMessage(e)))}>Chat langsung</button>
+        </div>}
       </div>
     </footer>
     <CartPanel open={showCart} cart={cart} onClose={() => setShowCart(false)} onQuantity={(line, n) => {
@@ -297,9 +334,11 @@ export default function App() {
     }} onRemove={line => setCart(cart.filter(x => x.product_id !== line.product_id || x.variant !== line.variant))} onCheckout={() => { setShowCart(false); navigate('checkout'); }} />
   </div>;
 }
-function ProductDetail({ product: p, onAdd, wishlisted, onWishlist }: {
+function ProductDetail({ product: p, whatsappPhone, onAdd, onShare, wishlisted, onWishlist }: {
   product: Product;
+  whatsappPhone: string;
   onAdd: (product: Product, variant: string, buyNow?: boolean) => void;
+  onShare: () => void;
   wishlisted: boolean;
   onWishlist: () => void;
 }) {
@@ -308,6 +347,12 @@ function ProductDetail({ product: p, onAdd, wishlisted, onWishlist }: {
   // Display gallery uses only product photos; variant previews live in their own selection panel.
   const images = Array.from(new Set([p.image_url, ...p.images].filter(Boolean)));
   const imageVariant = p.variants.find(v => v.image && v.image === image);
+  let productWhatsApp = '';
+  try {
+    if (whatsappPhone)
+      productWhatsApp = whatsappUrl(whatsappPhone, 'Halo, saya ingin bertanya tentang produk ' + p.title + '.');
+  }
+  catch { }
   return <div className="product-detail">
     <section className="product-gallery" aria-label="Display produk">
       <div className="gallery-heading">
@@ -356,7 +401,9 @@ function ProductDetail({ product: p, onAdd, wishlisted, onWishlist }: {
         <p className="selection-summary" role="status">Varian terpilih: <strong>{variant}</strong></p>
       </fieldset>}
       <div className="actions product-purchase">
-        <button type="button" className="button secondary" aria-pressed={wishlisted} onClick={onWishlist}>{wishlisted ? '♥ Tersimpan' : '♡ Wishlist'}</button>
+        <button type="button" className="button secondary" aria-pressed={wishlisted} onClick={onWishlist}><StoreIcon name="heart" />{wishlisted ? 'Tersimpan' : 'Wishlist'}</button>
+        <button type="button" className="button secondary" onClick={onShare}><StoreIcon name="share" />Bagikan</button>
+        {productWhatsApp && <a className="button secondary product-whatsapp" href={productWhatsApp} target="_blank" rel="noopener noreferrer"><StoreIcon name="whatsapp" />Tanya produk</a>}
         <button className="button secondary" disabled={p.stock === 0} onClick={() => onAdd(p, variant)}>Tambah ke keranjang</button>
         <button className="button" disabled={p.stock === 0} onClick={() => onAdd(p, variant, true)}>Beli langsung<StoreIcon name="arrow-right" /></button>
       </div>
@@ -365,8 +412,15 @@ function ProductDetail({ product: p, onAdd, wishlisted, onWishlist }: {
 }
 
 /** Small functional outline glyphs. Labels remain visible; no icon package or remote assets. */
-function StoreIcon({ name }: { name: 'bag' | 'search' | 'arrow-left' | 'arrow-right' }) {
-  return <svg className="store-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
-    {name === 'bag' ? <><path d="M5 7h14l1 14H4L5 7Z" /><path d="M8 8V6a4 4 0 0 1 8 0v2" /></> : name === 'search' ? <><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 5 5" /></> : name === 'arrow-left' ? <path d="M20 12H4m7-7-7 7 7 7" /> : <path d="M4 12h16m-7-7 7 7-7 7" />}
+function StoreIcon({ name }: { name: 'bag' | 'search' | 'arrow-left' | 'arrow-right' | 'heart' | 'user' | 'share' | 'whatsapp' | 'bank' | 'wallet' | 'qris' }) {
+  return <svg className={'store-icon store-icon-' + name} viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+    {name === 'bag' ? <><path d="M5 7h14l1 14H4L5 7Z" /><path d="M8 8V6a4 4 0 0 1 8 0v2" /></> : name === 'search' ? <><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 5 5" /></> : name === 'arrow-left' ? <path d="M20 12H4m7-7-7 7 7 7" /> : name === 'arrow-right' ? <path d="M4 12h16m-7-7 7 7-7 7" /> : null}
+    {name === 'heart' && <path d="M20.8 8.7c0 5.3-8.8 10.1-8.8 10.1S3.2 14 3.2 8.7a4.5 4.5 0 0 1 8.8-1.2 4.5 4.5 0 0 1 8.8 1.2Z" />}
+    {name === 'user' && <><circle cx="12" cy="8" r="3.5" /><path d="M5 20c.4-3.4 3.2-5.5 7-5.5s6.6 2.1 7 5.5" /></>}
+    {name === 'share' && <><circle cx="18" cy="5" r="2.5" /><circle cx="6" cy="12" r="2.5" /><circle cx="18" cy="19" r="2.5" /><path d="m8.2 10.8 7.5-4.4m-7.5 6.8 7.5 4.4" /></>}
+    {name === 'whatsapp' && <><path d="M20.2 11.7a8.2 8.2 0 0 1-12.1 7.2L3.5 20l1.2-4.4a8.2 8.2 0 1 1 15.5-3.9Z" /><path d="M8.2 8.3c.3-.5.6-.5.9-.5h.5c.2 0 .4.1.5.4l.8 1.8c.1.2.1.4-.1.6l-.6.7c-.2.2-.2.4-.1.6.6 1 1.5 1.8 2.6 2.3.2.1.4.1.6-.1l.8-.9c.2-.2.4-.2.6-.1l1.7.8c.3.1.4.3.4.5 0 .3-.2 1.3-.8 1.7-.5.4-1.2.6-2 .4-1-.2-2.3-.8-3.7-2-1.7-1.5-2.8-3.4-3.1-4.3-.3-.9 0-1.6.4-1.9Z" /></>}
+    {name === 'bank' && <><path d="m3 9 9-5 9 5" /><path d="M4 10h16M5 10v8m4-8v8m6-8v8m4-8v8M3 20h18" /></>}
+    {name === 'wallet' && <><rect x="3" y="6" width="18" height="14" rx="2" /><path d="M3 9h15a3 3 0 0 1 3 3v1h-5a2 2 0 0 0 0 4h5" /><path d="M17 14h.01" /></>}
+    {name === 'qris' && <><path d="M4 9V4h5m6 0h5v5m0 6v5h-5m-6 0H4v-5" /><path d="M8 8h2v2H8zm6 0h2v2h-2zm-6 6h2v2H8zm6 0h2v2h-2z" /></>}
   </svg>;
 }

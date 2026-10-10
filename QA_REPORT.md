@@ -13,18 +13,25 @@ Validasi awal setelah konfigurasi deployment dan pemulihan bukti pesanan menjala
 kupon, dan impor massal, `node scripts/run-tests.cjs`, `npm run typecheck`,
 `npm run build`, dan `node scripts/check-files.cjs` kembali berhasil. Setelah penghapusan integrasi pembayaran otomatis, `node scripts/run-tests.cjs`,
 `npm run build`, dan `node scripts/check-files.cjs` lulus kembali. Pengujian terakhir
-setelah perbaikan CORS checkout meliputi 64 tes, build, dan pemeriksaan file/import.
+setelah penyempurnaan storefront meliputi 66 tes, build, dan pemeriksaan file/import.
 Build mencakup
 strict typecheck dan Vite production bundle. Lingkungan ini memakai Node 24.14.0/npm
 11.11.0, sedangkan project dan workflow CI menetapkan Node 22; hasil ini belum
 menggantikan pemeriksaan runner Node 22. Tidak ada SQL, Supabase, Komerce,
 GitHub Actions remote, atau deployment Vercel yang dijalankan.
 
+Pembaruan storefront terbaru menambahkan navigasi ikon, berbagi produk, tombol
+WhatsApp kontekstual, metode pembayaran aktif pada footer, serta cerita brand dari
+artikel admin. Dua assertion source baru menjaga keterhubungan fitur ini dengan data
+Admin. Tes, strict typecheck, build production, pemeriksaan import, dan git diff check
+telah berhasil setelah perubahan tersebut. Browser belum dapat menguji render data
+toko karena environment Supabase lokal tidak dikonfigurasi.
+
 ## Yang benar-benar dijalankan
 
 | Pemeriksaan | Hasil | Bukti dan cakupan |
 |---|---|---|
-| Unit domain/checkout/pembayaran manual + assertion source | 64 tes lulus setelah perbaikan CORS checkout | Pure TS dikompilasi dan dieksekusi dengan Node; assertion source bukan transaksi DB. |
+| Unit domain/checkout/pembayaran manual + assertion source | 66 tes lulus setelah penambahan storefront | Pure TS dikompilasi dan dieksekusi dengan Node; assertion source bukan transaksi DB. |
 | Syntax TypeScript | 25 file, 0 parse error | docs/qa/syntax.json; TypeScript5.8.3 aktual. Tidak menggantikan pemeriksaan tipe penuh |
 | Kelengkapan/import lokal | 15 file wajib, 25source, 71import relatif lulus | docs/qa/imports.log; jalur relatif nyata, bukan declaration shim |
 | Layout CSS browser | 25/25 fixture lulus | docs/qa/mobile-layout.json; Chromium, lebar320/360/390/768/1440 |

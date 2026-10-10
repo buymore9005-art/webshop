@@ -95,6 +95,12 @@ Pesanan yang checkout saat login ditautkan ke akun melalui Edge Function; checko
 sebagai tamu tetap tersedia dan tidak ditampilkan di riwayat akun. Wishlist hanya
 tersedia untuk user login dan RLS membatasi datanya ke pemilik akun. Artikel/footer
 dapat diatur pada menu “Artikel & footer” di backoffice; artikel draf tidak publik.
+Footer menampilkan nama dari metode pembayaran aktif yang dikelola pada menu
+“Metode bayar” (tanpa membocorkan nomor rekening). Cerita brand pada footer memakai
+artikel terbit terbaru yang memiliki foto sampul; kelola sampul, judul, ringkasan, dan
+isi melalui menu “Artikel & footer”. Tautan Bagikan di kartu maupun detail produk
+menggunakan fitur berbagi perangkat, atau menyalin tautan jika fitur berbagi tidak
+tersedia. Nomor dan tombol WhatsApp berasal dari pengaturan WhatsApp Admin.
 Kupon dikelola lewat menu “Kupon”, satu kode per checkout. Sistem menghitung ulang
 diskon dan batas pemakaian di database pada saat checkout, menggunakan hash nomor
 WhatsApp untuk batas per pelanggan. Pembatalan order tidak otomatis mengembalikan

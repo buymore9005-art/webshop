@@ -1,7 +1,7 @@
 {
     "project":  "ZYHA ID webshop",
     "version":  "1.1.0",
-    "status":  "Payment integration removed; 64 local tests and production build pass; checkout CORS update is not deployed to Supabase. See QA_REPORT.md.",
+    "status":  "Payment integration removed; 66 local tests and production build pass; checkout CORS update is not deployed to Supabase. See QA_REPORT.md.",
     "files":  [
                   {
                       "path":  ".env.example",
@@ -25,13 +25,13 @@
                   },
                   {
                       "path":  "App.tsx",
-                      "bytes":  22879,
-                      "sha256":  "a09241b22d8baedb8bdb9d842ef4d63df287910ea53ec9ea0624dbcd8249cc03"
+                      "bytes":  27999,
+                      "sha256":  "9b07fa14095490a1aa15b68de7286b24192b1d19b8713366fbe1766bdf4e4369"
                   },
                   {
                       "path":  "CHANGELOG.md",
-                      "bytes":  8878,
-                      "sha256":  "7de18e93696ca1d1d98d648da61104300e4e84a8e50bd1a9990ecb21808f6d18"
+                      "bytes":  9518,
+                      "sha256":  "22ee92a56db659a95e523f11a2e1eb5ac1476c0dc3db49a50cac669ba850e1ac"
                   },
                   {
                       "path":  "docs/FILE_MAP.md",
@@ -170,8 +170,8 @@
                   },
                   {
                       "path":  "index.css",
-                      "bytes":  45734,
-                      "sha256":  "230e45a33e868117b85d193d29ec097a3fb2798bbc4c4a866f79ce74f274c455"
+                      "bytes":  51222,
+                      "sha256":  "9fc72306129461341adbefa2e0273b0ede3967004d1a83162ad580132d6e89c0"
                   },
                   {
                       "path":  "index.html",
@@ -205,8 +205,8 @@
                   },
                   {
                       "path":  "QA_REPORT.md",
-                      "bytes":  9097,
-                      "sha256":  "b5c8325b03595b9817a5e8d66b1ae146dc7aa727cc0b299704d4b8f6d206ae71"
+                      "bytes":  9581,
+                      "sha256":  "3e19af061b9a81b0db62f7e39daa6ab5be7c84ea211365571887a5d4e8f59d8b"
                   },
                   {
                       "path":  "README.md",
@@ -215,8 +215,8 @@
                   },
                   {
                       "path":  "README_DEPLOYMENT.md",
-                      "bytes":  18923,
-                      "sha256":  "3ec073d869de6c3e526c65931918c089afae44648481df48ed1dd58e6f201d20"
+                      "bytes":  19426,
+                      "sha256":  "40bf735d2960a12c58e0307b6609d788a0fd42ddc1c46a5f61b1b7f4d8fb0b3f"
                   },
                   {
                       "path":  "scripts/check-files.cjs",
@@ -240,8 +240,8 @@
                   },
                   {
                       "path":  "src/admin/Content.tsx",
-                      "bytes":  12020,
-                      "sha256":  "9eb95279e4ef70d78ceb1d0f407d8e659bfc029b8d342315f729a39acf4efa3c"
+                      "bytes":  12586,
+                      "sha256":  "423deb289b2fabb1591fe306b411f5ee7cf849916f1b9e30d053cf90088181eb"
                   },
                   {
                       "path":  "src/admin/Coupons.tsx",
@@ -405,8 +405,8 @@
                   },
                   {
                       "path":  "tests/source.test.cjs",
-                      "bytes":  5960,
-                      "sha256":  "59a191083c7952f45efa02622ebe5da26215c5352e0633288b9273a1ff3b63f5"
+                      "bytes":  6755,
+                      "sha256":  "d64dff82e6944ded330a785bfcfc1fbb0a1b0f75a626216677a1fb07510ef543"
                   },
                   {
                       "path":  "tsconfig.json",

@@ -119,6 +119,8 @@ export default function Content() {
         }
     }
     const activeError = error || (tab === 'articles' ? articles.error : footer.error);
+    const footerStory = articles.data?.filter(article => article.status === 'published' && article.cover_image_url)
+        .sort((a, b) => Date.parse(b.published_at || '') - Date.parse(a.published_at || ''))[0];
     return <section className="stack">
         <div className="section-heading"><div><h1>Artikel & informasi toko</h1><p className="muted">Kelola artikel publik dan isi tambahan pada footer toko.</p></div>
             <button className="button" onClick={() => tab === 'articles' ? editArticle() : editFooter()}>{tab === 'articles' ? 'Tambah artikel' : 'Tambah informasi footer'}</button>
@@ -128,10 +130,11 @@ export default function Content() {
             <button className={'button ' + (tab === 'footer' ? '' : 'secondary')} role="tab" aria-selected={tab === 'footer'} onClick={() => setTab('footer')}>Informasi footer</button>
         </div>
         <Message error={activeError} success={message} loading={tab === 'articles' ? articles.loading : footer.loading} />
+        {tab === 'articles' && <p className="content-admin-hint">Artikel terbit terbaru yang memiliki foto sampul otomatis tampil sebagai cerita brand di footer. Kelola foto, judul, ringkasan, dan isi cerita dari daftar artikel ini.</p>}
         {tab === 'articles' && <div className="admin-content-list">
             {articles.data?.map(article => <article className="panel content-admin-card" key={article.id}>
                 {article.cover_image_url && <Photo src={article.cover_image_url} alt="" className="content-admin-cover" />}
-                <div className="stack"><div className="split"><h2>{article.title}</h2><span className={'status ' + (article.status === 'published' ? 'paid' : 'pending')}>{article.status === 'published' ? 'Terbit' : 'Draf'}</span></div>
+                <div className="stack"><div className="split"><h2>{article.title}</h2><div className="actions"><span className={'status ' + (article.status === 'published' ? 'paid' : 'pending')}>{article.status === 'published' ? 'Terbit' : 'Draf'}</span>{footerStory?.id === article.id && <span className="status">Cerita footer</span>}</div></div>
                     <small>/{article.slug} · diperbarui {new Date(article.updated_at).toLocaleDateString('id-ID')}</small>
                     <p>{article.excerpt || 'Tanpa ringkasan.'}</p>
                     <div className="actions"><button className="button secondary" onClick={() => editArticle(article)}>Ubah</button><button className="text-button danger" onClick={() => void removeArticle(article)}>Hapus</button></div>

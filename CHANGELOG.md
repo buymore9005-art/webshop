@@ -1,5 +1,17 @@
 # CHANGELOG — ZYHA ID 1.1.0
 
+## Penyempurnaan storefront
+
+- Merapikan navigasi Wishlist, Akun, dan keranjang dengan ikon outline yang konsisten;
+  keranjang kini hanya berupa ikon dengan badge jumlah barang.
+- Menambahkan aksi Bagikan pada kartu dan detail produk menggunakan Web Share API,
+  dengan fallback menyalin tautan.
+- Menambahkan tombol WhatsApp berikon pada detail produk dan footer, dengan gaya
+  warna netral yang mengikuti tema toko.
+- Footer menampilkan metode pembayaran aktif dari panel Metode bayar serta area
+  cerita brand dari artikel terbit terbaru dengan foto sampul. Keduanya dikelola
+  melalui menu backoffice yang sudah tersedia.
+
 ## Fitur pertumbuhan toko
 
 - Menambahkan akun pelanggan Supabase Auth, riwayat pesanan untuk checkout saat login,
