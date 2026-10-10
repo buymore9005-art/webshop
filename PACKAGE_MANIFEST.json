@@ -1,7 +1,7 @@
 {
     "project":  "ZYHA ID webshop",
     "version":  "1.1.0",
-    "status":  "Payment integration removed; 67 local tests and production build pass; checkout CORS update is not deployed to Supabase. See QA_REPORT.md.",
+    "status":  "Payment integration removed; 67 local tests and production build pass; catalog category and sort use custom accessible dropdowns. Checkout CORS update is not deployed to Supabase. See QA_REPORT.md.",
     "files":  [
                   {
                       "path":  ".env.example",
@@ -25,13 +25,13 @@
                   },
                   {
                       "path":  "App.tsx",
-                      "bytes":  27999,
-                      "sha256":  "9b07fa14095490a1aa15b68de7286b24192b1d19b8713366fbe1766bdf4e4369"
+                      "bytes":  28077,
+                      "sha256":  "206b6b178630bdc7afe77d857e2bd08a644dde0bca46bf721e8e855824a71311"
                   },
                   {
                       "path":  "CHANGELOG.md",
-                      "bytes":  9675,
-                      "sha256":  "b9e1225577f938fef207d5c7e6ad5875a4efae64e8ce464cee5f6de65a2509c7"
+                      "bytes":  9671,
+                      "sha256":  "7c8d30a11319a517ad6f8b240d2a2ebe2cce624ef28424df030f348c8d09c52c"
                   },
                   {
                       "path":  "docs/FILE_MAP.md",
@@ -170,8 +170,8 @@
                   },
                   {
                       "path":  "index.css",
-                      "bytes":  52394,
-                      "sha256":  "87102059d27c0f173cdf96b07979578b34666e36582e7af0f5f1e92636e620c0"
+                      "bytes":  54877,
+                      "sha256":  "da563bc74909539ed60d4f1ab5a7cfe6e464e99362591058e66d94a23c8b27d2"
                   },
                   {
                       "path":  "index.html",
@@ -205,8 +205,8 @@
                   },
                   {
                       "path":  "QA_REPORT.md",
-                      "bytes":  9639,
-                      "sha256":  "5ac9997c9da630e717a901bbc594aa4659c85b5a849bf8d5feb07f32993b8f2a"
+                      "bytes":  9654,
+                      "sha256":  "2fe4f418349e6df0dce98a6bfe5bffa229fefe4120028fe0792f2ea73db8e6e6"
                   },
                   {
                       "path":  "README.md",
@@ -215,8 +215,8 @@
                   },
                   {
                       "path":  "README_DEPLOYMENT.md",
-                      "bytes":  19625,
-                      "sha256":  "cced1898a2fc0a083284c8dded398da3b7b71daf259fce6260d2c04050c12339"
+                      "bytes":  19702,
+                      "sha256":  "facb2b32994d884d3b50af9a9517ffe56b3abf3e2e67b3aaf344a366643126e4"
                   },
                   {
                       "path":  "scripts/check-files.cjs",
@@ -277,6 +277,11 @@
                       "path":  "src/components/AdminGate.tsx",
                       "bytes":  6559,
                       "sha256":  "eb352df6e8185697106398efacecc9fd1ea2004c0588f7acb4be1902d08fd609"
+                  },
+                  {
+                      "path":  "src/components/Dropdown.tsx",
+                      "bytes":  4864,
+                      "sha256":  "aa77202a392057c59077e5b9c6a50226b3356396dd99b9bbaefcc5a400eecc5b"
                   },
                   {
                       "path":  "src/components/UI.tsx",
@@ -405,8 +410,8 @@
                   },
                   {
                       "path":  "tests/source.test.cjs",
-                      "bytes":  7163,
-                      "sha256":  "1a9c261549702e24f488e4cddcb00774807ebd5116fe8ccbfbf262e9cd87257a"
+                      "bytes":  7362,
+                      "sha256":  "7f72f13e7ca201908479e805693c2f6ec3eb753b1abbf9d115427759bda968a9"
                   },
                   {
                       "path":  "tsconfig.json",

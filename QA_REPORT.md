@@ -13,7 +13,8 @@ Validasi awal setelah konfigurasi deployment dan pemulihan bukti pesanan menjala
 kupon, dan impor massal, `node scripts/run-tests.cjs`, `npm run typecheck`,
 `npm run build`, dan `node scripts/check-files.cjs` kembali berhasil. Setelah penghapusan integrasi pembayaran otomatis, `node scripts/run-tests.cjs`,
 `npm run build`, dan `node scripts/check-files.cjs` lulus kembali. Pengujian terakhir
-setelah penyempurnaan storefront meliputi 66 tes, build, dan pemeriksaan file/import.
+setelah dropdown Kategori/Urutkan menjadi menu kustom meliputi 67 tes, build,
+dan pemeriksaan file/import.
 Build mencakup
 strict typecheck dan Vite production bundle. Lingkungan ini memakai Node 24.14.0/npm
 11.11.0, sedangkan project dan workflow CI menetapkan Node 22; hasil ini belum
@@ -21,12 +22,12 @@ menggantikan pemeriksaan runner Node 22. Tidak ada SQL, Supabase, Komerce,
 GitHub Actions remote, atau deployment Vercel yang dijalankan.
 
 Pembaruan storefront terbaru menambahkan navigasi ikon, berbagi produk, tombol
-WhatsApp kontekstual, metode pembayaran aktif pada footer, cerita brand dari
-artikel admin, serta gaya konsisten pada seluruh dropdown toko dan backoffice.
-Assertion source menjaga fitur tersebut terhubung dengan data Admin dan styling
-select tetap aksesibel. Tes, strict typecheck, build production, pemeriksaan import,
-dan git diff check telah berhasil. Browser belum dapat menguji render data toko
-karena environment Supabase lokal tidak dikonfigurasi.
+WhatsApp kontekstual, metode pembayaran aktif pada footer, serta cerita brand dari
+artikel admin. Filter Kategori dan Urutkan kini memakai popup kustom dengan navigasi
+keyboard. Assertion source memeriksa integrasi Admin dan struktur aksesibelnya.
+Tes, strict typecheck, build production, pemeriksaan import, dan git diff check telah
+berhasil. Browser belum dapat menguji data katalog langsung karena environment
+Supabase lokal tidak dikonfigurasi.
 
 ## Yang benar-benar dijalankan
 

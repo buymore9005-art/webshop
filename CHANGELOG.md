@@ -11,8 +11,8 @@
 - Footer menampilkan metode pembayaran aktif dari panel Metode bayar serta area
   cerita brand dari artikel terbit terbaru dengan foto sampul. Keduanya dikelola
   melalui menu backoffice yang sudah tersedia.
-- Menyamakan tampilan dropdown native toko dan backoffice dengan chevron minimal,
-  state hover/fokus, serta ukuran yang nyaman disentuh pada layar kecil.
+- Mengganti daftar opsi Kategori dan Urutkan pada katalog dengan menu kustom yang
+  memiliki penanda opsi aktif, animasi halus, dan navigasi keyboard.
 
 ## Fitur pertumbuhan toko
 

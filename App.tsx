@@ -7,6 +7,7 @@ import { getFooterInfo, getMethods, getProduct, getProducts, getPublishedArticle
 import { useResource } from './src/lib/useResource';
 import { useCustomerSession } from './src/lib/useCustomerSession';
 import { Field, Message, Pagination, Photo } from './src/components/UI';
+import { Dropdown } from './src/components/Dropdown';
 import { CartPanel } from './src/shop/CartPanel';
 import { Checkout } from './src/shop/Checkout';
 import { OrderReceipt } from './src/shop/OrderReceipt';
@@ -250,17 +251,17 @@ export default function App() {
               <StoreIcon name="search" />
             </div>
             <Field label="Kategori">
-              <select value={category} onChange={e => filter('category', e.target.value)}>
-                <option value="">Semua kategori</option>
-                {(store?.categories || []).map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
+              <Dropdown label="Kategori" value={category} onChange={value => filter('category', value)} options={[
+                { value: '', label: 'Semua kategori' },
+                ...(store?.categories || []).map(c => ({ value: c, label: c })),
+              ]} />
             </Field>
             <Field label="Urutkan">
-              <select value={sort} onChange={e => filter('sort', e.target.value)}>
-                <option value="newest">Terbaru</option>
-                <option value="price_asc">Harga terendah</option>
-                <option value="price_desc">Harga tertinggi</option>
-              </select>
+              <Dropdown label="Urutkan" value={sort} onChange={value => filter('sort', value)} options={[
+                { value: 'newest', label: 'Terbaru' },
+                { value: 'price_asc', label: 'Harga terendah' },
+                { value: 'price_desc', label: 'Harga tertinggi' },
+              ]} />
             </Field>
           </div>
           <Message error={catalog.error} loading={catalog.loading} />
