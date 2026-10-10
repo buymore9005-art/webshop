@@ -1,4 +1,22 @@
-# CHANGELOG — ZYHA ID 1.1.0
+# CHANGELOG — ZYHA ID 1.2.0
+
+## Fondasi pengiriman provider-neutral
+
+- Menambahkan field berat per produk (gram), dukungan impor CSV, snapshot berat total
+  order, dan input alamat checkout terstruktur: alamat jalan, kecamatan, kota,
+  provinsi, dan kode pos.
+- Menambahkan pengaturan asal gudang di Admin pada tabel yang hanya dapat dibaca/
+  diperbarui Admin melalui RLS; tidak ikut terekspos melalui pengaturan toko publik.
+- Menambahkan schema privat untuk quote tarif dan tabel shipment provider-neutral,
+  termasuk request ID untuk idempotensi; tidak menyimpan API key atau response mentah.
+- Menambahkan kontrak Edge Function untuk tarif, booking, dan label yang belum terikat
+  pada provider tertentu.
+- Menambahkan packing slip HTML yang aman dari injeksi teks pelanggan dan cetak dari
+  detail Pesanan Admin. Dokumen ini bukan label AWB/resi kurir.
+- Ongkir checkout tetap menggunakan flat-rate Admin. Tarif real-time dan pembuatan
+  label otomatis belum aktif; perlu provider, akun, secret Edge, serta adapter nyata.
+- Menambahkan migration aditif `20261012000000_shipping_foundation.sql` dan petunjuk
+  urutan penerapannya untuk project baru maupun existing.
 
 ## Penyempurnaan storefront
 
@@ -28,8 +46,8 @@
 - Menambahkan migration terpisah yang harus dijalankan setelah `supabase-setup.sql`.
   Migration, signup Auto Confirm Email, realtime, asosiasi pesanan dan penukaran kupon
   belum diverifikasi terhadap project Supabase jarak jauh.
-- Tarif otomatis Komerce belum diaktifkan; uji integrasi memerlukan kontrak vendor
-  yang dapat diandalkan, asal gudang, dan berat produk.
+- Tarif kurir otomatis belum diaktifkan; integrasi memerlukan provider terpilih,
+  asal gudang, berat produk, serta implementasi dan pengujian adapter.
 - Menyempurnakan tampilan responsif untuk konten, riwayat akun, dan footer toko.
 
 ## Tindak lanjut audit — 10 Oktober 2026

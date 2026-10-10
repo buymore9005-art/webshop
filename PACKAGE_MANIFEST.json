@@ -1,7 +1,7 @@
 {
     "project":  "ZYHA ID webshop",
-    "version":  "1.1.0",
-    "status":  "Payment integration removed; 67 local tests and production build pass; catalog category and sort use custom accessible dropdowns. Checkout CORS update is not deployed to Supabase. See QA_REPORT.md.",
+    "version":  "1.2.0",
+    "status":  "Shipping groundwork added; 73 local tests and production build pass; provider quote/label APIs and SQL deployment still pending.",
     "files":  [
                   {
                       "path":  ".env.example",
@@ -30,8 +30,8 @@
                   },
                   {
                       "path":  "CHANGELOG.md",
-                      "bytes":  9671,
-                      "sha256":  "7c8d30a11319a517ad6f8b240d2a2ebe2cce624ef28424df030f348c8d09c52c"
+                      "bytes":  10845,
+                      "sha256":  "f9cb881ecccabebac832fffb3b0c23503bf2b13dca02a0cecb2eccc3f094606f"
                   },
                   {
                       "path":  "docs/FILE_MAP.md",
@@ -191,12 +191,12 @@
                   {
                       "path":  "package.json",
                       "bytes":  933,
-                      "sha256":  "62e0c84333f93cda08b9e9b401c5f3f80b4e580e8ca972a379d074f8934069aa"
+                      "sha256":  "f7523943f1184d103f77054ade39f32a9dd57523b284c76a0efe39201c3b7b10"
                   },
                   {
                       "path":  "package-lock.json",
                       "bytes":  99679,
-                      "sha256":  "cdbedaef4e2841d459b2bbc8dee80a900afa024372961843baf1e9c311d616d0"
+                      "sha256":  "6be9c9d0256ee9bd33ce17bf6a9171cba782c85656348847a85af78a36958adc"
                   },
                   {
                       "path":  "postcss.config.cjs",
@@ -205,8 +205,8 @@
                   },
                   {
                       "path":  "QA_REPORT.md",
-                      "bytes":  9654,
-                      "sha256":  "2fe4f418349e6df0dce98a6bfe5bffa229fefe4120028fe0792f2ea73db8e6e6"
+                      "bytes":  10512,
+                      "sha256":  "b41d992a5b483988d5d70fee41c108dfded6451475c261bd76b139bb9178d640"
                   },
                   {
                       "path":  "README.md",
@@ -215,8 +215,8 @@
                   },
                   {
                       "path":  "README_DEPLOYMENT.md",
-                      "bytes":  19702,
-                      "sha256":  "facb2b32994d884d3b50af9a9517ffe56b3abf3e2e67b3aaf344a366643126e4"
+                      "bytes":  23016,
+                      "sha256":  "a0fdb534359ac1cb0de34f13dbc18a426bf226c5fb00f8bb1f0e5fa22fed25cf"
                   },
                   {
                       "path":  "scripts/check-files.cjs",
@@ -255,8 +255,8 @@
                   },
                   {
                       "path":  "src/admin/Orders.tsx",
-                      "bytes":  10099,
-                      "sha256":  "dd0f131dcf8164d0d8e7430d571938009a05359d0e40fa41c2cfbd4523e591f5"
+                      "bytes":  10865,
+                      "sha256":  "23d58d62f620f8c31ff36c21d752ab3a612646134f022b4c52db1e6c6d20d8a0"
                   },
                   {
                       "path":  "src/admin/Payments.tsx",
@@ -265,13 +265,13 @@
                   },
                   {
                       "path":  "src/admin/Products.tsx",
-                      "bytes":  14091,
-                      "sha256":  "c3a864027ff2f2b1cf710a278a6f909bb8591f6734386cc2e489d98ca9fd7763"
+                      "bytes":  14889,
+                      "sha256":  "ea0c2b02e7a6a7aabc9991ad08619f50aa4014553f44aa8ef15a04e50659217b"
                   },
                   {
                       "path":  "src/admin/Settings.tsx",
-                      "bytes":  6402,
-                      "sha256":  "998ff2fc05e2364f07a42d831e6d9c1c36d50a8fbfe2e2f386c53bbdd6f02f53"
+                      "bytes":  9642,
+                      "sha256":  "f75ab49e47123dfb77593dd3cbb1fabbca48aa59bcabba91a4578b1948f21680"
                   },
                   {
                       "path":  "src/components/AdminGate.tsx",
@@ -290,13 +290,13 @@
                   },
                   {
                       "path":  "src/lib/api.ts",
-                      "bytes":  21108,
-                      "sha256":  "3cfe600ea69c7ff13ddaf2f717ec97223629c48a799fa868dc02052f68c5157e"
+                      "bytes":  23003,
+                      "sha256":  "4649d01f98e3cf4adcaaab1b99012c376933717e14c70cb0a4b06afccaa353de"
                   },
                   {
                       "path":  "src/lib/domain.ts",
-                      "bytes":  13672,
-                      "sha256":  "ef1291a026ab68151a0461b1bbe9914bf7af7bed6a8fa9827419762eab9e4c8f"
+                      "bytes":  14640,
+                      "sha256":  "9f83b83639826493cc8fa0b80d9b80d45fdc9bb4a56112bcc058d743063579d2"
                   },
                   {
                       "path":  "src/lib/useCustomerSession.ts",
@@ -315,8 +315,8 @@
                   },
                   {
                       "path":  "src/shop/Checkout.tsx",
-                      "bytes":  7529,
-                      "sha256":  "955d49df1bda08c1d9947cfc3ed7f4df9e07a304953f3899f83607dd6b5a48ce"
+                      "bytes":  8649,
+                      "sha256":  "2a08d6c5fd896362abb6d3e83a5cb6b4e6351401fa0dbc53a3c83a7ef73c854a"
                   },
                   {
                       "path":  "src/shop/CustomerPages.tsx",
@@ -325,8 +325,8 @@
                   },
                   {
                       "path":  "src/shop/OrderReceipt.tsx",
-                      "bytes":  6057,
-                      "sha256":  "51a88b30bc84317c04f25deecd13e510e7005bf6eb8d26ceef14b4f43f8e8105"
+                      "bytes":  6143,
+                      "sha256":  "c0fbd414cb7ba5eeb44590c00d5aadcd4f6ceeca5ecef0c9697c1852baa23a13"
                   },
                   {
                       "path":  "src/shop/payment.ts",
@@ -335,8 +335,8 @@
                   },
                   {
                       "path":  "src/types.ts",
-                      "bytes":  3688,
-                      "sha256":  "88e2746815d5b643ab932d04357a9b9982a32ac6f2f92fb66b19762b83f91a82"
+                      "bytes":  4266,
+                      "sha256":  "86cf8e2c76f075b229908c340f014cde1a46efa4fef8706def9d80de04f207cc"
                   },
                   {
                       "path":  "src/vite-env.d.ts",
@@ -360,8 +360,8 @@
                   },
                   {
                       "path":  "supabase/functions/_shared/validation.ts",
-                      "bytes":  2423,
-                      "sha256":  "fcf6ae64c75001e5dac442f2bacd31899d344c9849315b0506f76c14eb7586ac"
+                      "bytes":  2817,
+                      "sha256":  "8deb57dde5854a91723ee4229300d5900e209a673871a54a8d20599668002a23"
                   },
                   {
                       "path":  "supabase/functions/rapid-api/index.ts",
@@ -390,8 +390,8 @@
                   },
                   {
                       "path":  "supabase-setup.sql",
-                      "bytes":  27496,
-                      "sha256":  "1bd494adf9db8430fc0fed1b9c9dd25e2ff8be42edd99087ed9c09996d46f6b3"
+                      "bytes":  33546,
+                      "sha256":  "db8bf2822a9f0ff455a29e83926b28eb8c566579764e98ead871f2c49a9afb29"
                   },
                   {
                       "path":  "tailwind.config.cjs",
@@ -400,8 +400,8 @@
                   },
                   {
                       "path":  "tests/domain.test.cjs",
-                      "bytes":  5625,
-                      "sha256":  "e8e3975240936e24de4102ddc94bf23a71920ab14e32e97c65629a15626f14ae"
+                      "bytes":  6129,
+                      "sha256":  "e6f529e8a38bdefa1c716b4b0e9dc50434625b341ca995e4536b982c791f124c"
                   },
                   {
                       "path":  "tests/payment.test.cjs",
@@ -410,8 +410,8 @@
                   },
                   {
                       "path":  "tests/source.test.cjs",
-                      "bytes":  7362,
-                      "sha256":  "7f72f13e7ca201908479e805693c2f6ec3eb753b1abbf9d115427759bda968a9"
+                      "bytes":  9231,
+                      "sha256":  "4fa8e3d59b6b2dbadda02623f9c9f5ce002128a1bcc90d4c86913dd465d10cd2"
                   },
                   {
                       "path":  "tsconfig.json",
@@ -425,8 +425,8 @@
                   },
                   {
                       "path":  "tsconfig.test.json",
-                      "bytes":  282,
-                      "sha256":  "e3f1a1b0bdb3ce413615bf9b1e755b02187f2791e9044e6c7c099e9165de970e"
+                      "bytes":  304,
+                      "sha256":  "887fa9d078b51885995ea05887868d73007d8115e264b1488207904ac4b79c1c"
                   },
                   {
                       "path":  "vercel.json",
@@ -437,6 +437,26 @@
                       "path":  "vite.config.ts",
                       "bytes":  173,
                       "sha256":  "206e3729ee0cd625b162453929ea119d863052a091e906d06c0f82c2b51f2830"
+                  },
+                  {
+                      "path":  "src/lib/shipping.ts",
+                      "bytes":  3622,
+                      "sha256":  "0b2c337e10545ef683ca1e1c6c771c8589548d45392d679f2d403bbe6ac2fcfd"
+                  },
+                  {
+                      "path":  "supabase/functions/_shared/shipping.ts",
+                      "bytes":  1631,
+                      "sha256":  "8811b873782fe93cb01acf69452e92beebc272c2cd3c37f7ec49c8e8879c304f"
+                  },
+                  {
+                      "path":  "supabase/migrations/20261012000000_shipping_foundation.sql",
+                      "bytes":  12275,
+                      "sha256":  "e9a9a9f1755e924c5057e38de30a721968f84d43e4cb68c29f6e767d75c05bb9"
+                  },
+                  {
+                      "path":  "tests/shipping.test.cjs",
+                      "bytes":  1198,
+                      "sha256":  "892c1264f9713bdc6b3cd6ef1bb196638f8cd2e7fa97c9ef294efa64a4a37246"
                   }
               ]
 }

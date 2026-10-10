@@ -26,7 +26,7 @@ export function OrderReceipt({ initial, access, settings, customer, onBack }: {
   const method = receipt.payment_snapshot;
   let wa = '';
   if (settings.admin_phone) {
-    const text = [`PESANAN ${receipt.order_number}`, customer ? `Nama: ${customer.name}\nAlamat: ${customer.address}\nWhatsApp: ${customer.phone}` : '', ...receipt.items.map(x => `${x.title}${x.variant ? ' (' + x.variant + ')' : ''} × ${x.quantity}: ${money(x.subtotal)}`), `Ongkir: ${money(receipt.shipping_fee)}`, receipt.coupon_code ? `Kupon ${receipt.coupon_code}: -${money(receipt.discount_amount)}` : '', `Total: ${money(receipt.total_price)}`, `Metode: ${receipt.payment_method}`].filter(Boolean).join('\n');
+    const text = [`PESANAN ${receipt.order_number}`, customer ? `Nama: ${customer.name}\nAlamat: ${customer.address}, ${customer.district}, ${customer.city}, ${customer.province} ${customer.postal_code}\nWhatsApp: ${customer.phone}` : '', ...receipt.items.map(x => `${x.title}${x.variant ? ' (' + x.variant + ')' : ''} × ${x.quantity}: ${money(x.subtotal)}`), `Ongkir: ${money(receipt.shipping_fee)}`, receipt.coupon_code ? `Kupon ${receipt.coupon_code}: -${money(receipt.discount_amount)}` : '', `Total: ${money(receipt.total_price)}`, `Metode: ${receipt.payment_method}`].filter(Boolean).join('\n');
     try {
       wa = whatsappUrl(settings.admin_phone, text);
     }

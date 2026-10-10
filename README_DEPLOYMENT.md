@@ -1,6 +1,6 @@
 # ZYHA ID — panduan setup, deployment, dan operasi
 
-Versi source 1.1.0. Basisnya 14 file webshop yang diunggah, bukan aplikasi produksi.
+Versi source 1.2.0. Basisnya 14 file webshop yang diunggah, bukan aplikasi produksi.
 Seluruh kode di ZIP adalah file lengkap. Tidak ada perubahan langsung ke GitHub,
 Vercel, Supabase lama, atau akun payment provider pengguna.
 
@@ -54,7 +54,8 @@ Objek utama:
 | Objek | Fungsi |
 |---|---|
 | products | Katalog, galeri/varian, status aktif, stok opsional, version concurrency |
-| settings | Nama/banner/kategori/WhatsApp/ongkir |
+| settings | Nama/banner/kategori/WhatsApp/ongkir tetap yang dapat dibaca publik |
+| shipping_origin | Alamat gudang dan kontak pengirim; hanya Admin yang dapat membaca |
 | payment_methods | Bank, E-Wallet, dan QRIS manual |
 | orders | Snapshot harga/item/pembayaran dan status pesanan privat |
 | admin_users | Allowlist Admin yang terhubung auth.users |
@@ -117,9 +118,58 @@ konfigurasi/token/transaksi dihapus, tetapi pesanan dan snapshot metode pembayar
 tetap tersimpan. Project baru juga boleh menjalankannya agar seluruh environment
 menggunakan urutan migration yang sama.
 
-Integrasi tarif kurir Komerce belum diaktifkan karena kontrak endpoint/authentication
-dan format tarif resmi belum dapat diverifikasi. Jangan mengisi tarif seolah-olah
-hasil kurir otomatis; checkout saat ini menggunakan ongkir datar yang diatur Admin.
+### Fondasi ongkir, alamat, dan pengiriman
+
+Jalankan SELURUH file
+`supabase/migrations/20261012000000_shipping_foundation.sql` setelah migration
+penghapusan Midtrans. Untuk project yang sudah menjalankan dua migration itu, file
+shipping ini saja yang perlu dijalankan. Buka Supabase Dashboard > SQL Editor, pilih
+project yang benar, tempel seluruh isi file, lalu Run. File bersifat transaksional
+dan aditif; ia tidak menghapus pesanan. Script ini menambahkan berat produk, alamat
+penerima terstruktur, berat snapshot order, tabel asal gudang privat, tabel kutipan
+tarif privat, serta tabel untuk menyimpan pengiriman/label dari adapter provider kelak.
+Jalankan pada staging dan backup database sebelum menerapkan. Tidak ada SQL yang
+dijalankan pada project Supabase Anda oleh proses pengerjaan ini.
+
+Pada project kosong yang baru dibuat, urutannya:
+1. `supabase-setup.sql`
+2. `supabase/migrations/20261010000000_store_growth.sql`
+3. `supabase/migrations/20261011000000_remove_midtrans.sql`
+4. `supabase/migrations/20261012000000_shipping_foundation.sql`
+
+Pada project yang sudah aktif, JANGAN ulangi setup awal. Jalankan hanya migration
+yang memang belum diterapkan, berurutan; bila migration pertumbuhan dan penghapusan
+Midtrans sudah sukses, jalankan langkah 4 saja.
+
+Setelah migration, Admin > Pengaturan > Pengiriman tetap menggunakan ongkir tetap
+sebagai tarif checkout aktif. Simpan alamat asal/pengirim di panel Alamat asal /
+gudang; tabelnya dilindungi RLS dan tidak dapat dibaca pengunjung toko. Produk >
+Tambah/Ubah produk memiliki berat per unit dalam gram. Produk lama dapat bernilai
+0 (belum diisi); masukkan berat aktual produk, dan pastikan bobot kemasan turut
+diperhitungkan saat provider dipilih. Kolom CSV `weight_grams` opsional; tanpa nilai
+berat tercatat sebagai 0 dan bukan berat hasil tebakan.
+
+Checkout sekarang meminta alamat jalan, kecamatan, kota/kabupaten, provinsi, dan kode
+pos 5 digit. Detail ini disimpan sebagai snapshot order untuk lookup tujuan provider.
+Alamat order lama tetap utuh pada kolom alamat lama; field wilayah lama dibiarkan
+kosong karena tidak aman menebak/mengekstrak lokasi dari teks bebas.
+
+Di Admin > Pesanan, proses manual yang sudah ada tetap tersedia: konfirmasi pembayaran,
+mulai proses, isi kurir dan nomor resi secara manual, lalu tandai dikirim. Tombol
+**Cetak packing slip** mencetak dokumen internal berisi penerima, daftar barang, berat
+produk, serta kurir/resi manual bila sudah ada. Packing slip BUKAN AWB, label kurir,
+bukti booking, atau cetakan resmi shipping provider. Izinkan pop-up bila browser
+memblokir dokumen cetak.
+
+Tarif real-time dan pembuatan label/resi otomatis BELUM aktif sampai provider dipilih
+dan adapter API-nya diimplementasikan. Ongkir checkout saat ini tetap flat-rate; jangan
+anggap tabel quote/shipment atau kontrak TypeScript sebagai koneksi kurir aktif. Kerangka
+provider diletakkan di `supabase/functions/_shared/shipping.ts`; adapter berikutnya
+harus dipanggil hanya dari Edge Function, memvalidasi quote serta order di server, dan
+menyimpan credential sebagai Supabase Edge Function Secret. Jangan pernah menaruh
+credential pada `VITE_*`, tabel publik, atau source code. Nilai wilayah teks belum
+merupakan ID lokasi provider; adapter terpilih harus melakukan lookup/validasi lokasi
+sesuai kontrak provider.
 
 ## 4. Konfigurasi Auth dan environment frontend
 
@@ -260,7 +310,8 @@ nomor WhatsApp, ongkos kirim tetap, dan ambang gratis ongkir opsional. Nilai ong
 bukan tarif otomatis kurir atau per kota; pastikan sesuai wilayah layanan toko.
 
 Tambahkan produk nyata: nama, harga integer Rupiah, deskripsi, kategori, foto maksimal
-5, variasi maksimal 30, serta stok. Foto JPG/PNG/WebP maksimal 5 MB per file. Bucket
+5, variasi maksimal 30, stok, dan berat per unit dalam gram. Isi berat aktual; berat
+0 berarti belum disiapkan untuk tarif kurir. Foto JPG/PNG/WebP maksimal 5 MB per file. Bucket
 berisi gambar publik; jangan unggah KTP, bukti transfer, atau dokumen privat ke sana.
 Menghapus gambar dari galeri tidak otomatis menghapus objek Storage karena objek lama
 mungkin masih dibutuhkan referensi pesanan. Pembersihan Storage dilakukan terpisah

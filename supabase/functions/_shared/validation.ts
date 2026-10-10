@@ -25,7 +25,18 @@ export function proof(value: unknown): string {
 }
 export function checkoutInput(body: Record<string, unknown>) {
     const c = object(body.customer);
-    const customer = { name: string(c.name, 'Nama', 2, 120), address: string(c.address, 'Alamat', 10, 1000), phone: string(c.phone, 'WhatsApp', 10, 15), note: string(c.note ?? '', 'Catatan', 0, 500) };
+    const customer = {
+        name: string(c.name, 'Nama', 2, 120),
+        address: string(c.address, 'Alamat jalan', 10, 500),
+        district: string(c.district, 'Kecamatan', 2, 100),
+        city: string(c.city, 'Kota/Kabupaten', 2, 100),
+        province: string(c.province, 'Provinsi', 2, 100),
+        postal_code: string(c.postal_code, 'Kode pos', 5, 5),
+        phone: string(c.phone, 'WhatsApp', 10, 15),
+        note: string(c.note ?? '', 'Catatan', 0, 500),
+    };
+    if (!/^\d{5}$/.test(customer.postal_code))
+        throw new HttpError(400, 'Kode pos tidak valid.');
     if (!/^62\d{8,13}$/.test(customer.phone))
         throw new HttpError(400, 'Nomor WhatsApp tidak valid.');
     if (!Array.isArray(body.items) || body.items.length < 1 || body.items.length > 50)

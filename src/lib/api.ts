@@ -1,6 +1,6 @@
 import { client, projectStorageKey } from '../../supabaseClient';
-import type { Article, CartLine, Coupon, Customer, FooterInfo, OrderAccess, Order, Product, Settings, PaymentMethod, Receipt, Summary } from '../types';
-import { articleSlug, checkoutItems, validateCustomer, safeFooterHref, safeImageUrl, csvCell, errorMessage, serializeOrderAccessBackup } from './domain';
+import type { Article, CartLine, Coupon, Customer, FooterInfo, OrderAccess, Order, Product, Settings, ShippingOrigin, PaymentMethod, Receipt, Summary } from '../types';
+import { articleSlug, checkoutItems, validateCustomer, safeFooterHref, safeImageUrl, csvCell, errorMessage, serializeOrderAccessBackup, normalizePhone } from './domain';
 import type { ProductImportRow } from './domain';
 export interface CatalogFilter {
     page: number;
@@ -9,8 +9,8 @@ export interface CatalogFilter {
     sort: string;
     admin?: boolean;
 }
-const PRODUCT_FIELDS = 'id,title,price,description,category,image_url,images,variants,stock,is_active,version,created_at,updated_at';
-const ORDER_FIELDS = 'id,order_number,items,subtotal,shipping_fee,coupon_code,discount_amount,total_price,status,payment_method,payment_snapshot,fulfillment_status,tracking_number,carrier,created_at,customer_name,customer_phone,customer_address,customer_note,version,updated_at';
+const PRODUCT_FIELDS = 'id,title,price,description,category,image_url,images,variants,stock,weight_grams,is_active,version,created_at,updated_at';
+const ORDER_FIELDS = 'id,order_number,items,subtotal,shipping_fee,shipping_quote_id,coupon_code,discount_amount,total_price,status,payment_method,payment_snapshot,fulfillment_status,tracking_number,carrier,created_at,customer_name,customer_phone,customer_address,customer_district,customer_city,customer_province,customer_postal_code,total_weight_grams,customer_note,version,updated_at';
 const ARTICLE_FIELDS = 'id,slug,title,excerpt,body,cover_image_url,status,published_at,created_at,updated_at';
 export async function getProducts(filter: CatalogFilter, signal?: AbortSignal) {
     let q = client().from('products').select(PRODUCT_FIELDS, { count: 'exact' });
@@ -34,6 +34,8 @@ export async function getProduct(id: string) { const { data, error } = await cli
     throw error; return data as Product | null; }
 export async function getSettings() { const { data, error } = await client().from('settings').select('*').eq('id', 1).single(); if (error)
     throw error; return data as Settings; }
+export async function getShippingOrigin() { const { data, error } = await client().from('shipping_origin').select('*').eq('id', 1).single(); if (error)
+    throw error; return data as ShippingOrigin; }
 export async function getMethods(admin = false) { let q = client().from('payment_methods').select('*').order('sort_order').order('name'); if (!admin)
     q = q.eq('is_active', true); const { data, error } = await q; if (error)
     throw error; return ((data || []) as PaymentMethod[]).filter(method => ['Bank', 'E-Wallet', 'QRIS'].includes(method.type)); }
@@ -245,11 +247,13 @@ export async function loadReceipt(access: OrderAccess) { const x = await shopAct
     receipt: Receipt;
 }>({ ...access, action: 'receipt' }); return x.receipt; }
 export async function saveProduct(value: Partial<Product>, original?: Product) {
-    const payload = { title: value.title?.trim(), description: value.description?.trim() || '', category: value.category?.trim() || '', price: Number(value.price), stock: value.stock === null ? null : Number(value.stock), image_url: value.image_url || '', images: value.images || [], variants: (value.variants || []).map(v => ({ name: v.name.trim(), image: v.image.trim() })), is_active: value.is_active ?? true };
+    const payload = { title: value.title?.trim(), description: value.description?.trim() || '', category: value.category?.trim() || '', price: Number(value.price), stock: value.stock === null ? null : Number(value.stock), weight_grams: Number(value.weight_grams), image_url: value.image_url || '', images: value.images || [], variants: (value.variants || []).map(v => ({ name: v.name.trim(), image: v.image.trim() })), is_active: value.is_active ?? true };
     if (!payload.title || !Number.isSafeInteger(payload.price) || payload.price < 1 || payload.price > 1e9)
         throw new Error('Nama dan harga produk tidak valid.');
     if (payload.stock !== null && (!Number.isInteger(payload.stock) || payload.stock < 0))
         throw new Error('Stok harus bilangan bulat nonnegatif.');
+    if (!Number.isSafeInteger(payload.weight_grams) || payload.weight_grams < 0 || payload.weight_grams > 100000000)
+        throw new Error('Berat produk harus bilangan bulat 0–100.000.000 gram.');
     const query = original ? client().from('products').update(payload).eq('id', original.id).eq('version', original.version) : client().from('products').insert(payload);
     const { data, error } = await query.select(PRODUCT_FIELDS).maybeSingle();
     if (error)
@@ -270,6 +274,7 @@ export async function importProducts(products: ProductImportRow[]) {
         images: [] as string[],
         variants: [] as Product['variants'],
         stock: product.stock,
+        weight_grams: product.weight_grams,
         is_active: product.is_active,
     }));
     const { data, error } = await client().from('products').insert(rows).select('id');
@@ -285,6 +290,26 @@ export async function saveSettings(payload: Partial<Settings>, expected?: string
     q = q.eq('updated_at', expected); const { data, error } = await q.select('*').maybeSingle(); if (error)
     throw error; if (!data)
     throw new Error('Pengaturan telah diubah. Muat ulang terlebih dahulu.'); return data as Settings; }
+export async function saveShippingOrigin(value: ShippingOrigin, expected?: string) {
+    const phone = value.phone.trim() ? normalizePhone(value.phone) : '';
+    const payload = {
+        name: value.name.trim(), phone, address: value.address.trim(), district: value.district.trim(),
+        city: value.city.trim(), province: value.province.trim(), postal_code: value.postal_code.trim(),
+    };
+    if (payload.name.length > 120 || payload.address.length > 500 ||
+        [payload.district, payload.city, payload.province].some(part => part.length > 100) ||
+        (payload.postal_code !== '' && !/^\d{5}$/.test(payload.postal_code)))
+        throw new Error('Data alamat asal gudang tidak valid.');
+    let query = client().from('shipping_origin').update(payload).eq('id', 1);
+    if (expected)
+        query = query.eq('updated_at', expected);
+    const { data, error } = await query.select('*').maybeSingle();
+    if (error)
+        throw error;
+    if (!data)
+        throw new Error('Alamat gudang berubah. Muat ulang sebelum menyimpan.');
+    return data as ShippingOrigin;
+}
 export async function uploadImage(file: File, prefix: string) {
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024 || file.size === 0)
         throw new Error('Gunakan JPG, PNG, atau WebP maksimal 5 MB.');
@@ -334,7 +359,7 @@ export async function getSummary(start = '', end = '') {
 export function exportOrderPage(rows: Order[]) {
     if (!rows.length)
         throw new Error('Tidak ada pesanan untuk diekspor.');
-    const data = [['Nomor', 'Tanggal', 'Nama', 'WhatsApp', 'Alamat', 'Pembayaran', 'Status', 'Pengiriman', 'Total', 'Resi'], ...rows.map(r => [r.order_number, r.created_at, r.customer_name, r.customer_phone, r.customer_address, r.payment_method, r.status, r.fulfillment_status, r.total_price, r.tracking_number])];
+    const data = [['Nomor', 'Tanggal', 'Nama', 'WhatsApp', 'Alamat jalan', 'Kecamatan', 'Kota/Kabupaten', 'Provinsi', 'Kode pos', 'Pembayaran', 'Status', 'Pengiriman', 'Total', 'Resi'], ...rows.map(r => [r.order_number, r.created_at, r.customer_name, r.customer_phone, r.customer_address, r.customer_district, r.customer_city, r.customer_province, r.customer_postal_code, r.payment_method, r.status, r.fulfillment_status, r.total_price, r.tracking_number])];
     const url = URL.createObjectURL(new Blob(['\uFEFF' + data.map(row => row.map(csvCell).join(',')).join('\r\n')], { type: 'text/csv;charset=utf-8' }));
     const link = document.createElement('a');
     link.href = url;

@@ -1,7 +1,7 @@
 import type { FormEvent } from 'react';
 import { useEffect, useState } from 'react';
-import type { Settings as SettingsType } from '../types';
-import { getSettings, saveSettings, uploadImage } from '../lib/api';
+import type { Settings as SettingsType, ShippingOrigin } from '../types';
+import { getSettings, getShippingOrigin, saveSettings, saveShippingOrigin, uploadImage } from '../lib/api';
 import { errorMessage, normalizePhone } from '../lib/domain';
 import { useResource } from '../lib/useResource';
 import { Field, Message, Photo } from '../components/UI';
@@ -9,11 +9,17 @@ export default function Settings({ whatsappOnly = false }: {
   whatsappOnly?: boolean;
 }) {
   const result = useResource('settings-admin:' + whatsappOnly, () => getSettings());
+  const originResult = useResource('shipping-origin-admin:' + whatsappOnly, () => getShippingOrigin());
   const [draft, setDraft] = useState<SettingsType | null>(null), [newCategory, setNewCategory] = useState(''), [error, setError] = useState(''), [message, setMessage] = useState(''), [busy, setBusy] = useState(false);
+  const [originDraft, setOriginDraft] = useState<ShippingOrigin | null>(null);
   useEffect(() => {
     if (result.data)
       setDraft(result.data);
   }, [result.data]);
+  useEffect(() => {
+    if (originResult.data)
+      setOriginDraft(originResult.data);
+  }, [originResult.data]);
   async function save(event: FormEvent) {
     event.preventDefault();
     if (!draft || busy)
@@ -23,9 +29,30 @@ export default function Settings({ whatsappOnly = false }: {
     setMessage('');
     try {
       const admin_phone = draft.admin_phone.trim() ? normalizePhone(draft.admin_phone) : '';
-      const payload = whatsappOnly ? { admin_phone } : { store_name: draft.store_name.trim(), banner_url: draft.banner_url, hero_title: draft.hero_title.trim(), store_notice: draft.store_notice.trim(), categories: draft.categories, admin_phone, shipping_fee: Number(draft.shipping_fee), free_shipping_min: draft.free_shipping_min === null ? null : Number(draft.free_shipping_min) };
+      const payload = whatsappOnly ? { admin_phone } : {
+        store_name: draft.store_name.trim(), banner_url: draft.banner_url, hero_title: draft.hero_title.trim(),
+        store_notice: draft.store_notice.trim(), categories: draft.categories, admin_phone,
+        shipping_fee: Number(draft.shipping_fee), free_shipping_min: draft.free_shipping_min === null ? null : Number(draft.free_shipping_min),
+      };
       setDraft(await saveSettings(payload, draft.updated_at));
       setMessage('Pengaturan berhasil disimpan.');
+    }
+    catch (e) {
+      setError(errorMessage(e));
+    }
+    finally {
+      setBusy(false);
+    }
+  }
+  async function saveOrigin() {
+    if (!originDraft || busy)
+      return;
+    setBusy(true);
+    setError('');
+    setMessage('');
+    try {
+      setOriginDraft(await saveShippingOrigin(originDraft, originDraft.updated_at));
+      setMessage('Alamat asal gudang berhasil disimpan.');
     }
     catch (e) {
       setError(errorMessage(e));
@@ -107,6 +134,7 @@ export default function Settings({ whatsappOnly = false }: {
         </div>
         <div className="panel stack">
           <h2>Pengiriman</h2>
+          <p className="muted">Saat ini checkout memakai ongkir tetap di bawah. Data asal gudang disiapkan untuk integrasi kurir; penghitungan tarif dan label otomatis belum aktif sampai provider dipilih dan dikonfigurasi.</p>
           <div className="form-grid">
             <Field label="Ongkos kirim tetap (Rp)">
               <input required type="number" min={0} max={1000000000} step={1} value={draft.shipping_fee} onChange={e => setDraft({ ...draft, shipping_fee: Number(e.target.value) })} />
@@ -116,6 +144,37 @@ export default function Settings({ whatsappOnly = false }: {
             </Field>
           </div>
         </div>
+        <section className="panel stack">
+          <h2>Alamat asal / gudang</h2>
+          <p className="muted">Hanya Admin yang dapat membaca alamat ini; data gudang tidak disimpan di pengaturan publik toko.</p>
+          <Message error={originResult.error} loading={originResult.loading} />
+          {originDraft && <>
+            <div className="form-grid">
+              <Field label="Nama pengirim">
+                <input maxLength={120} value={originDraft.name} onChange={e => setOriginDraft({ ...originDraft, name: e.target.value })} />
+              </Field>
+              <Field label="Telepon pengirim">
+                <input type="tel" maxLength={20} value={originDraft.phone} onChange={e => setOriginDraft({ ...originDraft, phone: e.target.value })} />
+              </Field>
+              <Field label="Alamat jalan gudang">
+                <input maxLength={500} value={originDraft.address} onChange={e => setOriginDraft({ ...originDraft, address: e.target.value })} />
+              </Field>
+              <Field label="Kecamatan gudang">
+                <input maxLength={100} value={originDraft.district} onChange={e => setOriginDraft({ ...originDraft, district: e.target.value })} />
+              </Field>
+              <Field label="Kota/Kabupaten gudang">
+                <input maxLength={100} value={originDraft.city} onChange={e => setOriginDraft({ ...originDraft, city: e.target.value })} />
+              </Field>
+              <Field label="Provinsi gudang">
+                <input maxLength={100} value={originDraft.province} onChange={e => setOriginDraft({ ...originDraft, province: e.target.value })} />
+              </Field>
+              <Field label="Kode pos gudang">
+                <input inputMode="numeric" pattern="[0-9]{5}" maxLength={5} value={originDraft.postal_code} onChange={e => setOriginDraft({ ...originDraft, postal_code: e.target.value.replace(/\D/g, '').slice(0, 5) })} />
+              </Field>
+            </div>
+            <button type="button" className="button secondary" disabled={busy} onClick={() => void saveOrigin()}>{busy ? 'Menyimpan…' : 'Simpan alamat gudang'}</button>
+          </>}
+        </section>
       </>}
       <Message error={error} success={message} />
       <button className="button" disabled={busy}>

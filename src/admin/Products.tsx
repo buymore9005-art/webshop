@@ -6,8 +6,8 @@ import { errorMessage, money, parseProductCsv } from '../lib/domain';
 import type { ProductImportRow } from '../lib/domain';
 import { useResource } from '../lib/useResource';
 import { Field, Message, Modal, Pagination, Photo } from '../components/UI';
-type Draft = Pick<Product, 'title' | 'price' | 'description' | 'category' | 'image_url' | 'images' | 'variants' | 'stock' | 'is_active'>;
-const blank = (): Draft => ({ title: '', price: 0, description: '', category: '', image_url: '', images: [], variants: [], stock: null, is_active: true });
+type Draft = Pick<Product, 'title' | 'price' | 'description' | 'category' | 'image_url' | 'images' | 'variants' | 'stock' | 'weight_grams' | 'is_active'>;
+const blank = (): Draft => ({ title: '', price: 0, description: '', category: '', image_url: '', images: [], variants: [], stock: null, weight_grams: 0, is_active: true });
 export default function Products() {
   const [page, setPage] = useState(0), [search, setSearch] = useState(''), [revision, setRevision] = useState(0);
   const result = useResource(JSON.stringify([page, search, revision]), s => getProducts({ page, search, category: '', sort: 'newest', admin: true }, s));
@@ -15,7 +15,7 @@ export default function Products() {
   const [open, setOpen] = useState(false), [original, setOriginal] = useState<Product | undefined>(), [draft, setDraft] = useState<Draft>(blank);
   const [busy, setBusy] = useState(false), [uploading, setUploading] = useState(false), [error, setError] = useState(''), [message, setMessage] = useState('');
   const [showImport, setShowImport] = useState(false), [importRows, setImportRows] = useState<ProductImportRow[]>([]);
-  function edit(p?: Product) { setOriginal(p); setDraft(p ? { title: p.title, price: p.price, description: p.description, category: p.category, image_url: p.image_url, images: [...(p.images || [])], variants: (p.variants || []).map(v => ({ ...v })), stock: p.stock, is_active: p.is_active } : blank()); setOpen(true); setError(''); }
+  function edit(p?: Product) { setOriginal(p); setDraft(p ? { title: p.title, price: p.price, description: p.description, category: p.category, image_url: p.image_url, images: [...(p.images || [])], variants: (p.variants || []).map(v => ({ ...v })), stock: p.stock, weight_grams: p.weight_grams || 0, is_active: p.is_active } : blank()); setOpen(true); setError(''); }
   async function upload(files: FileList | null, variantIndex?: number) {
     if (!files?.length || uploading)
       return;
@@ -102,7 +102,7 @@ export default function Products() {
     }
   }
   function downloadTemplate() {
-    const csv = '\uFEFFtitle,price,description,category,image_url,stock,is_active\r\nTas contoh,125000,"Deskripsi produk",Tas,,10,true\r\n';
+    const csv = '\uFEFFtitle,price,description,category,image_url,stock,weight_grams,is_active\r\nTas contoh,125000,"Deskripsi produk",Tas,,10,500,true\r\n';
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
     const link = document.createElement('a');
     link.href = url;
@@ -125,15 +125,15 @@ export default function Products() {
     <Message error={open ? '' : error || result.error} success={message} loading={result.loading} />
     {showImport && <section className="panel stack">
       <div><h2>Impor produk dari CSV</h2><p className="muted">Maksimal 250 produk dan 1 MB per file. Harga dalam Rupiah. Seluruh baris divalidasi sebelum dikirim sebagai satu operasi database.</p></div>
-      <p className="import-format"><code>title,price,description,category,image_url,stock,is_active</code><br />Kolom wajib: title, price. Kolom opsional: description, category, image_url, stock, is_active. Stok kosong berarti tidak dibatasi; URL gambar harus HTTPS. Teks berkoma/baris baru harus dibungkus tanda kutip CSV. Impor menambahkan produk baru tanpa foto galeri atau varian.</p>
+      <p className="import-format"><code>title,price,description,category,image_url,stock,weight_grams,is_active</code><br />Kolom wajib: title, price. Kolom opsional: description, category, image_url, stock, weight_grams, is_active. Masukkan berat satu produk dalam gram (0 = belum diisi; isi berat aktual sebelum integrasi tarif kurir). Stok kosong berarti tidak dibatasi; URL gambar harus HTTPS. Teks berkoma/baris baru harus dibungkus tanda kutip CSV. Impor menambahkan produk baru tanpa foto galeri atau varian.</p>
       <button type="button" className="text-button" onClick={downloadTemplate}>Unduh template CSV</button>
       <Field label="Pilih file CSV">
         <input type="file" accept=".csv,text/csv" disabled={busy} onChange={event => { void stageImport(event.target.files?.[0]); event.target.value = ''; }} />
       </Field>
       {!!importRows.length && <>
         <p role="status">{importRows.length} produk valid; pratinjau maksimal 10 baris.</p>
-        <div className="table-wrap"><table className="data-table"><thead><tr><th>Nama produk</th><th>Harga</th><th>Kategori</th><th>Stok</th></tr></thead><tbody>
-          {importRows.slice(0, 10).map((row, index) => <tr key={index}><td data-label="Nama produk">{row.title}</td><td data-label="Harga">{money(row.price)}</td><td data-label="Kategori">{row.category || 'Tanpa kategori'}</td><td data-label="Stok">{row.stock === null ? 'Tidak dibatasi' : row.stock}</td></tr>)}
+        <div className="table-wrap"><table className="data-table"><thead><tr><th>Nama produk</th><th>Harga</th><th>Kategori</th><th>Stok</th><th>Berat (g)</th></tr></thead><tbody>
+          {importRows.slice(0, 10).map((row, index) => <tr key={index}><td data-label="Nama produk">{row.title}</td><td data-label="Harga">{money(row.price)}</td><td data-label="Kategori">{row.category || 'Tanpa kategori'}</td><td data-label="Stok">{row.stock === null ? 'Tidak dibatasi' : row.stock}</td><td data-label="Berat (g)">{row.weight_grams || 'Belum diisi'}</td></tr>)}
         </tbody></table></div>
         <button className="button" disabled={busy} onClick={() => void runImport()}>{busy ? 'Mengimpor…' : `Impor ${importRows.length} produk`}</button>
       </>}
@@ -149,7 +149,7 @@ export default function Products() {
           <tr>
             <th>Produk</th>
             <th>Kategori / varian</th>
-            <th>Harga / stok</th>
+            <th>Harga / stok / berat</th>
             <th>Status</th>
             <th>Aksi</th>
           </tr>
@@ -175,6 +175,7 @@ export default function Products() {
               <small>
                 {p.stock === null ? 'Stok tidak dibatasi' : 'Stok tersedia: ' + p.stock}
               </small>
+              <small>Berat: {p.weight_grams ? `${p.weight_grams} g` : 'Belum diisi'}</small>
             </td>
             <td data-label="Status">
               <span className={'status ' + (p.is_active ? 'paid' : 'cancelled')}>
@@ -217,6 +218,9 @@ export default function Products() {
           </Field>
           <Field label="Stok tersedia" hint="Kosong = tidak dibatasi. Stok berkurang saat pesanan dibuat, termasuk pesanan menunggu pembayaran.">
             <input type="number" min={0} step={1} max={100000000} value={draft.stock ?? ''} onChange={e => setDraft({ ...draft, stock: e.target.value === '' ? null : Number(e.target.value) })} />
+          </Field>
+          <Field label="Berat satu produk (gram)" hint="Masukkan berat aktual. 0 berarti belum diketahui dan tidak dapat dipakai untuk menghitung tarif kurir.">
+            <input required type="number" min={0} max={100000000} step={1} value={draft.weight_grams} onChange={e => setDraft({ ...draft, weight_grams: e.target.value === '' ? 0 : Number(e.target.value) })} />
           </Field>
         </div>
         <Field label="Deskripsi">

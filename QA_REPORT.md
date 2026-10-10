@@ -1,10 +1,10 @@
-# QA — ZYHA ID webshop 1.1.0
+# QA — ZYHA ID webshop 1.2.0
 
 Tanggal laporan: 10 Oktober 2026. Basis: 14 file webshop yang diunggah di percakapan.
 
 **Status: fitur toko, tes, typecheck, dan build lokal lulus. Ini belum berarti
 release production tervalidasi: migration SQL/RLS, Auth/Realtime, Edge Functions,
-Komerce, GitHub CI, Vercel, dan pembayaran live belum diuji.**
+provider shipping, GitHub CI, Vercel, dan pembayaran live belum diuji.**
 
 ## Validasi terbaru — 10 Oktober 2026
 
@@ -14,11 +14,12 @@ kupon, dan impor massal, `node scripts/run-tests.cjs`, `npm run typecheck`,
 `npm run build`, dan `node scripts/check-files.cjs` kembali berhasil. Setelah penghapusan integrasi pembayaran otomatis, `node scripts/run-tests.cjs`,
 `npm run build`, dan `node scripts/check-files.cjs` lulus kembali. Pengujian terakhir
 setelah dropdown Kategori/Urutkan menjadi menu kustom meliputi 67 tes, build,
-dan pemeriksaan file/import.
+dan pemeriksaan file/import. Shipping groundwork kemudian melewati 73 tes, strict
+typecheck dan production build lokal; migration PostgreSQL tidak dieksekusi.
 Build mencakup
 strict typecheck dan Vite production bundle. Lingkungan ini memakai Node 24.14.0/npm
 11.11.0, sedangkan project dan workflow CI menetapkan Node 22; hasil ini belum
-menggantikan pemeriksaan runner Node 22. Tidak ada SQL, Supabase, Komerce,
+menggantikan pemeriksaan runner Node 22. Tidak ada SQL, Supabase, shipping provider,
 GitHub Actions remote, atau deployment Vercel yang dijalankan.
 
 Pembaruan storefront terbaru menambahkan navigasi ikon, berbagi produk, tombol
@@ -33,7 +34,7 @@ Supabase lokal tidak dikonfigurasi.
 
 | Pemeriksaan | Hasil | Bukti dan cakupan |
 |---|---|---|
-| Unit domain/checkout/pembayaran manual + assertion source | 67 tes lulus setelah pembaruan storefront | Pure TS dikompilasi dan dieksekusi dengan Node; assertion source bukan transaksi DB. |
+| Unit domain/checkout/shipping/pembayaran manual + assertion source | 73 tes lulus setelah shipping groundwork | Pure TS dikompilasi dan dieksekusi dengan Node; assertion source bukan transaksi DB. |
 | Syntax TypeScript | 25 file, 0 parse error | docs/qa/syntax.json; TypeScript5.8.3 aktual. Tidak menggantikan pemeriksaan tipe penuh |
 | Kelengkapan/import lokal | 15 file wajib, 25source, 71import relatif lulus | docs/qa/imports.log; jalur relatif nyata, bukan declaration shim |
 | Layout CSS browser | 25/25 fixture lulus | docs/qa/mobile-layout.json; Chromium, lebar320/360/390/768/1440 |
@@ -42,7 +43,7 @@ Supabase lokal tidak dikonfigurasi.
 | Full typecheck | Lulus | `npm run build` menjalankan strict frontend dan Vite config typecheck sebelum bundling |
 | `npm run build` | Lulus | Strict typecheck dan Vite production bundle setelah integrasi pembayaran otomatis dihapus |
 | Impor CSV / kupon / akun di Supabase | BELUM DIEKSEKUSI LIVE | Tes lokal validasi domain/kontrak; tidak ada import/query aktual ke Supabase |
-| Kontrak API Komerce | BELUM DIINTEGRASIKAN | Tidak ada kunci vendor; docs host tidak tersedia dan detail integrasi belum diverifikasi dalam akun merchant |
+| API tarif / booking / label kurir | BELUM DIINTEGRASIKAN | Provider belum dipilih; interface saja tersedia, tidak ada API key atau request provider |
 | SQL/RLS/trigger/functions di PostgreSQL | BELUM DIEKSEKUSI | Tidak ada PostgreSQL/Supabase staging yang terotorisasi di lingkungan ini |
 | Edge Deno deploy/typecheck dan CORS live | BELUM DIUJI LIVE | Header CORS `x-supabase-api-version` sudah ditambahkan; belum dideploy ke Supabase project pengguna |
 | Semua halaman React dengan data Supabase | BELUM DIUJI END-TO-END | Fixture layout bukan aplikasi React terhubung |
@@ -51,6 +52,17 @@ Supabase lokal tidak dikonfigurasi.
 Runtime validasi terbaru: Node24.14.0, npm11.11.0; workflow ditetapkan ke Node22.
 Tes unit tidak memalsukan paket React/Vite/Supabase atau menonaktifkan strict agar
 terlihat lulus.
+
+## Shipping groundwork
+
+Checkout/Admin sekarang menggunakan alamat penerima terstruktur; Admin dapat
+menyimpan alamat gudang dengan RLS admin-only, mengelola berat gram produk, dan
+mencetak packing slip yang escaping data pembeli. Ongkir tetap flat-rate dan nomor
+resi/kurir tetap dapat dicatat manual. Shipping quote dan shipment tables, serta
+provider interface hanya merupakan schema/kontrak; tidak ada API kurir yang dipanggil,
+AWB yang dibuat, SQL yang diterapkan, atau Supabase/Vercel deployment yang dilakukan.
+Migration baru belum diuji pada PostgreSQL/Supabase staging. Verifikasi otomatis lokal
+meliputi test suite, strict typecheck, build, dan pemeriksaan import setelah perubahan.
 
 `docs/qa/partial-diagnostics.json`, `docs/qa/install.log`, `docs/qa/typecheck.log`,
 `docs/qa/build.log`, dan `docs/qa/tests.log` mencatat pemeriksaan pada iterasi
@@ -120,8 +132,8 @@ harus diuji sebelum penggunaan nyata. Tidak menambahkan cron expiry fiktif.
 3. Deploy Edge Functions dan uji request checkout, idempotency, stock concurrency,privasi receipt.
 4. Uji akun Admin/anon/non-Admin, recovery, logout, perubahan izin, galeri, CSV, semua form.
 5. Uji pembayaran manual, konfirmasi Admin, pengembalian stok, dan pesanan lama pada Supabase staging.
-6. Minta/konfirmasi spesifikasi tarif Komerce dan uji integrasi sebelum mengaktifkan
-   tarif dinamis; saat ini checkout masih memakai ongkir datar yang diatur Admin.
+6. Pilih provider shipping, verifikasi akses akun/fitur, implementasikan adapter dan
+   uji staging sebelum mengaktifkan tarif dinamis; checkout kini masih flat-rate.
 7. Vercel Preview pada perangkat mobile/desktop; production hanya setelah semua gate lulus.
 
 README_DEPLOYMENT.md berisi urutan setup dan penyimpanan secrets yang tepat. Tidak perlu

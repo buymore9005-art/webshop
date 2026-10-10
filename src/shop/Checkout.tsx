@@ -11,7 +11,7 @@ export function Checkout({ cart, settings, methods, onDone, onBack }: {
   onDone: (receipt: Receipt, access: OrderAccess, customer: Customer) => void;
   onBack: () => void;
 }) {
-  const [customer, setCustomer] = useState<Customer>({ name: '', phone: '', address: '', note: '' });
+  const [customer, setCustomer] = useState<Customer>({ name: '', phone: '', address: '', district: '', city: '', province: '', postal_code: '', note: '' });
   const [payment, setPayment] = useState('');
   const [error, setError] = useState(''), [busy, setBusy] = useState(false);
   const [couponCode, setCouponCode] = useState(''), [couponBusy, setCouponBusy] = useState(false);
@@ -80,9 +80,23 @@ export function Checkout({ cart, settings, methods, onDone, onBack }: {
           <Field label="Nomor WhatsApp" hint="Gunakan nomor Indonesia, misalnya 08… atau 62….">
             <input required type="tel" autoComplete="tel" maxLength={20} value={customer.phone} onChange={e => setCustomer({ ...customer, phone: e.target.value })} />
           </Field>
-          <Field label="Alamat lengkap" hint="Cantumkan jalan, nomor rumah, kelurahan, kecamatan, kota, dan kode pos.">
-            <textarea required autoComplete="street-address" minLength={10} maxLength={1000} rows={4} value={customer.address} onChange={e => setCustomer({ ...customer, address: e.target.value })} />
+          <Field label="Alamat jalan" hint="Jalan, nomor rumah, kelurahan/komplek, dan detail patokan.">
+            <textarea required autoComplete="street-address" minLength={10} maxLength={500} rows={3} value={customer.address} onChange={e => setCustomer({ ...customer, address: e.target.value })} />
           </Field>
+          <div className="form-grid">
+            <Field label="Kecamatan">
+              <input required maxLength={100} autoComplete="address-level3" value={customer.district} onChange={e => setCustomer({ ...customer, district: e.target.value })} />
+            </Field>
+            <Field label="Kota/Kabupaten">
+              <input required maxLength={100} autoComplete="address-level2" value={customer.city} onChange={e => setCustomer({ ...customer, city: e.target.value })} />
+            </Field>
+            <Field label="Provinsi">
+              <input required maxLength={100} autoComplete="address-level1" value={customer.province} onChange={e => setCustomer({ ...customer, province: e.target.value })} />
+            </Field>
+            <Field label="Kode pos">
+              <input required inputMode="numeric" pattern="[0-9]{5}" maxLength={5} autoComplete="postal-code" value={customer.postal_code} onChange={e => setCustomer({ ...customer, postal_code: e.target.value.replace(/\D/g, '').slice(0, 5) })} />
+            </Field>
+          </div>
           <Field label="Catatan pesanan (opsional)">
             <textarea maxLength={500} rows={2} value={customer.note} onChange={e => setCustomer({ ...customer, note: e.target.value })} />
           </Field>
@@ -122,7 +136,7 @@ export function Checkout({ cart, settings, methods, onDone, onBack }: {
           </span>
         </div>
         <div className="split">
-          <span>Ongkos kirim</span>
+          <span>Ongkos kirim tetap</span>
           <span>
             {money(totals.shipping)}
           </span>

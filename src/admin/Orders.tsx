@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { client } from '../../supabaseClient';
 import type { Order } from '../types';
 import { exportOrderPage, getOrders, orderAction } from '../lib/api';
+import { printPackingSlip } from '../lib/shipping';
 import { dateTime, errorMessage, fulfillmentLabels, money, orderLabels } from '../lib/domain';
 import { useResource } from '../lib/useResource';
 import { Field, Message, Modal, Pagination } from '../components/UI';
@@ -36,6 +37,14 @@ export default function Orders() {
   function exportPage() {
     try {
       exportOrderPage(result.data?.rows || []);
+    }
+    function printSlip(order: Order) {
+      try {
+        printPackingSlip(order);
+      }
+      catch (e) {
+        setError(errorMessage(e));
+      }
     }
     catch (e) {
       setError(errorMessage(e));
@@ -132,8 +141,12 @@ export default function Orders() {
           {editing.customer_phone}
         </p>
         <p className="preserve-text">
-          {editing.customer_address}
+          {[
+            editing.customer_address, editing.customer_district, editing.customer_city,
+            editing.customer_province, editing.customer_postal_code,
+          ].filter(Boolean).join('\n')}
         </p>
+        <p><strong>Berat produk:</strong> {editing.total_weight_grams > 0 ? `${editing.total_weight_grams} g` : 'Belum tercatat'} (berat kirim aktual dapat bertambah karena kemasan)</p>
         {editing.customer_note && <p>Catatan: {editing.customer_note}
         </p>}
         <div className="panel stack">
@@ -141,7 +154,7 @@ export default function Orders() {
             <span>
               {item.title}
               <small>
-                {item.variant || 'Tanpa varian'} · {item.quantity} × {money(item.unit_price)}
+                {item.variant || 'Tanpa varian'} · {item.quantity} × {money(item.unit_price)}{item.weight_grams ? ` · ${item.weight_grams} g/unit` : ''}
               </small>
             </span>
             <strong>
@@ -165,6 +178,7 @@ export default function Orders() {
         <p>
           {editing.payment_method} · {orderLabels[editing.status]} · {fulfillmentLabels[editing.fulfillment_status]}
         </p>
+        <button type="button" className="button secondary" onClick={() => printSlip(editing)}>Cetak packing slip</button>
         <form className="stack" onSubmit={save}>
           <Field label="Tindakan">
             <select required value={action} onChange={e => setAction(e.target.value)}>

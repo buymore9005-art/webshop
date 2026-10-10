@@ -15,6 +15,7 @@ export interface Product {
     images: string[];
     variants: Variant[];
     stock: number | null;
+    weight_grams: number;
     is_active: boolean;
     version: number;
     created_at: string;
@@ -30,6 +31,17 @@ export interface Settings {
     admin_phone: string;
     shipping_fee: number;
     free_shipping_min: number | null;
+    updated_at: string;
+}
+export interface ShippingOrigin {
+    id: number;
+    name: string;
+    phone: string;
+    address: string;
+    district: string;
+    city: string;
+    province: string;
+    postal_code: string;
     updated_at: string;
 }
 export interface PaymentMethod {
@@ -91,6 +103,10 @@ export interface CheckoutItem {
 export interface Customer {
     name: string;
     address: string;
+    district: string;
+    city: string;
+    province: string;
+    postal_code: string;
     phone: string;
     note: string;
 }
@@ -104,6 +120,7 @@ export interface OrderItem {
     unit_price: number;
     subtotal: number;
     stock_tracked: boolean;
+    weight_grams?: number;
 }
 export interface Receipt {
     id: string;
@@ -123,9 +140,15 @@ export interface Receipt {
     created_at: string;
 }
 export interface Order extends Receipt {
+    shipping_quote_id?: string | null;
     customer_name: string;
     customer_phone: string;
     customer_address: string;
+    customer_district: string;
+    customer_city: string;
+    customer_province: string;
+    customer_postal_code: string;
+    total_weight_grams: number;
     customer_note: string;
     version: number;
     updated_at: string;
