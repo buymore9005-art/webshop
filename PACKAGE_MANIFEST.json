@@ -410,8 +410,8 @@
     },
     {
       "path": "tests/source.test.cjs",
-      "bytes": 11045,
-      "sha256": "0e82dc7609d975746f86c53eddb7ace3d114482c4d16b97c9e1f5849bab9d6aa"
+      "bytes": 11095,
+      "sha256": "eb649d27be04ef04604687623f35b07583c8a9aa82dcc828d12ad7487c70111a"
     },
     {
       "path": "tsconfig.json",
@@ -460,8 +460,8 @@
     },
     {
       "path": "supabase/migrations/20261013000000_brand_gallery.sql",
-      "bytes": 1958,
-      "sha256": "6776c53cad3ff42186fe9ebbdbb3b31b2c01d3485745ffa62b81340f2f8eab7d"
+      "bytes": 1992,
+      "sha256": "ea239a599d17452987611090887fe3cf753db86e04b6dce1772654bdb529960b"
     }
   ]
 }
