@@ -101,6 +101,9 @@ artikel terbit terbaru yang memiliki foto sampul; kelola sampul, judul, ringkasa
 isi melalui menu “Artikel & footer”. Tautan Bagikan di kartu maupun detail produk
 menggunakan fitur berbagi perangkat, atau menyalin tautan jika fitur berbagi tidak
 tersedia. Nomor dan tombol WhatsApp berasal dari pengaturan WhatsApp Admin.
+Dropdown native pada toko dan backoffice memakai gaya visual bersama, indikator
+chevron, dan fokus keyboard yang jelas; sistem operasi/browser tetap mengendalikan
+tampilan popup opsi yang dibuka.
 Kupon dikelola lewat menu “Kupon”, satu kode per checkout. Sistem menghitung ulang
 diskon dan batas pemakaian di database pada saat checkout, menggunakan hash nomor
 WhatsApp untuk batas per pelanggan. Pembatalan order tidak otomatis mengembalikan

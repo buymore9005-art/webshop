@@ -21,17 +21,18 @@ menggantikan pemeriksaan runner Node 22. Tidak ada SQL, Supabase, Komerce,
 GitHub Actions remote, atau deployment Vercel yang dijalankan.
 
 Pembaruan storefront terbaru menambahkan navigasi ikon, berbagi produk, tombol
-WhatsApp kontekstual, metode pembayaran aktif pada footer, serta cerita brand dari
-artikel admin. Dua assertion source baru menjaga keterhubungan fitur ini dengan data
-Admin. Tes, strict typecheck, build production, pemeriksaan import, dan git diff check
-telah berhasil setelah perubahan tersebut. Browser belum dapat menguji render data
-toko karena environment Supabase lokal tidak dikonfigurasi.
+WhatsApp kontekstual, metode pembayaran aktif pada footer, cerita brand dari
+artikel admin, serta gaya konsisten pada seluruh dropdown toko dan backoffice.
+Assertion source menjaga fitur tersebut terhubung dengan data Admin dan styling
+select tetap aksesibel. Tes, strict typecheck, build production, pemeriksaan import,
+dan git diff check telah berhasil. Browser belum dapat menguji render data toko
+karena environment Supabase lokal tidak dikonfigurasi.
 
 ## Yang benar-benar dijalankan
 
 | Pemeriksaan | Hasil | Bukti dan cakupan |
 |---|---|---|
-| Unit domain/checkout/pembayaran manual + assertion source | 66 tes lulus setelah penambahan storefront | Pure TS dikompilasi dan dieksekusi dengan Node; assertion source bukan transaksi DB. |
+| Unit domain/checkout/pembayaran manual + assertion source | 67 tes lulus setelah pembaruan storefront | Pure TS dikompilasi dan dieksekusi dengan Node; assertion source bukan transaksi DB. |
 | Syntax TypeScript | 25 file, 0 parse error | docs/qa/syntax.json; TypeScript5.8.3 aktual. Tidak menggantikan pemeriksaan tipe penuh |
 | Kelengkapan/import lokal | 15 file wajib, 25source, 71import relatif lulus | docs/qa/imports.log; jalur relatif nyata, bukan declaration shim |
 | Layout CSS browser | 25/25 fixture lulus | docs/qa/mobile-layout.json; Chromium, lebar320/360/390/768/1440 |

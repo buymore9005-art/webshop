@@ -1,7 +1,7 @@
 {
     "project":  "ZYHA ID webshop",
     "version":  "1.1.0",
-    "status":  "Payment integration removed; 66 local tests and production build pass; checkout CORS update is not deployed to Supabase. See QA_REPORT.md.",
+    "status":  "Payment integration removed; 67 local tests and production build pass; checkout CORS update is not deployed to Supabase. See QA_REPORT.md.",
     "files":  [
                   {
                       "path":  ".env.example",
@@ -30,8 +30,8 @@
                   },
                   {
                       "path":  "CHANGELOG.md",
-                      "bytes":  9518,
-                      "sha256":  "22ee92a56db659a95e523f11a2e1eb5ac1476c0dc3db49a50cac669ba850e1ac"
+                      "bytes":  9675,
+                      "sha256":  "b9e1225577f938fef207d5c7e6ad5875a4efae64e8ce464cee5f6de65a2509c7"
                   },
                   {
                       "path":  "docs/FILE_MAP.md",
@@ -170,8 +170,8 @@
                   },
                   {
                       "path":  "index.css",
-                      "bytes":  51222,
-                      "sha256":  "9fc72306129461341adbefa2e0273b0ede3967004d1a83162ad580132d6e89c0"
+                      "bytes":  52394,
+                      "sha256":  "87102059d27c0f173cdf96b07979578b34666e36582e7af0f5f1e92636e620c0"
                   },
                   {
                       "path":  "index.html",
@@ -205,8 +205,8 @@
                   },
                   {
                       "path":  "QA_REPORT.md",
-                      "bytes":  9581,
-                      "sha256":  "3e19af061b9a81b0db62f7e39daa6ab5be7c84ea211365571887a5d4e8f59d8b"
+                      "bytes":  9639,
+                      "sha256":  "5ac9997c9da630e717a901bbc594aa4659c85b5a849bf8d5feb07f32993b8f2a"
                   },
                   {
                       "path":  "README.md",
@@ -215,8 +215,8 @@
                   },
                   {
                       "path":  "README_DEPLOYMENT.md",
-                      "bytes":  19426,
-                      "sha256":  "40bf735d2960a12c58e0307b6609d788a0fd42ddc1c46a5f61b1b7f4d8fb0b3f"
+                      "bytes":  19625,
+                      "sha256":  "cced1898a2fc0a083284c8dded398da3b7b71daf259fce6260d2c04050c12339"
                   },
                   {
                       "path":  "scripts/check-files.cjs",
@@ -405,8 +405,8 @@
                   },
                   {
                       "path":  "tests/source.test.cjs",
-                      "bytes":  6755,
-                      "sha256":  "d64dff82e6944ded330a785bfcfc1fbb0a1b0f75a626216677a1fb07510ef543"
+                      "bytes":  7163,
+                      "sha256":  "1a9c261549702e24f488e4cddcb00774807ebd5116fe8ccbfbf262e9cd87257a"
                   },
                   {
                       "path":  "tsconfig.json",
