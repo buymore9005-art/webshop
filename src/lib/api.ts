@@ -1,5 +1,5 @@
 import { client, projectStorageKey } from '../../supabaseClient';
-import type { Article, CartLine, Coupon, Customer, FooterInfo, OrderAccess, Order, Product, Settings, ShippingOrigin, PaymentMethod, Receipt, Summary } from '../types';
+import type { Article, BrandGalleryImage, CartLine, Coupon, Customer, FooterInfo, OrderAccess, Order, Product, Settings, ShippingOrigin, PaymentMethod, Receipt, Summary } from '../types';
 import { articleSlug, checkoutItems, validateCustomer, safeFooterHref, safeImageUrl, csvCell, errorMessage, serializeOrderAccessBackup, normalizePhone } from './domain';
 import type { ProductImportRow } from './domain';
 export interface CatalogFilter {
@@ -136,6 +136,40 @@ export async function saveFooterInfo(item: Omit<FooterInfo, 'id'>, id?: string) 
 }
 export async function deleteFooterInfo(id: string) {
     const { error } = await client().from('footer_info').delete().eq('id', id);
+    if (error)
+        throw error;
+}
+export async function getBrandGallery() {
+    const { data, error } = await client().from('brand_gallery').select('id,title,caption,image_url,sort_order,is_active,created_at,updated_at').eq('is_active', true).order('sort_order').order('created_at').order('id');
+    if (error)
+        throw error;
+    return (data || []) as BrandGalleryImage[];
+}
+export async function getAdminBrandGallery() {
+    const { data, error } = await client().from('brand_gallery').select('*').order('sort_order').order('created_at').order('id');
+    if (error)
+        throw error;
+    return (data || []) as BrandGalleryImage[];
+}
+export async function saveBrandGalleryImage(item: Omit<BrandGalleryImage, 'id' | 'created_at' | 'updated_at'>, id?: string) {
+    const imageUrl = safeImageUrl(item.image_url);
+    const payload = {
+        title: item.title.trim(),
+        caption: item.caption.trim(),
+        image_url: imageUrl,
+        sort_order: item.sort_order,
+        is_active: item.is_active,
+    };
+    if (payload.title.length < 2 || payload.title.length > 100 || payload.caption.length > 180 || !payload.image_url || !Number.isInteger(payload.sort_order))
+        throw new Error('Isi judul, foto HTTPS, keterangan maksimal 180 karakter, dan urutan yang valid.');
+    const query = id ? client().from('brand_gallery').update(payload).eq('id', id) : client().from('brand_gallery').insert(payload);
+    const { data, error } = await query.select('*').single();
+    if (error)
+        throw error;
+    return data as BrandGalleryImage;
+}
+export async function deleteBrandGalleryImage(id: string) {
+    const { error } = await client().from('brand_gallery').delete().eq('id', id);
     if (error)
         throw error;
 }

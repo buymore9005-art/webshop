@@ -22,13 +22,13 @@ strict typecheck dan Vite production bundle. Lingkungan ini memakai Node 24.14.0
 menggantikan pemeriksaan runner Node 22. Tidak ada SQL, Supabase, shipping provider,
 GitHub Actions remote, atau deployment Vercel yang dijalankan.
 
-Pembaruan storefront terbaru menambahkan navigasi ikon, berbagi produk, tombol
-WhatsApp kontekstual, metode pembayaran aktif pada footer, serta cerita brand dari
-artikel admin. Filter Kategori dan Urutkan kini memakai popup kustom dengan navigasi
-keyboard. Assertion source memeriksa integrasi Admin dan struktur aksesibelnya.
-Tes, strict typecheck, build production, pemeriksaan import, dan git diff check telah
-berhasil. Browser belum dapat menguji data katalog langsung karena environment
-Supabase lokal tidak dikonfigurasi.
+Pembaruan storefront terbaru mengganti cerita brand satu foto dari artikel menjadi
+kolase foto produksi/model/preview produk dari tabel `brand_gallery`. Panel Artikel &
+informasi toko memiliki tab upload/edit/hapus, keterangan, urutan, dan visibilitas.
+Migration RLS `20261013000000_brand_gallery.sql` ditambahkan; belum diterapkan ke
+Supabase. Sebanyak 76 tes, strict typecheck, build production, pemeriksaan import, dan
+git diff check lulus. Browser belum dapat menguji data katalog langsung karena
+environment Supabase lokal tidak dikonfigurasi.
 
 ## Yang benar-benar dijalankan
 

@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { client, projectStorageKey } from './supabaseClient';
 import type { CartLine, Customer, OrderAccess, Product, Receipt } from './src/types';
 import { addCartLine, errorMessage, money, parseCart, parseOrderAccessBackup, setCartQuantity, whatsappUrl } from './src/lib/domain';
-import { getFooterInfo, getMethods, getProduct, getProducts, getPublishedArticles, getSettings, getWishlist, loadReceipt, readOrderAccess, setWishlisted } from './src/lib/api';
+import { getBrandGallery, getFooterInfo, getMethods, getProduct, getProducts, getPublishedArticles, getSettings, getWishlist, loadReceipt, readOrderAccess, setWishlisted } from './src/lib/api';
 import { useResource } from './src/lib/useResource';
 import { useCustomerSession } from './src/lib/useCustomerSession';
 import { Field, Message, Pagination, Photo } from './src/components/UI';
@@ -39,6 +39,7 @@ export default function App() {
   const wishlist = useResource('wishlist:' + (session?.user.id || ''), () => session ? getWishlist() : Promise.resolve([]));
   const articles = useResource('published-articles', getPublishedArticles, 'store-published-articles', true);
   const footer = useResource('footer-info', getFooterInfo, 'store-footer-info', true);
+  const brandGallery = useResource('brand-gallery', getBrandGallery, 'store-brand-gallery', true);
   useEffect(() => {
     try {
       localStorage.setItem(projectStorageKey + 'cart', JSON.stringify(cart));
@@ -52,7 +53,8 @@ export default function App() {
     const userId = session?.user.id;
     let channel = client().channel('zyha-content-' + (userId || 'guest'))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'articles' }, () => { articles.reload(); })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'footer_info' }, () => { footer.reload(); });
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'footer_info' }, () => { footer.reload(); })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'brand_gallery' }, () => { brandGallery.reload(); });
     if (userId)
       channel = channel.on('postgres_changes', { event: '*', schema: 'public', table: 'wishlist_items', filter: 'user_id=eq.' + userId }, () => { wishlist.reload(); });
     channel.subscribe();
@@ -301,20 +303,22 @@ export default function App() {
           <p>Katalog dan pemesanan online.</p>
           {wa && <a className="footer-whatsapp" href={wa} target="_blank" rel="noopener noreferrer" aria-label="Hubungi toko melalui WhatsApp"><StoreIcon name="whatsapp" /><span>WhatsApp</span></a>}
         </div>
-        {(() => {
-          const story = articles.data?.find(article => !!article.cover_image_url);
-          return story ? <button type="button" className="footer-story" onClick={() => navigateArticle(story.slug)} aria-label={'Baca cerita: ' + story.title}>
-            <Photo src={story.cover_image_url} alt="" className="footer-story-image" />
-            <span className="footer-story-copy"><span className="eyebrow">Cerita & proses</span><strong>{story.title}</strong><span>{story.excerpt || 'Kenali lebih dekat cerita di balik koleksi kami.'}</span><span className="footer-story-link">Baca cerita <StoreIcon name="arrow-right" /></span></span>
-          </button> : null;
-        })()}
+        {!!brandGallery.data?.length && <section className="footer-gallery" aria-labelledby="footer-gallery-title">
+          <div className="footer-gallery-heading"><p className="eyebrow">Dari proses ke koleksi</p><h2 id="footer-gallery-title">Di balik karya</h2><p>Potret proses, model, dan detail koleksi kami.</p></div>
+          <div className="footer-gallery-grid">
+            {brandGallery.data.slice(0, 5).map(image => <figure className="footer-gallery-item" key={image.id}>
+              <Photo src={image.image_url} alt={image.title} className="footer-gallery-photo" />
+              {(image.caption || image.title) && <figcaption>{image.caption || image.title}</figcaption>}
+            </figure>)}
+          </div>
+        </section>}
         <div className="footer-info-grid">
           {footer.data?.map(item => <section key={item.id}>
             <h2>{item.href ? <a href={item.href} target={item.href.startsWith('https://') ? '_blank' : undefined} rel={item.href.startsWith('https://') ? 'noopener noreferrer' : undefined}>{item.title}</a> : item.title}</h2>
             {item.content && <p className="preserve-text">{item.content}</p>}
           </section>)}
           {articles.data?.length ? <section><h2>Artikel</h2>{articles.data.slice(0, 5).map(article => <button type="button" className="text-button" key={article.id} onClick={() => navigateArticle(article.slug)}>{article.title}</button>)}<button type="button" className="text-button" onClick={() => navigateArticle()}>Lihat semua artikel</button></section> : null}
-          {(footer.error || articles.error) && <p className="message error">Informasi footer/artikel belum dapat dimuat.</p>}
+          {(footer.error || articles.error || brandGallery.error) && <p className="message error">Informasi footer/artikel belum dapat dimuat.</p>}
         </div>
         {methods.data?.length ? <section className="footer-payments" aria-label="Metode pembayaran tersedia">
           <h2>Metode pembayaran</h2>

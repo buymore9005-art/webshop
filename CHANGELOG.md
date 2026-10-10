@@ -1,5 +1,15 @@
 # CHANGELOG — ZYHA ID 1.2.0
 
+## Kolase foto brand di footer
+
+- Mengganti kartu cerita brand berbasis artikel menjadi kolase foto editorial untuk
+  menampilkan proses produksi, model, dan preview produk.
+- Menambahkan tab “Kolase foto footer” pada panel Artikel & informasi toko untuk
+  upload foto, pratinjau, keterangan, urutan, status tampil, edit, dan hapus.
+- Menambahkan tabel `brand_gallery` dengan RLS publik-baca/Admin-kelola serta
+  sinkronisasi Supabase Realtime melalui migration `20261013000000_brand_gallery.sql`.
+- Kolase storefront responsif menampilkan hingga lima foto aktif dengan urutan terendah.
+
 ## Fondasi pengiriman provider-neutral
 
 - Menambahkan field berat per produk (gram), dukungan impor CSV, snapshot berat total
@@ -26,9 +36,8 @@
   dengan fallback menyalin tautan.
 - Menambahkan tombol WhatsApp berikon pada detail produk dan footer, dengan gaya
   warna netral yang mengikuti tema toko.
-- Footer menampilkan metode pembayaran aktif dari panel Metode bayar serta area
-  cerita brand dari artikel terbit terbaru dengan foto sampul. Keduanya dikelola
-  melalui menu backoffice yang sudah tersedia.
+- Footer menampilkan metode pembayaran aktif dari panel Metode bayar serta kolase foto
+  brand yang dikelola melalui tab khusus pada menu backoffice.
 - Mengganti daftar opsi Kategori dan Urutkan pada katalog dengan menu kustom yang
   memiliki penanda opsi aktif, animasi halus, dan navigasi keyboard.
 

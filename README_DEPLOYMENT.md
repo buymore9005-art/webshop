@@ -98,8 +98,10 @@ tersedia untuk user login dan RLS membatasi datanya ke pemilik akun. Artikel/foo
 dapat diatur pada menu “Artikel & footer” di backoffice; artikel draf tidak publik.
 Footer menampilkan nama dari metode pembayaran aktif yang dikelola pada menu
 “Metode bayar” (tanpa membocorkan nomor rekening). Cerita brand pada footer memakai
-artikel terbit terbaru yang memiliki foto sampul; kelola sampul, judul, ringkasan, dan
-isi melalui menu “Artikel & footer”. Tautan Bagikan di kartu maupun detail produk
+kolase hingga lima foto proses, model, atau preview produk; kelola unggahan, keterangan,
+status tampil, dan urutan foto melalui tab “Kolase foto footer” pada menu “Artikel &
+informasi toko”. Artikel tetap dikelola terpisah dan tidak mengubah kolase. Tautan
+Bagikan di kartu maupun detail produk
 menggunakan fitur berbagi perangkat, atau menyalin tautan jika fitur berbagi tidak
 tersedia. Nomor dan tombol WhatsApp berasal dari pengaturan WhatsApp Admin.
 Filter Kategori dan Urutkan pada katalog memakai menu dropdown kustom dengan opsi
@@ -136,10 +138,13 @@ Pada project kosong yang baru dibuat, urutannya:
 2. `supabase/migrations/20261010000000_store_growth.sql`
 3. `supabase/migrations/20261011000000_remove_midtrans.sql`
 4. `supabase/migrations/20261012000000_shipping_foundation.sql`
+5. `supabase/migrations/20261013000000_brand_gallery.sql`
 
 Pada project yang sudah aktif, JANGAN ulangi setup awal. Jalankan hanya migration
 yang memang belum diterapkan, berurutan; bila migration pertumbuhan dan penghapusan
-Midtrans sudah sukses, jalankan langkah 4 saja.
+Midtrans serta fondasi pengiriman sudah sukses, jalankan langkah 5 untuk kolase foto.
+Migration menambahkan tabel `brand_gallery` dengan RLS: publik hanya membaca foto
+aktif, sedangkan perubahan hanya dapat dilakukan Admin terautentikasi.
 
 Setelah migration, Admin > Pengaturan > Pengiriman tetap menggunakan ongkir tetap
 sebagai tarif checkout aktif. Simpan alamat asal/pengirim di panel Alamat asal /

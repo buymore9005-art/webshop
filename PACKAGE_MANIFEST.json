@@ -1,7 +1,7 @@
 {
   "project": "ZYHA ID webshop",
   "version": "1.2.0",
-  "status": "Public local cache and mobile storefront navigation updated; 76 local tests and production build pass; provider quote/label APIs and SQL deployment still pending.",
+  "status": "Admin-managed production-photo collage added to the storefront footer; 76 local tests and production build pass; Supabase migration still needs deployment.",
   "files": [
     {
       "path": ".env.example",
@@ -25,13 +25,13 @@
     },
     {
       "path": "App.tsx",
-      "bytes": 28254,
-      "sha256": "40112666b9948a73ffb0891f1ecbb2a8163ad868abd74da7978a8c72091eea9c"
+      "bytes": 28572,
+      "sha256": "3092a03ee31ea5324c011b0b1ef566351733424f2a52c94690171d232a8f9231"
     },
     {
       "path": "CHANGELOG.md",
-      "bytes": 10845,
-      "sha256": "f9cb881ecccabebac832fffb3b0c23503bf2b13dca02a0cecb2eccc3f094606f"
+      "bytes": 11388,
+      "sha256": "85a55040d49987b1305a20c92ba5cb53543cde43b85ea0b3592d08f94e8e0c17"
     },
     {
       "path": "docs/FILE_MAP.md",
@@ -170,8 +170,8 @@
     },
     {
       "path": "index.css",
-      "bytes": 56550,
-      "sha256": "f0d7951fa15acb3ee2e93cfde9854f7231c4e62fe62d8c61f946a41dcdd8b9ab"
+      "bytes": 57386,
+      "sha256": "7dbd5927fa6e92e4fad098e63421e5d9563711aa3f8fe4e97909a8c177ceca94"
     },
     {
       "path": "index.html",
@@ -205,8 +205,8 @@
     },
     {
       "path": "QA_REPORT.md",
-      "bytes": 10512,
-      "sha256": "b41d992a5b483988d5d70fee41c108dfded6451475c261bd76b139bb9178d640"
+      "bytes": 10533,
+      "sha256": "0218bf0e97150fa5b91205f5e816c0381d2db908e72cfa59200d1b3caa28a75f"
     },
     {
       "path": "README.md",
@@ -215,8 +215,8 @@
     },
     {
       "path": "README_DEPLOYMENT.md",
-      "bytes": 23534,
-      "sha256": "0a72accf7cad27e03f358e6a4d181b6aa1775bb6b4b59543163d5109902a927e"
+      "bytes": 23918,
+      "sha256": "7283d4b8125befa8f94915634eb6a830ec9206556609a4a20f635f154751555d"
     },
     {
       "path": "scripts/check-files.cjs",
@@ -240,8 +240,8 @@
     },
     {
       "path": "src/admin/Content.tsx",
-      "bytes": 12625,
-      "sha256": "11773b554d0af40461500244a4bc847c28e257810a386b16e541cd2f5d9439f6"
+      "bytes": 18370,
+      "sha256": "4a15c7f12e6f95aeaead5debaa9b891976170613e6538f4e91e52327f5b67665"
     },
     {
       "path": "src/admin/Coupons.tsx",
@@ -290,8 +290,8 @@
     },
     {
       "path": "src/lib/api.ts",
-      "bytes": 23003,
-      "sha256": "4649d01f98e3cf4adcaaab1b99012c376933717e14c70cb0a4b06afccaa353de"
+      "bytes": 24764,
+      "sha256": "67079e3203f405ae1105316bef0ac35f286e928e803617450814777013e2aa97"
     },
     {
       "path": "src/lib/domain.ts",
@@ -335,8 +335,8 @@
     },
     {
       "path": "src/types.ts",
-      "bytes": 4266,
-      "sha256": "86cf8e2c76f075b229908c340f014cde1a46efa4fef8706def9d80de04f207cc"
+      "bytes": 4490,
+      "sha256": "e05e91abfc6f89c76bf6a6df8513ef7cd5a738424ebd7ee0fd39346323bdd09a"
     },
     {
       "path": "src/vite-env.d.ts",
@@ -410,8 +410,8 @@
     },
     {
       "path": "tests/source.test.cjs",
-      "bytes": 10614,
-      "sha256": "84af36548312050e3458f238b2db56a1462fbcce9bdc0d1cdfc60ed9f586fc13"
+      "bytes": 11045,
+      "sha256": "0e82dc7609d975746f86c53eddb7ace3d114482c4d16b97c9e1f5849bab9d6aa"
     },
     {
       "path": "tsconfig.json",
@@ -457,6 +457,11 @@
       "path": "tests/shipping.test.cjs",
       "bytes": 1198,
       "sha256": "892c1264f9713bdc6b3cd6ef1bb196638f8cd2e7fa97c9ef294efa64a4a37246"
+    },
+    {
+      "path": "supabase/migrations/20261013000000_brand_gallery.sql",
+      "bytes": 1958,
+      "sha256": "6776c53cad3ff42186fe9ebbdbb3b31b2c01d3485745ffa62b81340f2f8eab7d"
     }
   ]
 }

@@ -1627,14 +1627,22 @@ meter {
 .storefront .footer-brand-block { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
 .storefront .footer-whatsapp { display: inline-flex; align-items: center; gap: 8px; margin-top: 8px; color: var(--shop-ink); font-size: .82rem; }
 .storefront .footer-whatsapp .store-icon { width: 19px; height: 19px; }
-.storefront .footer-story { display: grid; grid-template-columns: minmax(90px,.8fr) minmax(0,1.2fr); min-width: 0; padding: 0; overflow: hidden; border: 1px solid #e4e9e4; border-radius: 12px; background: #fff; color: var(--shop-ink); text-align: left; transition: border-color .2s ease, transform .2s ease; }
-.storefront .footer-story:hover { border-color: #b7c4bd; transform: translateY(-2px); }
-.storefront .footer-story-image { width: 100%; height: 100%; min-height: 155px; max-height: 220px; object-fit: cover; background: #edf0eb; }
-.storefront .footer-story-copy { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 9px; padding: 16px; min-width: 0; }
-.storefront .footer-story-copy strong { font-size: .98rem; line-height: 1.35; }
-.storefront .footer-story-copy > span:not(.eyebrow):not(.footer-story-link) { color: var(--shop-muted); font-size: .78rem; line-height: 1.55; }
-.storefront .footer-story-link { display: inline-flex; align-items: center; gap: 6px; margin-top: 3px; color: var(--shop-ink); font-size: .75rem; font-weight: 650; }
-.storefront .footer-story-link .store-icon { width: 15px; height: 15px; }
+.storefront .footer-gallery { grid-column: 2; min-width: 0; }
+.storefront .footer-gallery-heading { display: grid; gap: 5px; margin-bottom: 12px; }
+.storefront .footer-gallery-heading h2 { font-size: 1rem; line-height: 1.25; }
+.storefront .footer-gallery-heading > p:last-child { color: var(--shop-muted); font-size: .75rem; line-height: 1.5; }
+.storefront .footer-gallery-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); grid-auto-rows: clamp(62px,7vw,88px); gap: 7px; }
+.storefront .footer-gallery-item { position: relative; min-width: 0; min-height: 0; margin: 0; overflow: hidden; border-radius: 8px; background: #e9eeeb; }
+.storefront .footer-gallery-item:first-child { grid-row: span 2; }
+.storefront .footer-gallery-photo { position: absolute; inset: 0; width: 100%; height: 100%; min-height: 0; max-height: none; object-fit: cover; transition: transform .35s ease; }
+.storefront .footer-gallery-item:hover .footer-gallery-photo { transform: scale(1.04); }
+.storefront .footer-gallery-item figcaption { position: absolute; inset: auto 0 0; padding: 18px 8px 7px; overflow: hidden; background: linear-gradient(transparent, #111a); color: #fff; font-size: .68rem; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }
+.admin-gallery-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
+.admin-gallery-card { display: grid; grid-template-columns: minmax(110px,.75fr) minmax(0,1.25fr); align-items: start; gap: 16px; }
+.admin-gallery-photo { width: 100%; height: 145px; min-height: 0; border-radius: 10px; object-fit: cover; }
+.admin-gallery-preview { width: 100%; height: 210px; min-height: 0; border-radius: 10px; object-fit: cover; }
+.admin-gallery-card .stack { min-width: 0; }
+.admin-gallery-card h2 { overflow-wrap: anywhere; }
 .storefront .footer-payments { grid-column: 1/-1; display: flex; flex-wrap: wrap; align-items: center; gap: 14px 24px; border-top: 1px solid #e1e7e2; padding-top: 20px; }
 .storefront .footer-payments h2 { font-size: .78rem; letter-spacing: .04em; text-transform: uppercase; }
 .storefront .footer-payment-list { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -1670,6 +1678,7 @@ meter {
 @media (max-width: 800px) {
   .storefront .footer-inner { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 24px; }
   .storefront .footer-info-grid { grid-column: 1/-1; }
+  .storefront .footer-gallery { grid-column: 1/-1; max-width: 680px; }
   .storefront .footer-payments { grid-column: 1/-1; }
 }
 @media (max-width: 640px) {
@@ -1679,9 +1688,11 @@ meter {
   .storefront .header-inner .icon-nav-link .store-nav-label { display: none; }
   .storefront .header-inner .store-cart-button { flex: 0 0 42px; width: 42px; min-width: 42px; height: 42px; min-height: 42px; margin-inline: 4px; }
   .storefront .footer-inner { grid-template-columns: minmax(0,1fr); gap: 22px; }
-  .storefront .footer-story { grid-template-columns: minmax(88px,.7fr) minmax(0,1.3fr); }
-  .storefront .footer-story-image { min-height: 145px; }
-  .storefront .footer-story-copy { padding: 12px; gap: 7px; }
+  .storefront .footer-gallery { grid-column: 1; }
+  .storefront .footer-gallery-grid { grid-auto-rows: clamp(68px,20vw,96px); }
+  .admin-gallery-grid { grid-template-columns: minmax(0,1fr); }
+  .admin-gallery-card { grid-template-columns: minmax(92px,.7fr) minmax(0,1.3fr); gap: 12px; }
+  .admin-gallery-photo { height: 125px; }
   .storefront .footer-payments { grid-column: 1; align-items: flex-start; }
   .storefront .product-quick-actions .button { font-size: .7rem; }
   .storefront .dropdown-trigger { min-height: 48px; font-size: 16px; }

@@ -74,6 +74,16 @@ export interface FooterInfo {
     sort_order: number;
     is_active: boolean;
 }
+export interface BrandGalleryImage {
+    id: string;
+    title: string;
+    caption: string;
+    image_url: string;
+    sort_order: number;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+}
 export interface Coupon {
     id: string;
     code: string;
