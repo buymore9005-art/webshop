@@ -2,11 +2,10 @@
 
 ## Perapihan header mobile
 
-- Menata header storefront menjadi dua baris yang konsisten: brand di baris atas dan
-  navigasi pada satu baris gulir horizontal, tanpa membungkus tombol ke posisi acak.
-- Menyamakan target sentuh Wishlist, Akun, dan Keranjang menjadi 42 px, merapikan
-  ukuran ikon dan posisi badge, serta membatasi nama brand panjang agar tidak
-  mendorong navigasi keluar layar.
+- Menyejajarkan logo di sisi kiri dan Katalog, Wishlist, Artikel, Akun, serta
+  Keranjang dalam satu baris yang dirapatkan ke sisi kanan.
+- Mengatur ukuran ikon, jarak kontrol, dan tipografi header agar tetap muat di layar
+  sempit; nama brand panjang dipotong agar tidak mendorong navigasi keluar layar.
 
 ## Inventaris stok per varian
 
