@@ -1,5 +1,10 @@
 # CHANGELOG — ZYHA ID 1.2.0
 
+## Antarmuka lebih bersih
+
+- Menghapus toast rutin untuk perubahan wishlist dan tautan yang berhasil disalin.
+  Status wishlist tetap terlihat pada tombolnya; pesan kesalahan penting tetap tampil.
+
 ## Animasi wishlist
 
 - Ikon hati di kartu produk berubah merah dan terisi saat produk tersimpan, dengan

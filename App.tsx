@@ -25,7 +25,7 @@ export default function App() {
       return [];
     }
   });
-  const [error, setError] = useState(''), [notice, setNotice] = useState('');
+  const [error, setError] = useState('');
   const [receipt, setReceipt] = useState<Receipt | null>(null), [access, setAccess] = useState<OrderAccess | null>(readOrderAccess), [customer, setCustomer] = useState<Customer | undefined>();
   const [revision, setRevision] = useState(0);
   const { session, loading: sessionLoading, error: sessionError } = useCustomerSession();
@@ -45,7 +45,7 @@ export default function App() {
       localStorage.setItem(projectStorageKey + 'cart', JSON.stringify(cart));
     }
     catch {
-      setNotice('Keranjang belum dapat disimpan pada perangkat ini. Jangan tutup halaman sebelum selesai.');
+      setError('Keranjang tidak dapat disimpan pada perangkat ini. Jangan tutup halaman sebelum checkout selesai.');
     }
   }, [cart]);
   useEffect(() => { const channel = client().channel('zyha-store').on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => setRevision(n => n + 1)).on('postgres_changes', { event: '*', schema: 'public', table: 'settings' }, () => setRevision(n => n + 1)).on('postgres_changes', { event: '*', schema: 'public', table: 'payment_methods' }, () => setRevision(n => n + 1)).subscribe(); return () => { void client().removeChannel(channel); }; }, []);
@@ -116,7 +116,6 @@ export default function App() {
   function done(order: Receipt, ref: OrderAccess, data: Customer) { setReceipt(order); setAccess(ref); setCustomer(data); setCart([]); navigate('receipt'); }
   async function toggleWishlist(product: Product) {
     if (!session) {
-      setNotice('Masuk atau buat akun untuk menyimpan wishlist antarperangkat.');
       navigate('account');
       return;
     }
@@ -126,7 +125,6 @@ export default function App() {
       setRevision(value => value + 1);
       wishlist.reload();
       setError('');
-      setNotice(saved ? 'Produk dihapus dari wishlist.' : 'Produk disimpan di wishlist Anda.');
     }
     catch (e) {
       setError(errorMessage(e));
@@ -144,7 +142,6 @@ export default function App() {
       }
       if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(url.toString());
-        setNotice('Tautan produk berhasil disalin.');
         setError('');
         return;
       }
@@ -184,7 +181,7 @@ export default function App() {
     </header>
     <main>
       <div className="container">
-        <Message error={error || settings.error || methods.error} success={notice} />
+        <Message error={error || settings.error || methods.error} />
         {(settings.error || methods.error) && <button className="button secondary" onClick={() => { settings.reload(); methods.reload(); }}>Coba kembali</button>}
       </div>
       {view === 'account' ? <CustomerAccount session={session} loading={sessionLoading} sessionError={sessionError} />

@@ -52,6 +52,10 @@ Penyempurnaan kartu produk memberi ikon hati wishlist warna merah dan animasi po
 status tersimpan aktif, dengan dukungan preferensi `prefers-reduced-motion`. Seluruh 84
 tes, strict typecheck, production build, dan pemeriksaan diff lulus.
 
+Pesan sukses rutin (perubahan wishlist dan tautan yang berhasil disalin) dihilangkan
+agar tampilan lebih bersih. Status wishlist tetap tampak di tombol, sementara pesan
+kesalahan penting tetap ditampilkan. Tes terkait, typecheck, dan build lokal lulus.
+
 Perubahan stok per varian yang lebih baru melewati 83 tes, strict typecheck,
 production build, dan `git diff --check`. Pemeriksaan mencakup perilaku stok tiap
 varian dan assertion source migration; hasil tersebut bukan eksekusi SQL.
