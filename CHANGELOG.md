@@ -1,5 +1,11 @@
 # CHANGELOG — ZYHA ID 1.2.0
 
+## Animasi wishlist
+
+- Ikon hati di kartu produk berubah merah dan terisi saat produk tersimpan, dengan
+  animasi pop lembut; animasi otomatis dinonaktifkan saat preferensi reduced-motion
+  aktif.
+
 ## Perapihan header mobile
 
 - Menyejajarkan logo di sisi kiri dan Katalog, Wishlist, Artikel, Akun, serta

@@ -48,6 +48,10 @@ Test suite (83 tes), strict typecheck, serta production build lokal lulus. Brows
 tersedia menampilkan halaman konfigurasi karena environment Supabase tidak disetel,
 sehingga preview storefront langsung tidak dapat diverifikasi di browser.
 
+Penyempurnaan kartu produk memberi ikon hati wishlist warna merah dan animasi pop saat
+status tersimpan aktif, dengan dukungan preferensi `prefers-reduced-motion`. Seluruh 84
+tes, strict typecheck, production build, dan pemeriksaan diff lulus.
+
 Perubahan stok per varian yang lebih baru melewati 83 tes, strict typecheck,
 production build, dan `git diff --check`. Pemeriksaan mencakup perilaku stok tiap
 varian dan assertion source migration; hasil tersebut bukan eksekusi SQL.

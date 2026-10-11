@@ -1555,6 +1555,29 @@ meter {
 .storefront .product-quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .storefront .product-quick-actions .button { min-width: 0; min-height: 42px; padding: 8px 6px; gap: 6px; font-size: .75rem; }
 .storefront .product-quick-actions .store-icon { width: 17px; height: 17px; flex-basis: 17px; }
+.storefront .product-quick-actions .wishlist-toggle { transition: color .2s ease, background-color .2s ease, border-color .2s ease, box-shadow .2s ease; }
+.storefront .product-quick-actions .wishlist-toggle .store-icon { transform-origin: center; transition: color .2s ease, fill .2s ease; }
+.storefront .product-quick-actions .wishlist-toggle[aria-pressed=true] {
+  color: #c52b45;
+  border-color: #f0aab6;
+  background: #fff1f3;
+  box-shadow: 0 3px 12px #c52b451c;
+}
+.storefront .product-quick-actions .wishlist-toggle[aria-pressed=true] .store-icon {
+  fill: #e3425d;
+  stroke: #c52b45;
+  animation: wishlist-heart-pop .52s cubic-bezier(.2,1.55,.45,1) both;
+}
+@keyframes wishlist-heart-pop {
+  0% { transform: scale(.65) rotate(-18deg); }
+  45% { transform: scale(1.35) rotate(9deg); }
+  72% { transform: scale(.9) rotate(-4deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .storefront .product-quick-actions .wishlist-toggle,
+  .storefront .product-quick-actions .wishlist-toggle .store-icon { transition: none; animation: none; }
+}
 .storefront .product-purchase .product-whatsapp { color: var(--shop-ink); }
 .storefront .product-whatsapp .store-icon, .storefront .footer-whatsapp .store-icon { stroke-width: 1.7; }
 .storefront .footer-inner { display: grid; grid-template-columns: minmax(160px,.7fr) minmax(230px,1fr) minmax(260px,1.4fr); align-items: start; gap: 32px; }

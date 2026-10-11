@@ -283,7 +283,7 @@ export default function App() {
                 <strong>{money(p.price)}</strong>
                 {(!p.variants.length && p.stock === 0) || (p.variants.length > 0 && p.variants.every(variant => variant.stock === 0)) ? <small className="stock-unavailable">Stok habis</small> : null}
                 <div className="product-quick-actions">
-                  <button type="button" className="button secondary" aria-pressed={wishlist.data?.some(item => item.id === p.id) || false} aria-label={wishlist.data?.some(item => item.id === p.id) ? 'Hapus ' + p.title + ' dari wishlist' : 'Simpan ' + p.title + ' ke wishlist'} onClick={() => void toggleWishlist(p)}><StoreIcon name="heart" /><span>{wishlist.data?.some(item => item.id === p.id) ? 'Tersimpan' : 'Wishlist'}</span></button>
+                  <button type="button" className="button secondary wishlist-toggle" aria-pressed={wishlist.data?.some(item => item.id === p.id) || false} aria-label={wishlist.data?.some(item => item.id === p.id) ? 'Hapus ' + p.title + ' dari wishlist' : 'Simpan ' + p.title + ' ke wishlist'} onClick={() => void toggleWishlist(p)}><StoreIcon name="heart" /><span>{wishlist.data?.some(item => item.id === p.id) ? 'Tersimpan' : 'Wishlist'}</span></button>
                   <button type="button" className="button secondary" onClick={() => void shareProduct(p)} aria-label={'Bagikan ' + p.title}><StoreIcon name="share" /><span>Bagikan</span></button>
                 </div>
                 <button type="button" className="button secondary wide product-action" disabled={!p.variants.length && p.stock === 0 || p.variants.length > 0 && p.variants.every(variant => variant.stock === 0)} onClick={() => p.variants.length ? navigate('shop', p.id) : add(p)}>
