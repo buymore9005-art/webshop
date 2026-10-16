@@ -2,6 +2,7 @@ import { client, projectStorageKey } from '../../supabaseClient';
 import type { Article, BrandGalleryImage, CartLine, Coupon, Customer, FooterInfo, OrderAccess, Order, Product, Settings, ShippingOrigin, PaymentMethod, Receipt, Summary } from '../types';
 import { articleSlug, checkoutItems, validateCustomer, safeFooterHref, safeImageUrl, csvCell, errorMessage, serializeOrderAccessBackup, normalizePhone } from './domain';
 import type { ProductImportRow } from './domain';
+
 export interface CatalogFilter {
     page: number;
     search: string;
@@ -9,9 +10,11 @@ export interface CatalogFilter {
     sort: string;
     admin?: boolean;
 }
+
 const PRODUCT_FIELDS = 'id,title,price,description,category,image_url,images,variants,stock,stock_alert_threshold,weight_grams,is_active,version,created_at,updated_at';
 const ORDER_FIELDS = 'id,order_number,items,subtotal,shipping_fee,shipping_quote_id,coupon_code,discount_amount,total_price,status,payment_method,payment_snapshot,fulfillment_status,tracking_number,carrier,created_at,customer_name,customer_phone,customer_address,customer_district,customer_city,customer_province,customer_postal_code,total_weight_grams,customer_note,version,updated_at';
 const ARTICLE_FIELDS = 'id,slug,title,excerpt,body,cover_image_url,status,published_at,created_at,updated_at';
+
 export async function getProducts(filter: CatalogFilter, signal?: AbortSignal) {
     let q = client().from('products').select(PRODUCT_FIELDS, { count: 'exact' });
     if (!filter.admin)
@@ -30,66 +33,103 @@ export async function getProducts(filter: CatalogFilter, signal?: AbortSignal) {
         throw error;
     return { rows: (data || []) as Product[], count: count || 0 };
 }
-export async function getProduct(id: string) { const { data, error } = await client().from('products').select(PRODUCT_FIELDS).eq('id', id).eq('is_active', true).maybeSingle(); if (error)
-    throw error; return data as Product | null; }
-export async function getSettings() { const { data, error } = await client().from('settings').select('*').eq('id', 1).single(); if (error)
-    throw error; return data as Settings; }
-export async function getShippingOrigin() { const { data, error } = await client().from('shipping_origin').select('*').eq('id', 1).single(); if (error)
-    throw error; return data as ShippingOrigin; }
-export async function getMethods(admin = false) { let q = client().from('payment_methods').select('*').order('sort_order').order('name'); if (!admin)
-    q = q.eq('is_active', true); const { data, error } = await q; if (error)
-    throw error; return ((data || []) as PaymentMethod[]).filter(method => ['Bank', 'E-Wallet', 'QRIS'].includes(method.type)); }
+
+export async function getProduct(id: string) { 
+    const { data, error } = await client().from('products').select(PRODUCT_FIELDS).eq('id', id).eq('is_active', true).maybeSingle(); 
+    if (error) throw error; 
+    return data as Product | null; 
+}
+
+export async function getSettings() { 
+    const { data, error } = await client().from('settings').select('*').eq('id', 1).single(); 
+    if (error) throw error; 
+    return data as Settings; 
+}
+
+export async function getShippingOrigin() { 
+    const { data, error } = await client().from('shipping_origin').select('*').eq('id', 1).single(); 
+    if (error) throw error; 
+    return data as ShippingOrigin; 
+}
+
+export async function getMethods(admin = false) { 
+    let q = client().from('payment_methods').select('*').order('sort_order').order('name'); 
+    if (!admin) q = q.eq('is_active', true); 
+    const { data, error } = await q; 
+    if (error) throw error; 
+    return ((data || []) as PaymentMethod[]).filter(method => ['Bank', 'E-Wallet', 'QRIS'].includes(method.type)); 
+}
+
 export async function shopAction<T>(body: Record<string, unknown>): Promise<T> {
-    const { data, error } = await client().functions.invoke('rapid-api', { body });
-    if (error) {
-        let message = errorMessage(error);
-        if (error.name === 'FunctionsFetchError' || /failed to send a request to the edge function/i.test(message)) {
-            message = 'Tidak dapat menghubungi layanan checkout. Periksa koneksi, lalu minta pengelola toko memastikan Edge Function rapid-api sudah di-deploy dan domain toko tercantum tepat di ALLOWED_ORIGINS. Permintaan mungkin sudah diterima server; coba lagi dari tab yang sama agar tidak membuat pesanan duplikat.';
-        }
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+    const session = (await client().auth.getSession())?.data.session;
+    const token = session?.access_token || supabaseAnonKey;
+
+    const response = await fetch(`${supabaseUrl}/functions/v1/rapid-api`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'apikey': supabaseAnonKey,
+            'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(body)
+    });
+
+    if (!response.ok) {
+        let message = `Request gagal dengan status ${response.status}`;
         try {
-            const detail = await error.context?.json();
-            if (typeof detail?.error === 'string')
+            const detail = await response.json();
+            if (typeof detail?.error === 'string') {
                 message = detail.error;
+            }
         }
-        catch { /* Keep transport error */ }
+        catch {
+            // Keep transport error message
+        }
+        if (response.status === 401 || response.status === 403) {
+            message = 'Sesi tidak sah atau unauthorized (401). Periksa kembali VITE_SUPABASE_ANON_KEY di lingkungan Vercel Anda.';
+        }
         throw new Error(message);
     }
+
+    const data = await response.json();
     if (!data || data.error)
         throw new Error(data?.error || 'Respons server tidak lengkap.');
     return data as T;
 }
+
 export async function getPublishedArticles() {
     const { data, error } = await client().from('articles').select(ARTICLE_FIELDS).eq('status', 'published').order('published_at', { ascending: false }).order('id');
-    if (error)
-        throw error;
+    if (error) throw error;
     return (data || []) as Article[];
 }
+
 export async function getPublishedArticle(slug: string) {
     const { data, error } = await client().from('articles').select(ARTICLE_FIELDS).eq('slug', articleSlug(slug)).eq('status', 'published').maybeSingle();
-    if (error)
-        throw error;
+    if (error) throw error;
     return data as Article | null;
 }
+
 export async function getFooterInfo() {
     const { data, error } = await client().from('footer_info').select('id,title,content,href,sort_order,is_active').eq('is_active', true).order('sort_order').order('title');
-    if (error)
-        throw error;
+    if (error) throw error;
     return (data || []) as FooterInfo[];
 }
+
 export async function getAdminArticles() {
     const { data, error } = await client().from('articles').select(ARTICLE_FIELDS).order('updated_at', { ascending: false });
-    if (error)
-        throw error;
+    if (error) throw error;
     return (data || []) as Article[];
 }
+
 export async function saveArticle(article: Omit<Article, 'id' | 'created_at' | 'updated_at' | 'published_at'> & { id?: string }) {
     let previousPublishedAt: string | null = null;
     if (article.id) {
         const { data, error } = await client().from('articles').select('status,published_at').eq('id', article.id).maybeSingle();
-        if (error)
-            throw error;
-        if (!data)
-            throw new Error('Artikel tidak ditemukan atau izin tidak tersedia.');
+        if (error) throw error;
+        if (!data) throw new Error('Artikel tidak ditemukan atau izin tidak tersedia.');
         previousPublishedAt = data.status === 'published' ? data.published_at : null;
     }
     const payload = {
@@ -107,21 +147,21 @@ export async function saveArticle(article: Omit<Article, 'id' | 'created_at' | '
         throw new Error('URL foto sampul harus berupa HTTPS yang valid.');
     const query = article.id ? client().from('articles').update(payload).eq('id', article.id) : client().from('articles').insert(payload);
     const { data, error } = await query.select(ARTICLE_FIELDS).single();
-    if (error)
-        throw error;
+    if (error) throw error;
     return data as Article;
 }
+
 export async function deleteArticle(id: string) {
     const { error } = await client().from('articles').delete().eq('id', id);
-    if (error)
-        throw error;
+    if (error) throw error;
 }
+
 export async function getAdminFooterInfo() {
     const { data, error } = await client().from('footer_info').select('*').order('sort_order').order('title');
-    if (error)
-        throw error;
+    if (error) throw error;
     return (data || []) as FooterInfo[];
 }
+
 export async function saveFooterInfo(item: Omit<FooterInfo, 'id'>, id?: string) {
     const payload = { title: item.title.trim(), content: item.content.trim(), href: safeFooterHref(item.href), sort_order: item.sort_order, is_active: item.is_active };
     if (payload.title.length < 2 || payload.title.length > 100 || payload.content.length > 1000 || !Number.isInteger(payload.sort_order))
@@ -130,27 +170,27 @@ export async function saveFooterInfo(item: Omit<FooterInfo, 'id'>, id?: string) 
         throw new Error('Isi informasi atau tautan harus diisi.');
     const query = id ? client().from('footer_info').update(payload).eq('id', id) : client().from('footer_info').insert(payload);
     const { data, error } = await query.select('*').single();
-    if (error)
-        throw error;
+    if (error) throw error;
     return data as FooterInfo;
 }
+
 export async function deleteFooterInfo(id: string) {
     const { error } = await client().from('footer_info').delete().eq('id', id);
-    if (error)
-        throw error;
+    if (error) throw error;
 }
+
 export async function getBrandGallery() {
     const { data, error } = await client().from('brand_gallery').select('id,title,caption,image_url,sort_order,is_active,created_at,updated_at').eq('is_active', true).order('sort_order').order('created_at').order('id');
-    if (error)
-        throw error;
+    if (error) throw error;
     return (data || []) as BrandGalleryImage[];
 }
+
 export async function getAdminBrandGallery() {
     const { data, error } = await client().from('brand_gallery').select('*').order('sort_order').order('created_at').order('id');
-    if (error)
-        throw error;
+    if (error) throw error;
     return (data || []) as BrandGalleryImage[];
 }
+
 export async function saveBrandGalleryImage(item: Omit<BrandGalleryImage, 'id' | 'created_at' | 'updated_at'>, id?: string) {
     const imageUrl = safeImageUrl(item.image_url);
     const payload = {
@@ -164,53 +204,50 @@ export async function saveBrandGalleryImage(item: Omit<BrandGalleryImage, 'id' |
         throw new Error('Isi judul, foto HTTPS, keterangan maksimal 180 karakter, dan urutan yang valid.');
     const query = id ? client().from('brand_gallery').update(payload).eq('id', id) : client().from('brand_gallery').insert(payload);
     const { data, error } = await query.select('*').single();
-    if (error)
-        throw error;
+    if (error) throw error;
     return data as BrandGalleryImage;
 }
+
 export async function deleteBrandGalleryImage(id: string) {
     const { error } = await client().from('brand_gallery').delete().eq('id', id);
-    if (error)
-        throw error;
+    if (error) throw error;
 }
+
 export async function getWishlist() {
     const { data: saved, error } = await client().from('wishlist_items').select('product_id').order('created_at', { ascending: false });
-    if (error)
-        throw error;
+    if (error) throw error;
     const ids = (saved || []).map(item => item.product_id as string);
-    if (!ids.length)
-        return [] as Product[];
+    if (!ids.length) return [] as Product[];
     const { data, error: productsError } = await client().from('products').select(PRODUCT_FIELDS).in('id', ids).eq('is_active', true);
-    if (productsError)
-        throw productsError;
+    if (productsError) throw productsError;
     const products = (data || []) as Product[];
     const byId = new Map(products.map(product => [product.id, product]));
     return ids.flatMap(id => byId.has(id) ? [byId.get(id)!] : []);
 }
+
 export async function setWishlisted(productId: string, saved: boolean) {
     if (saved) {
         const { error } = await client().from('wishlist_items').upsert({ product_id: productId }, { onConflict: 'user_id,product_id', ignoreDuplicates: true });
-        if (error)
-            throw error;
+        if (error) throw error;
     }
     else {
         const { error } = await client().from('wishlist_items').delete().eq('product_id', productId);
-        if (error)
-            throw error;
+        if (error) throw error;
     }
 }
+
 export async function getCustomerOrderHistory() {
     const { data, error } = await client().from('orders').select('id,order_number,items,total_price,coupon_code,discount_amount,status,fulfillment_status,tracking_number,carrier,created_at').order('created_at', { ascending: false }).limit(100);
-    if (error)
-        throw error;
+    if (error) throw error;
     return data || [];
 }
+
 export async function getAdminCoupons() {
     const { data, error } = await client().from('coupons').select('*').order('created_at', { ascending: false });
-    if (error)
-        throw error;
+    if (error) throw error;
     return (data || []) as Coupon[];
 }
+
 export async function saveCoupon(value: Omit<Coupon, 'id' | 'times_used'>, id?: string) {
     const code = value.code.trim().toUpperCase();
     if (!/^[A-Z0-9_-]{3,40}$/.test(code))
@@ -233,13 +270,14 @@ export async function saveCoupon(value: Omit<Coupon, 'id' | 'times_used'>, id?: 
     };
     const query = id ? client().from('coupons').update(payload).eq('id', id) : client().from('coupons').insert(payload);
     const { data, error } = await query.select('*').single();
-    if (error)
-        throw error;
+    if (error) throw error;
     return data as Coupon;
 }
+
 export async function validateCoupon(code: string, subtotal: number, phone: string) {
     return shopAction<{ code: string; discount_amount: number }>({ action: 'validate-coupon', code, subtotal, phone });
 }
+
 export function readOrderAccess(): OrderAccess | null {
     try {
         const x = JSON.parse(sessionStorage.getItem(projectStorageKey + 'order-access') || 'null');
@@ -249,10 +287,14 @@ export function readOrderAccess(): OrderAccess | null {
         return null;
     }
 }
-function saveAccess(value: OrderAccess) { try {
-    sessionStorage.setItem(projectStorageKey + 'order-access', JSON.stringify(value));
+
+function saveAccess(value: OrderAccess) { 
+    try {
+        sessionStorage.setItem(projectStorageKey + 'order-access', JSON.stringify(value));
+    }
+    catch { /* In-memory access still works */ } 
 }
-catch { /* In-memory access still works; receipt page explains per-tab storage. */ } }
+
 export function downloadOrderAccessBackup(access: OrderAccess, orderNumber: string) {
     const contents = serializeOrderAccessBackup(access, orderNumber);
     const url = URL.createObjectURL(new Blob([contents], { type: 'application/json' }));
@@ -262,12 +304,13 @@ export function downloadOrderAccessBackup(access: OrderAccess, orderNumber: stri
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 5000);
 }
+
 export async function submitOrder(cart: CartLine[], customer: Customer, methodId: string, prior: OrderAccess | null, couponCode = '') {
     const body = { items: checkoutItems(cart), customer: validateCustomer(customer), methodId, couponCode };
     const signature = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(body)))), n => n.toString(16).padStart(2, '0')).join('');
     const existing = prior?.signature === signature ? prior : readOrderAccess();
     const access: OrderAccess = existing?.signature === signature ? existing : { requestId: crypto.randomUUID(), receiptToken: Array.from(crypto.getRandomValues(new Uint8Array(32)), n => n.toString(16).padStart(2, '0')).join(''), signature };
-    saveAccess(access); // Persist idempotency proof before sending; no address/phone is persisted here.
+    saveAccess(access); 
     const result = await shopAction<{
         receipt: Receipt;
     }>({ ...body, ...access, action: 'checkout' });
@@ -277,9 +320,14 @@ export async function submitOrder(cart: CartLine[], customer: Customer, methodId
     saveAccess(access);
     return { access, receipt: result.receipt };
 }
-export async function loadReceipt(access: OrderAccess) { const x = await shopAction<{
-    receipt: Receipt;
-}>({ ...access, action: 'receipt' }); return x.receipt; }
+
+export async function loadReceipt(access: OrderAccess) { 
+    const x = await shopAction<{
+        receipt: Receipt;
+    }>({ ...access, action: 'receipt' }); 
+    return x.receipt; 
+}
+
 export async function saveProduct(value: Partial<Product>, original?: Product) {
     const payload = { title: value.title?.trim(), description: value.description?.trim() || '', category: value.category?.trim() || '', price: Number(value.price), stock: value.stock === null ? null : Number(value.stock), stock_alert_threshold: Number(value.stock_alert_threshold ?? 5), weight_grams: Number(value.weight_grams), image_url: value.image_url || '', images: value.images || [], variants: (value.variants || []).map(v => ({ name: v.name.trim(), image: v.image.trim(), stock: v.stock === null ? null : Number(v.stock ?? 0), low_stock_threshold: Number(v.low_stock_threshold ?? 5) })), is_active: value.is_active ?? true };
     if (!payload.title || !Number.isSafeInteger(payload.price) || payload.price < 1 || payload.price > 1e9)
@@ -298,12 +346,11 @@ export async function saveProduct(value: Partial<Product>, original?: Product) {
         throw new Error('Berat produk harus bilangan bulat 0–100.000.000 gram.');
     const query = original ? client().from('products').update(payload).eq('id', original.id).eq('version', original.version) : client().from('products').insert(payload);
     const { data, error } = await query.select(PRODUCT_FIELDS).maybeSingle();
-    if (error)
-        throw error;
-    if (!data)
-        throw new Error('Produk berubah sejak dibuka. Muat ulang sebelum menyimpan.');
+    if (error) throw error;
+    if (!data) throw new Error('Produk berubah sejak dibuka. Muat ulang sebelum menyimpan.');
     return data as Product;
 }
+
 export async function importProducts(products: ProductImportRow[]) {
     if (!products.length || products.length > 250)
         throw new Error('Impor harus berisi 1–250 produk.');
@@ -320,12 +367,12 @@ export async function importProducts(products: ProductImportRow[]) {
         is_active: product.is_active,
     }));
     const { data, error } = await client().from('products').insert(rows).select('id');
-    if (error)
-        throw error;
+    if (error) throw error;
     if (data?.length !== products.length)
         throw new Error('Respons impor tidak lengkap; periksa katalog sebelum mengulangi impor.');
     return data.length;
 }
+
 export async function adjustInventory(productId: string, variant: string, delta: number, reason: string) {
     if (!Number.isInteger(delta) || delta === 0 || Math.abs(delta) > 100000000)
         throw new Error('Penyesuaian stok harus bilangan bulat bukan nol.');
@@ -335,10 +382,10 @@ export async function adjustInventory(productId: string, variant: string, delta:
         p_delta: delta,
         p_reason: reason.trim(),
     });
-    if (error)
-        throw error;
+    if (error) throw error;
     return data as { stock: number; movement_id: string };
 }
+
 export async function getInventoryMovements(productId: string, variant: string) {
     let query = client().from('inventory_movements')
         .select('id,product_id,variant_name,delta,stock_after,reason,created_at')
@@ -350,16 +397,26 @@ export async function getInventoryMovements(productId: string, variant: string) 
     else
         query = query.is('variant_name', null);
     const { data, error } = await query;
-    if (error)
-        throw error;
+    if (error) throw error;
     return data || [];
 }
-export async function saveMethod(value: Omit<PaymentMethod, 'id'>, id?: string) { const q = id ? client().from('payment_methods').update(value).eq('id', id) : client().from('payment_methods').insert(value); const { data, error } = await q.select('id').single(); if (error)
-    throw error; return data; }
-export async function saveSettings(payload: Partial<Settings>, expected?: string) { let q = client().from('settings').update(payload).eq('id', 1); if (expected)
-    q = q.eq('updated_at', expected); const { data, error } = await q.select('*').maybeSingle(); if (error)
-    throw error; if (!data)
-    throw new Error('Pengaturan telah diubah. Muat ulang terlebih dahulu.'); return data as Settings; }
+
+export async function saveMethod(value: Omit<PaymentMethod, 'id'>, id?: string) { 
+    const q = id ? client().from('payment_methods').update(value).eq('id', id) : client().from('payment_methods').insert(value); 
+    const { data, error } = await q.select('id').single(); 
+    if (error) throw error; 
+    return data; 
+}
+
+export async function saveSettings(payload: Partial<Settings>, expected?: string) { 
+    let q = client().from('settings').update(payload).eq('id', 1); 
+    if (expected) q = q.eq('updated_at', expected); 
+    const { data, error } = await q.select('*').maybeSingle(); 
+    if (error) throw error; 
+    if (!data) throw new Error('Pengaturan telah diubah. Muat ulang terlebih dahulu.'); 
+    return data as Settings; 
+}
+
 export async function saveShippingOrigin(value: ShippingOrigin, expected?: string) {
     const phone = value.phone.trim() ? normalizePhone(value.phone) : '';
     const payload = {
@@ -374,12 +431,12 @@ export async function saveShippingOrigin(value: ShippingOrigin, expected?: strin
     if (expected)
         query = query.eq('updated_at', expected);
     const { data, error } = await query.select('*').maybeSingle();
-    if (error)
-        throw error;
+    if (error) throw error;
     if (!data)
         throw new Error('Alamat gudang berubah. Muat ulang sebelum menyimpan.');
     return data as ShippingOrigin;
 }
+
 export async function uploadImage(file: File, prefix: string) {
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024 || file.size === 0)
         throw new Error('Gunakan JPG, PNG, atau WebP maksimal 5 MB.');
@@ -392,10 +449,10 @@ export async function uploadImage(file: File, prefix: string) {
     const ext = file.type === 'image/jpeg' ? 'jpg' : file.type === 'image/png' ? 'png' : 'webp';
     const path = `${prefix}/${crypto.randomUUID()}.${ext}`;
     const { error } = await client().storage.from('products').upload(path, file, { upsert: false, contentType: file.type, cacheControl: '31536000' });
-    if (error)
-        throw error;
+    if (error) throw error;
     return safeImageUrl(client().storage.from('products').getPublicUrl(path).data.publicUrl);
 }
+
 export async function getOrders(page: number, status: string, search: string, start: string, end: string) {
     if (start && end && start > end)
         throw new Error('Tanggal awal tidak boleh melewati tanggal akhir.');
@@ -409,23 +466,23 @@ export async function getOrders(page: number, status: string, search: string, st
     if (end)
         q = q.lt('created_at', new Date(new Date(end + 'T00:00:00+07:00').getTime() + 86400000).toISOString());
     const { data, error, count } = await q.range(page * 20, page * 20 + 19);
-    if (error)
-        throw error;
+    if (error) throw error;
     return { rows: (data || []) as Order[], count: count || 0 };
 }
+
 export async function orderAction(id: string, version: number, action: string, note: string, tracking = '', carrier = '') {
     const { data, error } = await client().rpc('zyha_admin_order_action', { p_id: id, p_version: version, p_action: action, p_note: note, p_tracking: tracking, p_carrier: carrier });
-    if (error)
-        throw error;
+    if (error) throw error;
     if (data?.ok !== true)
         throw new Error('Perubahan belum dikonfirmasi server.');
 }
+
 export async function getSummary(start = '', end = '') {
     const { data, error } = await client().rpc('zyha_dashboard', { p_start: start ? start + 'T00:00:00+07:00' : null, p_end: end ? new Date(new Date(end + 'T00:00:00+07:00').getTime() + 86400000).toISOString() : null });
-    if (error)
-        throw error;
+    if (error) throw error;
     return data as Summary;
 }
+
 export function exportOrderPage(rows: Order[]) {
     if (!rows.length)
         throw new Error('Tidak ada pesanan untuk diekspor.');
