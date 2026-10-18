@@ -50,14 +50,23 @@
   diperbarui Admin melalui RLS; tidak ikut terekspos melalui pengaturan toko publik.
 - Menambahkan schema privat untuk quote tarif dan tabel shipment provider-neutral,
   termasuk request ID untuk idempotensi; tidak menyimpan API key atau response mentah.
-- Menambahkan kontrak Edge Function untuk tarif, booking, dan label yang belum terikat
-  pada provider tertentu.
 - Menambahkan packing slip HTML yang aman dari injeksi teks pelanggan dan cetak dari
   detail Pesanan Admin. Dokumen ini bukan label AWB/resi kurir.
-- Ongkir checkout tetap menggunakan flat-rate Admin. Tarif real-time dan pembuatan
-  label otomatis belum aktif; perlu provider, akun, secret Edge, serta adapter nyata.
 - Menambahkan migration aditif `20261012000000_shipping_foundation.sql` dan petunjuk
   urutan penerapannya untuk project baru maupun existing.
+
+## Integrasi Biteship
+
+- Menambahkan migration satu file `20261015000000_biteship.sql` untuk mode ongkir,
+  ID area asal, dimensi produk, quote terbatas waktu, dan RPC server-only untuk
+  validasi total checkout serta reservasi shipment.
+- Menambahkan lookup area dan tarif Biteship melalui Supabase Edge Function; API key
+  tetap berada di Supabase Function Secrets, tidak pada SQL atau bundle browser.
+- Checkout dapat memilih layanan kurir dan menyimpan tarif yang divalidasi ulang oleh
+  database. Admin dapat membuat booking setelah pembayaran diverifikasi, lalu menyimpan
+  nomor resi dan URL label yang dikembalikan provider.
+- Mode default tetap ongkir tetap. Penggunaan Biteship memerlukan migration, API key,
+  konfigurasi area asal, data berat/dimensi aktual, dan pengujian dengan akun staging.
 
 ## Penyempurnaan storefront
 

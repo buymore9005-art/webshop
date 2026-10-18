@@ -155,10 +155,14 @@ export function safeFooterHref(value: string): string {
     }
 }
 export function validateCustomer(value: Customer): Customer {
+    const destination_area_id = value.destination_area_id?.trim() || '';
+    if (destination_area_id && !/^[a-z0-9_-]{3,120}$/i.test(destination_area_id))
+        throw new Error('Lokasi tujuan kurir tidak valid.');
     const customer = {
         name: value.name.trim(), address: value.address.trim(), district: value.district.trim(),
         city: value.city.trim(), province: value.province.trim(), postal_code: value.postal_code.trim(),
         phone: normalizePhone(value.phone), note: value.note.trim(),
+        ...(destination_area_id ? { destination_area_id } : {}),
     };
     if (customer.name.length < 2 || customer.name.length > 120)
         throw new Error('Nama harus berisi 2–120 karakter.');
@@ -191,6 +195,9 @@ export interface ProductImportRow {
     image_url: string;
     stock: number | null;
     weight_grams: number;
+    length_cm: number;
+    width_cm: number;
+    height_cm: number;
     is_active: boolean;
 }
 export function parseProductCsv(raw: string): ProductImportRow[] {
@@ -245,7 +252,7 @@ export function parseProductCsv(raw: string): ProductImportRow[] {
         throw new Error('CSV harus berisi header dan minimal satu baris produk.');
     if (rows.length > 251)
         throw new Error('Maksimal 250 produk per impor.');
-    const allowed = ['title', 'price', 'description', 'category', 'image_url', 'stock', 'weight_grams', 'is_active'];
+    const allowed = ['title', 'price', 'description', 'category', 'image_url', 'stock', 'weight_grams', 'length_cm', 'width_cm', 'height_cm', 'is_active'];
     const headers = rows[0].map(value => value.toLowerCase());
     if (new Set(headers).size !== headers.length || headers.some(header => !allowed.includes(header)) || !headers.includes('title') || !headers.includes('price'))
         throw new Error('Header wajib: title,price. Header opsional: description,category,image_url,stock,is_active. Jangan gunakan header lain atau duplikat.');
@@ -255,8 +262,9 @@ export function parseProductCsv(raw: string): ProductImportRow[] {
             throw new Error(`Baris ${rowIndex + 2}: jumlah kolom tidak sesuai header.`);
         const get = (name: string) => index(name) < 0 ? '' : values[index(name)];
         const title = get('title'), rawPrice = get('price'), description = get('description');
-        const category = get('category'), imageUrl = get('image_url'), rawStock = get('stock'), rawWeight = get('weight_grams'), rawActive = get('is_active');
+        const category = get('category'), imageUrl = get('image_url'), rawStock = get('stock'), rawWeight = get('weight_grams'), rawLength = get('length_cm'), rawWidth = get('width_cm'), rawHeight = get('height_cm'), rawActive = get('is_active');
         const price = Number(rawPrice), stock = rawStock === '' ? null : Number(rawStock), weight_grams = rawWeight === '' ? 0 : Number(rawWeight);
+        const length_cm = rawLength === '' ? 0 : Number(rawLength), width_cm = rawWidth === '' ? 0 : Number(rawWidth), height_cm = rawHeight === '' ? 0 : Number(rawHeight);
         if (title.length < 1 || title.length > 200 || !/^\d+$/.test(rawPrice) || !Number.isSafeInteger(price) || price < 1 || price > MAX_MONEY)
             throw new Error(`Baris ${rowIndex + 2}: nama produk dan harga bilangan bulat 1–${MAX_MONEY} wajib valid.`);
         if (description.length > 10000 || category.length > 100)
@@ -267,9 +275,13 @@ export function parseProductCsv(raw: string): ProductImportRow[] {
             throw new Error(`Baris ${rowIndex + 2}: stock harus kosong atau bilangan bulat 0–100.000.000.`);
         if (rawWeight !== '' && (!/^\d+$/.test(rawWeight) || !Number.isSafeInteger(weight_grams) || weight_grams < 0 || weight_grams > 100000000))
             throw new Error(`Baris ${rowIndex + 2}: weight_grams harus kosong atau bilangan bulat 0–100.000.000.`);
+        for (const [raw, value, label] of [[rawLength, length_cm, 'length_cm'], [rawWidth, width_cm, 'width_cm'], [rawHeight, height_cm, 'height_cm']] as const) {
+            if (raw !== '' && (!/^\d+$/.test(raw) || !Number.isSafeInteger(value) || value < 0 || value > 10000))
+                throw new Error(`Baris ${rowIndex + 2}: ${label} harus kosong atau bilangan bulat 0–10.000 cm.`);
+        }
         if (rawActive && !['true', 'false'].includes(rawActive.toLowerCase()))
             throw new Error(`Baris ${rowIndex + 2}: is_active harus true atau false.`);
-        return { title, price, description, category, image_url: safeImageUrl(imageUrl), stock, weight_grams, is_active: rawActive ? rawActive.toLowerCase() === 'true' : true };
+        return { title, price, description, category, image_url: safeImageUrl(imageUrl), stock, weight_grams, length_cm, width_cm, height_cm, is_active: rawActive ? rawActive.toLowerCase() === 'true' : true };
     });
 }
 export const orderLabels: Record<OrderStatus, string> = { pending: 'Menunggu pembayaran', paid: 'Lunas', cancelled: 'Dibatalkan', expired: 'Kedaluwarsa', failed: 'Gagal', refunded: 'Dikembalikan', partial_refund: 'Pengembalian sebagian' };

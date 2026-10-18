@@ -19,8 +19,46 @@ export interface Product {
     stock: number | null;
     stock_alert_threshold: number;
     weight_grams: number;
+    length_cm: number;
+    width_cm: number;
+    height_cm: number;
     is_active: boolean;
     version: number;
+    created_at: string;
+    updated_at: string;
+}
+export interface ShippingRate {
+    key: string;
+    courier_code: string;
+    courier_name: string;
+    service_code: string;
+    service_name: string;
+    amount: number;
+    currency: string;
+    estimated_days: string;
+}
+export interface ShippingArea {
+    id: string;
+    name: string;
+    postal_code: string;
+    label: string;
+    district?: string;
+    city?: string;
+    province?: string;
+}
+export interface ShippingShipment {
+    id: string;
+    order_id: string;
+    provider_request_id: string;
+    provider_shipment_id: string;
+    carrier_code: string;
+    carrier_name: string;
+    service_code: string;
+    service_name: string;
+    tracking_number: string;
+    status: 'created' | 'booked' | 'picked_up' | 'in_transit' | 'delivered' | 'failed' | 'cancelled';
+    label_url: string;
+    provider_error: string;
     created_at: string;
     updated_at: string;
 }
@@ -34,6 +72,8 @@ export interface Settings {
     admin_phone: string;
     shipping_fee: number;
     free_shipping_min: number | null;
+    shipping_provider: 'flat_rate' | 'biteship';
+    shipping_couriers: string;
     updated_at: string;
 }
 export interface ShippingOrigin {
@@ -45,6 +85,7 @@ export interface ShippingOrigin {
     city: string;
     province: string;
     postal_code: string;
+    provider_location_id: string;
     updated_at: string;
 }
 export interface PaymentMethod {
@@ -122,6 +163,7 @@ export interface Customer {
     postal_code: string;
     phone: string;
     note: string;
+    destination_area_id?: string;
 }
 export interface OrderItem {
     product_id: string;
@@ -150,10 +192,13 @@ export interface Receipt {
     fulfillment_status: FulfillmentStatus;
     tracking_number: string;
     carrier: string;
+    shipping_quote_id?: string | null;
+    shipping_service_key?: string;
+    shipping_courier_name?: string;
+    shipping_service_name?: string;
     created_at: string;
 }
 export interface Order extends Receipt {
-    shipping_quote_id?: string | null;
     customer_name: string;
     customer_phone: string;
     customer_address: string;

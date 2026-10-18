@@ -1,5 +1,5 @@
 import { client, projectStorageKey } from '../../supabaseClient';
-import type { Article, BrandGalleryImage, CartLine, Coupon, Customer, FooterInfo, OrderAccess, Order, Product, Settings, ShippingOrigin, PaymentMethod, Receipt, Summary } from '../types';
+import type { Article, BrandGalleryImage, CartLine, Coupon, Customer, FooterInfo, OrderAccess, Order, Product, Settings, ShippingArea, ShippingOrigin, PaymentMethod, Receipt, ShippingRate, ShippingShipment, Summary } from '../types';
 import { articleSlug, checkoutItems, validateCustomer, safeFooterHref, safeImageUrl, csvCell, errorMessage, serializeOrderAccessBackup, normalizePhone } from './domain';
 import type { ProductImportRow } from './domain';
 export interface CatalogFilter {
@@ -9,8 +9,8 @@ export interface CatalogFilter {
     sort: string;
     admin?: boolean;
 }
-const PRODUCT_FIELDS = 'id,title,price,description,category,image_url,images,variants,stock,stock_alert_threshold,weight_grams,is_active,version,created_at,updated_at';
-const ORDER_FIELDS = 'id,order_number,items,subtotal,shipping_fee,shipping_quote_id,coupon_code,discount_amount,total_price,status,payment_method,payment_snapshot,fulfillment_status,tracking_number,carrier,created_at,customer_name,customer_phone,customer_address,customer_district,customer_city,customer_province,customer_postal_code,total_weight_grams,customer_note,version,updated_at';
+const PRODUCT_FIELDS = 'id,title,price,description,category,image_url,images,variants,stock,stock_alert_threshold,weight_grams,length_cm,width_cm,height_cm,is_active,version,created_at,updated_at';
+const ORDER_FIELDS = 'id,order_number,items,subtotal,shipping_fee,shipping_quote_id,shipping_service_key,shipping_courier_name,shipping_service_name,coupon_code,discount_amount,total_price,status,payment_method,payment_snapshot,fulfillment_status,tracking_number,carrier,created_at,customer_name,customer_phone,customer_address,customer_district,customer_city,customer_province,customer_postal_code,total_weight_grams,customer_note,version,updated_at';
 const ARTICLE_FIELDS = 'id,slug,title,excerpt,body,cover_image_url,status,published_at,created_at,updated_at';
 export async function getProducts(filter: CatalogFilter, signal?: AbortSignal) {
     let q = client().from('products').select(PRODUCT_FIELDS, { count: 'exact' });
@@ -262,8 +262,11 @@ export function downloadOrderAccessBackup(access: OrderAccess, orderNumber: stri
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 5000);
 }
-export async function submitOrder(cart: CartLine[], customer: Customer, methodId: string, prior: OrderAccess | null, couponCode = '') {
-    const body = { items: checkoutItems(cart), customer: validateCustomer(customer), methodId, couponCode };
+export async function submitOrder(cart: CartLine[], customer: Customer, methodId: string, prior: OrderAccess | null, couponCode = '', shippingQuoteId = '', shippingServiceKey = '') {
+    const body = {
+        items: checkoutItems(cart), customer: validateCustomer(customer), methodId, couponCode,
+        shippingQuoteId, shippingServiceKey, shippingAreaId: customer.destination_area_id || '',
+    };
     const signature = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(body)))), n => n.toString(16).padStart(2, '0')).join('');
     const existing = prior?.signature === signature ? prior : readOrderAccess();
     const access: OrderAccess = existing?.signature === signature ? existing : { requestId: crypto.randomUUID(), receiptToken: Array.from(crypto.getRandomValues(new Uint8Array(32)), n => n.toString(16).padStart(2, '0')).join(''), signature };
@@ -281,7 +284,15 @@ export async function loadReceipt(access: OrderAccess) { const x = await shopAct
     receipt: Receipt;
 }>({ ...access, action: 'receipt' }); return x.receipt; }
 export async function saveProduct(value: Partial<Product>, original?: Product) {
-    const payload = { title: value.title?.trim(), description: value.description?.trim() || '', category: value.category?.trim() || '', price: Number(value.price), stock: value.stock === null ? null : Number(value.stock), stock_alert_threshold: Number(value.stock_alert_threshold ?? 5), weight_grams: Number(value.weight_grams), image_url: value.image_url || '', images: value.images || [], variants: (value.variants || []).map(v => ({ name: v.name.trim(), image: v.image.trim(), stock: v.stock === null ? null : Number(v.stock ?? 0), low_stock_threshold: Number(v.low_stock_threshold ?? 5) })), is_active: value.is_active ?? true };
+    const payload = {
+        title: value.title?.trim(), description: value.description?.trim() || '', category: value.category?.trim() || '',
+        price: Number(value.price), stock: value.stock === null ? null : Number(value.stock),
+        stock_alert_threshold: Number(value.stock_alert_threshold ?? 5), weight_grams: Number(value.weight_grams),
+        length_cm: Number(value.length_cm ?? 0), width_cm: Number(value.width_cm ?? 0), height_cm: Number(value.height_cm ?? 0),
+        image_url: value.image_url || '', images: value.images || [],
+        variants: (value.variants || []).map(v => ({ name: v.name.trim(), image: v.image.trim(), stock: v.stock === null ? null : Number(v.stock ?? 0), low_stock_threshold: Number(v.low_stock_threshold ?? 5) })),
+        is_active: value.is_active ?? true,
+    };
     if (!payload.title || !Number.isSafeInteger(payload.price) || payload.price < 1 || payload.price > 1e9)
         throw new Error('Nama dan harga produk tidak valid.');
     if (payload.stock !== null && (!Number.isInteger(payload.stock) || payload.stock < 0))
@@ -296,6 +307,8 @@ export async function saveProduct(value: Partial<Product>, original?: Product) {
     }
     if (!Number.isSafeInteger(payload.weight_grams) || payload.weight_grams < 0 || payload.weight_grams > 100000000)
         throw new Error('Berat produk harus bilangan bulat 0–100.000.000 gram.');
+    if ([payload.length_cm, payload.width_cm, payload.height_cm].some(value => !Number.isSafeInteger(value) || value < 0 || value > 10000))
+        throw new Error('Dimensi produk harus bilangan bulat 0–10.000 cm.');
     const query = original ? client().from('products').update(payload).eq('id', original.id).eq('version', original.version) : client().from('products').insert(payload);
     const { data, error } = await query.select(PRODUCT_FIELDS).maybeSingle();
     if (error)
@@ -317,6 +330,12 @@ export async function importProducts(products: ProductImportRow[]) {
         variants: [] as Product['variants'],
         stock: product.stock,
         weight_grams: product.weight_grams,
+        length_cm: product.length_cm,
+        width_cm: product.width_cm,
+        height_cm: product.height_cm,
+        length_cm: product.length_cm,
+        width_cm: product.width_cm,
+        height_cm: product.height_cm,
         is_active: product.is_active,
     }));
     const { data, error } = await client().from('products').insert(rows).select('id');
@@ -356,19 +375,27 @@ export async function getInventoryMovements(productId: string, variant: string) 
 }
 export async function saveMethod(value: Omit<PaymentMethod, 'id'>, id?: string) { const q = id ? client().from('payment_methods').update(value).eq('id', id) : client().from('payment_methods').insert(value); const { data, error } = await q.select('id').single(); if (error)
     throw error; return data; }
-export async function saveSettings(payload: Partial<Settings>, expected?: string) { let q = client().from('settings').update(payload).eq('id', 1); if (expected)
+export async function saveSettings(payload: Partial<Settings>, expected?: string) {
+    if (payload.shipping_provider && !['flat_rate', 'biteship'].includes(payload.shipping_provider))
+        throw new Error('Penyedia ongkir tidak valid.');
+    if (payload.shipping_couriers && (payload.shipping_couriers.length > 200 || !/^[a-z0-9,-]+$/.test(payload.shipping_couriers)))
+        throw new Error('Kode kurir hanya boleh berisi huruf kecil, angka, koma, dan tanda hubung.');
+    let q = client().from('settings').update(payload).eq('id', 1); if (expected)
     q = q.eq('updated_at', expected); const { data, error } = await q.select('*').maybeSingle(); if (error)
     throw error; if (!data)
-    throw new Error('Pengaturan telah diubah. Muat ulang terlebih dahulu.'); return data as Settings; }
+    throw new Error('Pengaturan telah diubah. Muat ulang terlebih dahulu.'); return data as Settings;
+}
 export async function saveShippingOrigin(value: ShippingOrigin, expected?: string) {
     const phone = value.phone.trim() ? normalizePhone(value.phone) : '';
     const payload = {
         name: value.name.trim(), phone, address: value.address.trim(), district: value.district.trim(),
         city: value.city.trim(), province: value.province.trim(), postal_code: value.postal_code.trim(),
+        provider_location_id: value.provider_location_id.trim(),
     };
     if (payload.name.length > 120 || payload.address.length > 500 ||
         [payload.district, payload.city, payload.province].some(part => part.length > 100) ||
-        (payload.postal_code !== '' && !/^\d{5}$/.test(payload.postal_code)))
+        (payload.postal_code !== '' && !/^\d{5}$/.test(payload.postal_code)) ||
+        (payload.provider_location_id !== '' && !/^[a-z0-9_-]{3,120}$/i.test(payload.provider_location_id)))
         throw new Error('Data alamat asal gudang tidak valid.');
     let query = client().from('shipping_origin').update(payload).eq('id', 1);
     if (expected)
@@ -379,6 +406,26 @@ export async function saveShippingOrigin(value: ShippingOrigin, expected?: strin
     if (!data)
         throw new Error('Alamat gudang berubah. Muat ulang sebelum menyimpan.');
     return data as ShippingOrigin;
+}
+export async function searchShippingAreas(input: string) {
+    const result = await shopAction<{ areas: ShippingArea[] }>({
+        action: 'shipping-areas',
+        input: input.trim(),
+    });
+    return result.areas;
+}
+export async function getShippingRates(items: CartLine[], destinationAreaId: string) {
+    return shopAction<{ quote_id: string; expires_at: string; subtotal: number; rates: ShippingRate[] }>({
+        action: 'shipping-rates',
+        items: items.map(item => ({ product_id: item.product_id, variant: item.variant, quantity: item.quantity })),
+        destinationAreaId,
+    });
+}
+export async function bookBiteshipShipment(orderId: string) {
+    return shopAction<{ shipment: ShippingShipment; already_booked: boolean }>({
+        action: 'book-biteship-shipment',
+        orderId,
+    });
 }
 export async function uploadImage(file: File, prefix: string) {
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024 || file.size === 0)

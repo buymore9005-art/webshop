@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1660" viewBox="0 0 1200 1660" role="img" aria-labelledby="title desc">
+  <title id="title">Panduan visual memperbaiki checkout rapid-api</title>
+  <desc id="desc">Ilustrasi empat langkah memeriksa project Supabase, Edge Function rapid-api, ALLOWED_ORIGINS, deployment, dan log.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f4f8ff"/>
+      <stop offset="1" stop-color="#edf7f4"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="5" stdDeviation="8" flood-color="#183452" flood-opacity=".09"/>
+    </filter>
+    <style>
+      text{font-family:Segoe UI,Arial,sans-serif;fill:#183047}
+      .muted{fill:#526a7e}
+      .small{font-size:18px}
+      .body{font-size:21px}
+      .heading{font-size:27px;font-weight:700}
+      .step{font-size:23px;font-weight:700;fill:#fff}
+      .mono{font-family:Consolas,monospace;font-size:18px}
+    </style>
+  </defs>
+
+  <rect width="1200" height="1660" fill="url(#bg)"/>
+  <text x="64" y="76" font-size="18" font-weight="700" fill="#087e72">PANDUAN CHECKOUT • SUPABASE</text>
+  <text x="64" y="126" font-size="40" font-weight="800">Perbaiki koneksi rapid-api</text>
+  <text x="64" y="164" class="body muted">Ikuti langkahnya berurutan. Ini ilustrasi menu, bukan screenshot akun Supabase Anda.</text>
+
+  <g filter="url(#shadow)">
+    <rect x="64" y="198" width="1072" height="106" rx="18" fill="#fff4dc" stroke="#f0ce83"/>
+  </g>
+  <circle cx="112" cy="251" r="25" fill="#d48b12"/>
+  <text x="112" y="259" text-anchor="middle" font-size="24" font-weight="800" fill="#fff">!</text>
+  <text x="154" y="239" font-size="21" font-weight="700" fill="#744c07">Sebelum mencoba checkout lagi</text>
+  <text x="154" y="272" class="body" fill="#744c07">Minta Admin cek menu Pesanan dulu. Jika pesanan sudah tercatat, jangan buat pesanan baru.</text>
+
+  <g filter="url(#shadow)">
+    <rect x="64" y="334" width="1072" height="272" rx="20" fill="#fff"/>
+  </g>
+  <circle cx="106" cy="377" r="25" fill="#176f9b"/>
+  <text x="106" y="385" text-anchor="middle" class="step">1</text>
+  <text x="148" y="385" class="heading">Pastikan project Supabase benar</text>
+  <rect x="98" y="414" width="340" height="126" rx="12" fill="#f2f7fb" stroke="#cad9e5"/>
+  <rect x="98" y="414" width="340" height="34" rx="12" fill="#dbe8f2"/>
+  <circle cx="118" cy="431" r="5" fill="#73a6c5"/>
+  <circle cx="136" cy="431" r="5" fill="#73a6c5"/>
+  <text x="116" y="475" class="small" font-weight="700">Supabase Dashboard</text>
+  <text x="116" y="507" class="small">Pilih project toko yang aktif</text>
+  <text x="480" y="438" class="body">Di Settings → API, cocokkan URL project</text>
+  <text x="480" y="468" class="body">dengan VITE_SUPABASE_URL aplikasi.</text>
+  <text x="480" y="512" class="body" font-weight="700">Keduanya harus project yang sama.</text>
+  <text x="480" y="548" class="small muted">Jangan kirim atau tempel service_role key ke browser.</text>
+
+  <g filter="url(#shadow)">
+    <rect x="64" y="632" width="1072" height="300" rx="20" fill="#fff"/>
+  </g>
+  <circle cx="106" cy="675" r="25" fill="#176f9b"/>
+  <text x="106" y="683" text-anchor="middle" class="step">2</text>
+  <text x="148" y="683" class="heading">Periksa Edge Function rapid-api</text>
+  <rect x="98" y="712" width="402" height="150" rx="12" fill="#f2f7fb" stroke="#cad9e5"/>
+  <rect x="98" y="712" width="402" height="36" rx="12" fill="#dbe8f2"/>
+  <text x="118" y="737" class="small" font-weight="700">Supabase → Edge Functions</text>
+  <rect x="118" y="772" width="362" height="58" rx="9" fill="#e5f5ef" stroke="#8bc8ae"/>
+  <circle cx="143" cy="801" r="8" fill="#1c9a66"/>
+  <text x="164" y="808" class="body" font-weight="700">rapid-api</text>
+  <text x="524" y="730" class="body">Function harus terlihat di project ini.</text>
+  <text x="524" y="769" class="body">Jika tidak ada, developer deploy dari root repo:</text>
+  <rect x="524" y="790" width="574" height="48" rx="8" fill="#183047"/>
+  <text x="544" y="821" class="mono" fill="#e9f5ff">npx supabase functions deploy rapid-api</text>
+  <text x="524" y="871" class="small muted">Tambahkan --project-ref PROJECT_REF project yang benar.</text>
+
+  <g filter="url(#shadow)">
+    <rect x="64" y="958" width="1072" height="330" rx="20" fill="#fff"/>
+  </g>
+  <circle cx="106" cy="1001" r="25" fill="#176f9b"/>
+  <text x="106" y="1009" text-anchor="middle" class="step">3</text>
+  <text x="148" y="1009" class="heading">Cocokkan ALLOWED_ORIGINS</text>
+  <text x="98" y="1052" class="body">Alamat domain toko harus sama persis dengan alamat di browser.</text>
+  <rect x="98" y="1075" width="1000" height="74" rx="10" fill="#183047"/>
+  <text x="120" y="1106" class="mono" fill="#e9f5ff">ALLOWED_ORIGINS=https://domain-toko-anda.com</text>
+  <text x="120" y="1133" class="mono" fill="#a8d6ff">,http://localhost:5173</text>
+  <text x="98" y="1185" class="body">✓ Sertakan https:// • pisahkan domain dengan koma</text>
+  <text x="98" y="1217" class="body">✗ Jangan sertakan /checkout, path, atau garis miring di akhir domain</text>
+  <text x="98" y="1257" class="small muted">Domain Preview Vercel berbeda? Tambahkan domain Preview yang dipakai untuk tes.</text>
+
+  <g filter="url(#shadow)">
+    <rect x="64" y="1314" width="1072" height="264" rx="20" fill="#fff"/>
+  </g>
+  <circle cx="106" cy="1357" r="25" fill="#176f9b"/>
+  <text x="106" y="1365" text-anchor="middle" class="step">4</text>
+  <text x="148" y="1365" class="heading">Simpan secret, deploy ulang, lalu cek log</text>
+  <text x="98" y="1410" class="body">Developer menjalankan dari root repository:</text>
+  <rect x="98" y="1430" width="1000" height="78" rx="10" fill="#183047"/>
+  <text x="120" y="1462" class="mono" fill="#e9f5ff">npx supabase secrets set --env-file .env.edge --project-ref PROJECT_REF</text>
+  <text x="120" y="1490" class="mono" fill="#a8d6ff">npx supabase functions deploy rapid-api --project-ref PROJECT_REF</text>
+  <text x="98" y="1542" class="small muted">Setelah itu: Dashboard → Edge Functions → rapid-api → Logs. Cari error saat checkout.</text>
+
+  <rect x="64" y="1600" width="1072" height="2" fill="#c8d8e2"/>
+  <text x="64" y="1634" class="small muted">Jika tidak punya akses Supabase atau terminal repository, kirim panduan ini ke pengelola/developer toko.</text>
+</svg>

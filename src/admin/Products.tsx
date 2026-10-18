@@ -6,10 +6,10 @@ import { errorMessage, money, parseProductCsv } from '../lib/domain';
 import type { ProductImportRow } from '../lib/domain';
 import { useResource } from '../lib/useResource';
 import { Field, Message, Modal, Pagination, Photo } from '../components/UI';
-type Draft = Pick<Product, 'title' | 'price' | 'description' | 'category' | 'image_url' | 'images' | 'variants' | 'stock' | 'stock_alert_threshold' | 'weight_grams' | 'is_active'>;
+type Draft = Pick<Product, 'title' | 'price' | 'description' | 'category' | 'image_url' | 'images' | 'variants' | 'stock' | 'stock_alert_threshold' | 'weight_grams' | 'length_cm' | 'width_cm' | 'height_cm' | 'is_active'>;
 type InventoryFilter = 'all' | 'low' | 'out' | 'unlimited';
 type InventoryEntry = { product: Product; variant: string; stock: number | null; threshold: number };
-const blank = (): Draft => ({ title: '', price: 0, description: '', category: '', image_url: '', images: [], variants: [], stock: null, stock_alert_threshold: 5, weight_grams: 0, is_active: true });
+const blank = (): Draft => ({ title: '', price: 0, description: '', category: '', image_url: '', images: [], variants: [], stock: null, stock_alert_threshold: 5, weight_grams: 0, length_cm: 0, width_cm: 0, height_cm: 0, is_active: true });
 export default function Products() {
   const [page, setPage] = useState(0), [search, setSearch] = useState(''), [revision, setRevision] = useState(0);
   const result = useResource(JSON.stringify([page, search, revision]), s => getProducts({ page, search, category: '', sort: 'newest', admin: true }, s), JSON.stringify(['admin-products', page, search]));
@@ -23,7 +23,7 @@ export default function Products() {
   const [stockDelta, setStockDelta] = useState('1'), [stockReason, setStockReason] = useState('Penerimaan stok'), [stockNote, setStockNote] = useState('');
   const [stockHistory, setStockHistory] = useState<Awaited<ReturnType<typeof getInventoryMovements>>>([]);
   const [stockHistoryError, setStockHistoryError] = useState('');
-  function edit(p?: Product) { setOriginal(p); setDraft(p ? { title: p.title, price: p.price, description: p.description, category: p.category, image_url: p.image_url, images: [...(p.images || [])], variants: (p.variants || []).map(v => ({ ...v, stock: v.stock ?? 0, low_stock_threshold: v.low_stock_threshold ?? 5 })), stock: p.stock, stock_alert_threshold: p.stock_alert_threshold ?? 5, weight_grams: p.weight_grams || 0, is_active: p.is_active } : blank()); setOpen(true); setError(''); }
+  function edit(p?: Product) { setOriginal(p); setDraft(p ? { title: p.title, price: p.price, description: p.description, category: p.category, image_url: p.image_url, images: [...(p.images || [])], variants: (p.variants || []).map(v => ({ ...v, stock: v.stock ?? 0, low_stock_threshold: v.low_stock_threshold ?? 5 })), stock: p.stock, stock_alert_threshold: p.stock_alert_threshold ?? 5, weight_grams: p.weight_grams || 0, length_cm: p.length_cm || 0, width_cm: p.width_cm || 0, height_cm: p.height_cm || 0, is_active: p.is_active } : blank()); setOpen(true); setError(''); }
   const inventoryEntries = useMemo(() => (result.data?.rows || []).flatMap(product => product.variants.length
     ? product.variants.map(variant => ({ product, variant: variant.name, stock: variant.stock ?? 0, threshold: variant.low_stock_threshold ?? 5 }))
     : [{ product, variant: '', stock: product.stock, threshold: product.stock_alert_threshold ?? 5 }]), [result.data?.rows]);
@@ -160,7 +160,7 @@ export default function Products() {
     }
   }
   function downloadTemplate() {
-    const csv = '\uFEFFtitle,price,description,category,image_url,stock,weight_grams,is_active\r\nTas contoh,125000,"Deskripsi produk",Tas,,10,500,true\r\n';
+    const csv = '\uFEFFtitle,price,description,category,image_url,stock,weight_grams,length_cm,width_cm,height_cm,is_active\r\nTas contoh,125000,"Deskripsi produk",Tas,,10,500,30,20,10,true\r\n';
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
     const link = document.createElement('a');
     link.href = url;
@@ -187,7 +187,7 @@ export default function Products() {
     </div>
     {view === 'products' && showImport && <section className="panel stack">
       <div><h2>Impor produk dari CSV</h2><p className="muted">Maksimal 250 produk dan 1 MB per file. Harga dalam Rupiah. Seluruh baris divalidasi sebelum dikirim sebagai satu operasi database.</p></div>
-      <p className="import-format"><code>title,price,description,category,image_url,stock,weight_grams,is_active</code><br />Kolom wajib: title, price. Kolom opsional: description, category, image_url, stock, weight_grams, is_active. Masukkan berat satu produk dalam gram (0 = belum diisi; isi berat aktual sebelum integrasi tarif kurir). Stok kosong berarti tidak dibatasi; URL gambar harus HTTPS. Teks berkoma/baris baru harus dibungkus tanda kutip CSV. Impor menambahkan produk baru tanpa foto galeri atau varian.</p>
+      <p className="import-format"><code>title,price,description,category,image_url,stock,weight_grams,length_cm,width_cm,height_cm,is_active</code><br />Kolom wajib: title, price. Dimensi dalam cm dan berat dalam gram perlu diisi sebelum tarif Biteship dapat dihitung. Kolom lain opsional; stok kosong berarti tidak dibatasi; URL gambar harus HTTPS. Teks berkoma/baris baru harus dibungkus tanda kutip CSV. Impor menambahkan produk baru tanpa foto galeri atau varian.</p>
       <button type="button" className="text-button" onClick={downloadTemplate}>Unduh template CSV</button>
       <Field label="Pilih file CSV">
         <input type="file" accept=".csv,text/csv" disabled={busy} onChange={event => { void stageImport(event.target.files?.[0]); event.target.value = ''; }} />
@@ -320,6 +320,17 @@ export default function Products() {
           <Field label="Berat satu produk (gram)" hint="Masukkan berat aktual. 0 berarti belum diketahui dan tidak dapat dipakai untuk menghitung tarif kurir.">
             <input required type="number" min={0} max={100000000} step={1} value={draft.weight_grams} onChange={e => setDraft({ ...draft, weight_grams: e.target.value === '' ? 0 : Number(e.target.value) })} />
           </Field>
+          <div className="form-grid-wide form-grid">
+            <Field label="Panjang produk (cm)" hint="Wajib diisi untuk menghitung tarif Biteship.">
+              <input required type="number" min={0} max={10000} step={1} value={draft.length_cm} onChange={e => setDraft({ ...draft, length_cm: Number(e.target.value) || 0 })} />
+            </Field>
+            <Field label="Lebar produk (cm)">
+              <input required type="number" min={0} max={10000} step={1} value={draft.width_cm} onChange={e => setDraft({ ...draft, width_cm: Number(e.target.value) || 0 })} />
+            </Field>
+            <Field label="Tinggi produk (cm)">
+              <input required type="number" min={0} max={10000} step={1} value={draft.height_cm} onChange={e => setDraft({ ...draft, height_cm: Number(e.target.value) || 0 })} />
+            </Field>
+          </div>
         </div>
         <Field label="Deskripsi">
           <textarea maxLength={10000} rows={4} value={draft.description} onChange={e => setDraft({ ...draft, description: e.target.value })} />

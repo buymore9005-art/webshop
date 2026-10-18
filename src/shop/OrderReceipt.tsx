@@ -50,6 +50,7 @@ export function OrderReceipt({ initial, access, settings, customer, onBack }: {
         </div>
         <p>Pengiriman: {fulfillmentLabels[receipt.fulfillment_status]}
         </p>
+        {receipt.shipping_courier_name && <p>Layanan kurir: <strong>{receipt.shipping_courier_name} · {receipt.shipping_service_name}</strong></p>}
         {receipt.tracking_number && <p>Resi: <strong>
           {receipt.carrier} · {receipt.tracking_number}
         </strong>

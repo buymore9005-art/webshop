@@ -2,7 +2,7 @@ import type { FormEvent } from 'react';
 import { useEffect, useState } from 'react';
 import { client } from '../../supabaseClient';
 import type { Order } from '../types';
-import { exportOrderPage, getOrders, orderAction } from '../lib/api';
+import { bookBiteshipShipment, exportOrderPage, getOrders, orderAction } from '../lib/api';
 import { printPackingSlip } from '../lib/shipping';
 import { dateTime, errorMessage, fulfillmentLabels, money, orderLabels } from '../lib/domain';
 import { useResource } from '../lib/useResource';
@@ -17,6 +17,14 @@ export default function Orders() {
       return []; const { data, error: e } = await client().from('order_events').select('id,event,old_status,new_status,note,created_at').eq('order_id', editing.id).order('created_at', { ascending: false }).limit(50); if (e)
       throw e; return data || [];
   }, 'admin-order-events:' + editing?.id);
+  const shipment = useResource('shipment:' + editing?.id + ':' + rev, async () => {
+    if (!editing)
+      return null;
+    const { data, error: e } = await client().from('shipping_shipments').select('*').eq('order_id', editing.id).maybeSingle();
+    if (e)
+      throw e;
+    return data;
+  }, 'admin-order-shipment:' + editing?.id);
   useEffect(() => { const channel = client().channel('admin-orders').on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => setRev(n => n + 1)).subscribe(); return () => { void client().removeChannel(channel); }; }, []);
   function edit(o: Order) { setEditing(o); setAction(''); setReason(''); setTracking(o.tracking_number); setCarrier(o.carrier); setError(''); }
   async function save(event: FormEvent) {
@@ -26,6 +34,23 @@ export default function Orders() {
         setEditing(null);
         setRev(n => n + 1);
         setMessage('Perubahan pesanan disimpan.');
+      }
+      async function bookShipment() {
+        if (!editing || busy)
+          return;
+        setBusy(true);
+        setError('');
+        try {
+          const result = await bookBiteshipShipment(editing.id);
+          setRev(n => n + 1);
+          setMessage(result.already_booked ? 'Booking Biteship sudah tercatat.' : 'Shipment Biteship berhasil dibuat.');
+        }
+        catch (e) {
+          setError(errorMessage(e));
+        }
+        finally {
+          setBusy(false);
+        }
       }
     catch (e) {
       setError(errorMessage(e));
@@ -178,7 +203,22 @@ export default function Orders() {
         <p>
           {editing.payment_method} · {orderLabels[editing.status]} · {fulfillmentLabels[editing.fulfillment_status]}
         </p>
+        {editing.shipping_courier_name && <p>Tarif terpilih: {editing.shipping_courier_name} · {editing.shipping_service_name} · {money(editing.shipping_fee)}</p>}
         <button type="button" className="button secondary" onClick={() => printSlip(editing)}>Cetak packing slip</button>
+        {editing.shipping_quote_id && <section className="panel stack">
+          <h3>Pengiriman Biteship</h3>
+          <Message error={shipment.error} loading={shipment.loading} />
+          {shipment.data && <>
+            <p>{shipment.data.carrier_name} · {shipment.data.service_name} · status {shipment.data.status}</p>
+            {shipment.data.tracking_number && <p>Resi: <strong>{shipment.data.tracking_number}</strong></p>}
+            <small>Referensi booking: {shipment.data.provider_request_id}</small>
+            {shipment.data.label_url && <a className="button secondary" href={shipment.data.label_url} target="_blank" rel="noopener noreferrer">Buka label pengiriman</a>}
+            {shipment.data.provider_error && <p className="message error">{shipment.data.provider_error}</p>}
+            {shipment.data.status === 'created' && <p className="message">Permintaan booking sudah dimulai. Periksa dashboard Biteship sebelum mencoba tindakan lain.</p>}
+          </>}
+          {!shipment.data && ['paid', 'partial_refund'].includes(editing.status) && editing.fulfillment_status === 'processing' &&
+            <button type="button" className="button" disabled={busy || shipment.loading} onClick={() => void bookShipment()}>{busy ? 'Membuat booking…' : 'Buat booking & label Biteship'}</button>}
+        </section>}
         <form className="stack" onSubmit={save}>
           <Field label="Tindakan">
             <select required value={action} onChange={e => setAction(e.target.value)}>
@@ -189,7 +229,7 @@ export default function Orders() {
               </>}
               {['paid', 'partial_refund'].includes(editing.status) && <>
                 {editing.fulfillment_status === 'unfulfilled' && <option value="processing">Mulai proses pesanan</option>}
-                {editing.fulfillment_status === 'processing' && <option value="shipped">Kirim pesanan</option>}
+                {editing.fulfillment_status === 'processing' && !editing.shipping_quote_id && <option value="shipped">Kirim pesanan</option>}
                 {editing.fulfillment_status === 'shipped' && <option value="completed">Selesaikan pesanan</option>}
               </>}
             </select>

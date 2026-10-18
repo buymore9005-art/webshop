@@ -5,6 +5,7 @@ import { getSettings, getShippingOrigin, saveSettings, saveShippingOrigin, uploa
 import { errorMessage, normalizePhone } from '../lib/domain';
 import { useResource } from '../lib/useResource';
 import { Field, Message, Photo } from '../components/UI';
+import { ShippingAreaPicker } from '../components/ShippingAreaPicker';
 export default function Settings({ whatsappOnly = false }: {
   whatsappOnly?: boolean;
 }) {
@@ -33,6 +34,8 @@ export default function Settings({ whatsappOnly = false }: {
         store_name: draft.store_name.trim(), banner_url: draft.banner_url, hero_title: draft.hero_title.trim(),
         store_notice: draft.store_notice.trim(), categories: draft.categories, admin_phone,
         shipping_fee: Number(draft.shipping_fee), free_shipping_min: draft.free_shipping_min === null ? null : Number(draft.free_shipping_min),
+        shipping_provider: draft.shipping_provider,
+        shipping_couriers: draft.shipping_couriers.trim().toLowerCase(),
       };
       setDraft(await saveSettings(payload, draft.updated_at));
       setMessage('Pengaturan berhasil disimpan.');
@@ -134,19 +137,28 @@ export default function Settings({ whatsappOnly = false }: {
         </div>
         <div className="panel stack">
           <h2>Pengiriman</h2>
-          <p className="muted">Saat ini checkout memakai ongkir tetap di bawah. Data asal gudang disiapkan untuk integrasi kurir; penghitungan tarif dan label otomatis belum aktif sampai provider dipilih dan dikonfigurasi.</p>
+          <p className="muted">Pilih ongkir tetap atau tarif real-time Biteship. Biteship memerlukan API key pada Supabase Edge Function Secrets, lokasi asal, serta berat dan dimensi produk yang sudah diisi.</p>
+          <Field label="Penyedia ongkir">
+            <select value={draft.shipping_provider} onChange={e => setDraft({ ...draft, shipping_provider: e.target.value as SettingsType['shipping_provider'] })}>
+              <option value="flat_rate">Ongkir tetap</option>
+              <option value="biteship">Biteship (tarif real-time)</option>
+            </select>
+          </Field>
+          {draft.shipping_provider === 'biteship' && <Field label="Kode kurir yang diminta" hint="Kode dipisahkan koma; misalnya jne,sicepat,anteraja. Layanan yang tersedia bergantung pada akun Biteship dan tujuan.">
+            <input required maxLength={200} value={draft.shipping_couriers} onChange={e => setDraft({ ...draft, shipping_couriers: e.target.value.toLowerCase() })} />
+          </Field>}
           <div className="form-grid">
             <Field label="Ongkos kirim tetap (Rp)">
-              <input required type="number" min={0} max={1000000000} step={1} value={draft.shipping_fee} onChange={e => setDraft({ ...draft, shipping_fee: Number(e.target.value) })} />
+              <input required disabled={draft.shipping_provider === 'biteship'} type="number" min={0} max={1000000000} step={1} value={draft.shipping_fee} onChange={e => setDraft({ ...draft, shipping_fee: Number(e.target.value) })} />
             </Field>
-            <Field label="Gratis ongkir mulai subtotal (Rp)" hint="Kosong = tidak ada batas gratis ongkir. Ini tarif tetap, bukan integrasi tarif kurir.">
-              <input type="number" min={0} max={1000000000} step={1} value={draft.free_shipping_min ?? ''} onChange={e => setDraft({ ...draft, free_shipping_min: e.target.value === '' ? null : Number(e.target.value) })} />
+            <Field label="Gratis ongkir mulai subtotal (Rp)" hint={draft.shipping_provider === 'biteship' ? 'Hanya dipakai pada mode ongkir tetap.' : 'Kosong = tidak ada batas gratis ongkir.'}>
+              <input disabled={draft.shipping_provider === 'biteship'} type="number" min={0} max={1000000000} step={1} value={draft.free_shipping_min ?? ''} onChange={e => setDraft({ ...draft, free_shipping_min: e.target.value === '' ? null : Number(e.target.value) })} />
             </Field>
           </div>
         </div>
         <section className="panel stack">
           <h2>Alamat asal / gudang</h2>
-          <p className="muted">Hanya Admin yang dapat membaca alamat ini; data gudang tidak disimpan di pengaturan publik toko.</p>
+        <p className="muted">Hanya Admin yang dapat membaca alamat ini. Pilih ID area Biteship yang sesuai dengan alamat gudang.</p>
           <Message error={originResult.error} loading={originResult.loading} />
           {originDraft && <>
             <div className="form-grid">
@@ -172,6 +184,8 @@ export default function Settings({ whatsappOnly = false }: {
                 <input inputMode="numeric" pattern="[0-9]{5}" maxLength={5} value={originDraft.postal_code} onChange={e => setOriginDraft({ ...originDraft, postal_code: e.target.value.replace(/\D/g, '').slice(0, 5) })} />
               </Field>
             </div>
+            <ShippingAreaPicker label="Cari area asal di Biteship" hint="Cari kecamatan/kota gudang, lalu pilih area yang tepat." onSelect={area => setOriginDraft({ ...originDraft, provider_location_id: area.id })} />
+            <p><strong>ID area asal:</strong> {originDraft.provider_location_id || 'Belum dipilih'}</p>
             <button type="button" className="button secondary" disabled={busy} onClick={() => void saveOrigin()}>{busy ? 'Menyimpan…' : 'Simpan alamat gudang'}</button>
           </>}
         </section>

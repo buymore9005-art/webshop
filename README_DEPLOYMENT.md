@@ -141,9 +141,12 @@ Pada project kosong yang baru dibuat, urutannya:
 4. `supabase/migrations/20261012000000_shipping_foundation.sql`
 5. `supabase/migrations/20261013000000_brand_gallery.sql`
 6. `supabase/migrations/20261014000000_variant_inventory.sql`
+7. `supabase/migrations/20261015000000_biteship.sql` (optional; enables Biteship)
 
 Pada project yang sudah aktif, JANGAN ulangi setup awal. Jalankan hanya migration
-yang memang belum diterapkan, berurutan. Migration brand gallery menambahkan tabel
+yang memang belum diterapkan, berurutan. File langkah 7 adalah satu skrip SQL
+transaksional yang dapat ditempel dan dijalankan sekali di Supabase SQL Editor setelah
+migration sebelumnya. Migration brand gallery menambahkan tabel
 `brand_gallery` dengan RLS: publik hanya membaca foto aktif, sedangkan perubahan hanya
 dapat dilakukan Admin terautentikasi. Migration inventory menambahkan stok per varian,
 riwayat pergerakan stok dan RPC Admin; terapkan langkah 6 setelah migration sebelumnya.
@@ -180,13 +183,38 @@ Migration memakai `if not exists`/penggantian fungsi dan membuat trigger penyimp
 varian. Setelah berhasil, refresh halaman, buka kembali produk, isi stok tiap varian,
 lalu simpan dan cek ulang nilainya.
 
-Setelah migration, Admin > Pengaturan > Pengiriman tetap menggunakan ongkir tetap
-sebagai tarif checkout aktif. Simpan alamat asal/pengirim di panel Alamat asal /
-gudang; tabelnya dilindungi RLS dan tidak dapat dibaca pengunjung toko. Produk >
-Tambah/Ubah produk memiliki berat per unit dalam gram. Produk lama dapat bernilai
-0 (belum diisi); masukkan berat aktual produk, dan pastikan bobot kemasan turut
-diperhitungkan saat provider dipilih. Kolom CSV `weight_grams` opsional; tanpa nilai
-berat tercatat sebagai 0 dan bukan berat hasil tebakan.
+Migration Biteship menambahkan mode penyedia ongkir, ID area asal, dimensi produk,
+validasi quote terpilih di database, dan RPC booking shipment. Ia tidak memasukkan
+API key ke SQL (secret tidak aman disimpan dalam skrip atau tabel). Siapkan key
+Biteship sebagai secret Edge Function, lalu deploy ulang `rapid-api`:
+
+```bash
+# Tambahkan BITESHIP_API_KEY=<API-key-server-Biteship> ke .env.edge lokal
+npx supabase secrets set --env-file .env.edge --project-ref PROJECT_REF_BARU
+npx supabase functions deploy rapid-api --project-ref PROJECT_REF_BARU --use-api
+```
+
+Jangan isi nilai nyata pada `supabase/functions/.env.example`, frontend `.env.local`,
+Vercel `VITE_*`, atau berkas yang akan dikomit. Simpan `.env.edge` lokal secara aman
+dan pastikan diabaikan Git. Biteship API key harus dibuat/diambil dari akun Biteship
+Anda; source code tidak membuat akun atau mengaktifkan saldo/layanan provider.
+
+Setelah langkah 7 dan function dideploy, buka Admin > Pengaturan > Pengiriman, pilih
+Biteship, lalu pilih ID area asal pada pencarian Biteship dan simpan alamat gudang,
+kontak, serta kode pos. Pada Produk & katalog, masukkan berat nyata (gram) serta
+panjang/lebar/tinggi (cm) untuk setiap produk yang dijual. Berat atau dimensi bernilai
+0 sengaja ditolak saat meminta tarif; jangan menebak ukuran paket. CSV mendukung
+kolom opsional `weight_grams,length_cm,width_cm,height_cm`.
+
+Checkout Biteship meminta pembeli memilih area tujuan dari lookup provider, lalu
+menghitung tarif berdasarkan item/berat/dimensi server dan menyimpan quote 8 menit.
+Total dan tarif dicek ulang database saat order dibuat. Setelah Admin memverifikasi
+pembayaran dan memindahkan pesanan ke status Diproses, tombol **Buat booking & label
+Biteship** membuat shipment dan menautkan resi/label jika dikembalikan Biteship.
+Pengiriman tidak otomatis dibuat sebelum pembayaran diverifikasi. Jika permintaan
+booking timeout, jangan mengulang tanpa memeriksa dashboard Biteship: sistem menahan
+booking ulang untuk mencegah label/resi duplikat; cocokkan nomor pesanan/metadata ke
+Biteship sebelum tindak lanjut.
 
 Checkout sekarang meminta alamat jalan, kecamatan, kota/kabupaten, provinsi, dan kode
 pos 5 digit. Detail ini disimpan sebagai snapshot order untuk lookup tujuan provider.
@@ -200,15 +228,11 @@ produk, serta kurir/resi manual bila sudah ada. Packing slip BUKAN AWB, label ku
 bukti booking, atau cetakan resmi shipping provider. Izinkan pop-up bila browser
 memblokir dokumen cetak.
 
-Tarif real-time dan pembuatan label/resi otomatis BELUM aktif sampai provider dipilih
-dan adapter API-nya diimplementasikan. Ongkir checkout saat ini tetap flat-rate; jangan
-anggap tabel quote/shipment atau kontrak TypeScript sebagai koneksi kurir aktif. Kerangka
-provider diletakkan di `supabase/functions/_shared/shipping.ts`; adapter berikutnya
-harus dipanggil hanya dari Edge Function, memvalidasi quote serta order di server, dan
-menyimpan credential sebagai Supabase Edge Function Secret. Jangan pernah menaruh
-credential pada `VITE_*`, tabel publik, atau source code. Nilai wilayah teks belum
-merupakan ID lokasi provider; adapter terpilih harus melakukan lookup/validasi lokasi
-sesuai kontrak provider.
+Jika mode Biteship belum dipilih, checkout tetap menggunakan ongkir tetap seperti
+sebelumnya. Operasi Biteship bergantung pada API key, status akun/layanan Biteship,
+data area yang cocok, serta berat/dimensi barang yang akurat. Verifikasi dengan key
+dan akun staging Biteship sebelum mengaktifkan untuk pembeli; jangan menganggap build
+lokal sebagai bukti booking atau pencetakan label live.
 
 ## 4. Konfigurasi Auth dan environment frontend
 
@@ -245,6 +269,12 @@ milik akun lama yang dipasang otomatis. Antarmuka vendor Tawk bukan komponen yan
 kita desain ulang; secara default integrasinya tidak aktif.
 
 ## 5. Pasang Supabase Edge Functions — diperlukan untuk checkout
+
+Jika checkout menampilkan pesan bahwa layanan tidak dapat dihubungi, ikuti
+[panduan visual rapid-api](./docs/panduan-visual-checkout-rapid-api.svg) untuk memeriksa
+project, deployment function, `ALLOWED_ORIGINS`, dan log secara berurutan.
+
+![Ilustrasi langkah pengecekan checkout rapid-api](./docs/panduan-visual-checkout-rapid-api.svg)
 
 SQL membangun database, bukan men-deploy function server. Bahkan pembayaran manual
 memerlukan `rapid-api` karena validasi checkout/nominal tidak dipercayakan ke browser.
