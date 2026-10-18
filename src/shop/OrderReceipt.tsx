@@ -1,11 +1,10 @@
 import { useState } from 'react';
-import type { Customer, OrderAccess, Receipt, Settings } from '../types';
+import type { Customer, Receipt, Settings } from '../types';
 import { dateTime, errorMessage, fulfillmentLabels, money, orderLabels, whatsappUrl } from '../lib/domain';
-import { downloadOrderAccessBackup, loadReceipt } from '../lib/api';
+import { loadReceipt } from '../lib/api';
 import { Message, Photo } from '../components/UI';
-export function OrderReceipt({ initial, access, settings, customer, onBack }: {
+export function OrderReceipt({ initial, settings, customer = initial.customer, onBack }: {
   initial: Receipt;
-  access: OrderAccess;
   settings: Settings;
   customer?: Customer;
   onBack: () => void;
@@ -13,7 +12,7 @@ export function OrderReceipt({ initial, access, settings, customer, onBack }: {
   const [receipt, setReceipt] = useState(initial), [busy, setBusy] = useState(false), [error, setError] = useState(''), [message, setMessage] = useState('');
   async function refresh() {
     setBusy(true); setError(''); try {
-      setReceipt(await loadReceipt(access));
+      setReceipt(await loadReceipt(initial.id));
       setMessage('Status pesanan diperbarui dari server.');
     }
       catch (e) {
@@ -39,7 +38,7 @@ export function OrderReceipt({ initial, access, settings, customer, onBack }: {
       {receipt.order_number}
     </p>
     <p className="muted">
-      {dateTime(receipt.created_at)} · Simpan nomor pesanan. Bukti akses tersedia pada tab ini, maksimal 30 hari.</p>
+      {dateTime(receipt.created_at)} · Detail pembayaran tersedia kembali melalui Pesanan saya setelah masuk ke akun.</p>
     <div className="checkout-grid">
       <section className="panel stack">
         <div className="split">
@@ -75,10 +74,9 @@ export function OrderReceipt({ initial, access, settings, customer, onBack }: {
           <button className="button secondary" disabled={busy} onClick={refresh}>
             {busy ? 'Memeriksa…' : 'Periksa status'}
           </button>
-          <button type="button" className="button secondary" onClick={() => downloadOrderAccessBackup(access, receipt.order_number)}>Unduh kunci pemulihan</button>
           <button className="button secondary" onClick={() => window.print()}>Cetak ringkasan</button>
         </div>
-        <small>Simpan file kunci di tempat pribadi. File ini memberikan akses ke ringkasan pesanan; jangan bagikan atau unggah ke tempat umum.</small>
+        {customer && <p>Pengiriman: {customer.name}, {customer.address}, {customer.district}, {customer.city}, {customer.province} {customer.postal_code}. WhatsApp: {customer.phone}</p>}
       </section>
       <aside className="panel stack">
         <h2>Detail pesanan</h2>

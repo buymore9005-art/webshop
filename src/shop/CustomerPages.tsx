@@ -89,9 +89,9 @@ export function CustomerAccount({ session, loading, sessionError, onOrders }: { 
     </section>;
 }
 
-export function CustomerOrders({ session, loading, sessionError, hasAccess, onAccount, onReceipt }: {
-    session: Session | null; loading: boolean; sessionError: string; hasAccess: boolean;
-    onAccount: () => void; onReceipt: () => void;
+export function CustomerOrders({ session, loading, sessionError, onAccount, onReceipt }: {
+    session: Session | null; loading: boolean; sessionError: string;
+    onAccount: () => void; onReceipt: (id: string) => void;
 }) {
     const [page, setPage] = useState(0);
     const [revision, setRevision] = useState(0);
@@ -120,7 +120,7 @@ export function CustomerOrders({ session, loading, sessionError, hasAccess, onAc
         <div className="section-heading"><div><p className="eyebrow">Riwayat pesanan</p><h1>Pesanan saya</h1></div>
             {session && <button className="button secondary" disabled={busy || loading} onClick={() => { setBusy(true); setRevision(value => value + 1); }}>Perbarui</button>}
         </div>
-        <div className="panel stack"><h2>Bukti pesanan & pembayaran</h2><p>Buka bukti pesanan terakhir di perangkat ini untuk petunjuk pembayaran, atau pulihkan pesanan dengan file kunci pemulihan. Berlaku juga untuk checkout tamu.</p><button className="button secondary" onClick={onReceipt}>{hasAccess ? 'Buka bukti pesanan terakhir' : 'Pulihkan bukti pesanan'}</button></div>
+        <div className="panel stack"><h2>Bukti pesanan & pembayaran</h2><p>Pilih detail pesanan untuk melihat instruksi pembayaran dan alamat pengiriman, termasuk dari perangkat lain. Untuk pesanan tamu lama, hubungi Admin dengan nomor pesanan.</p></div>
         <Message error={sessionError || error} />
         {loading ? <p role="status">Memuat akun...</p> : !session ? <div className="panel stack"><p>Masuk untuk melihat seluruh riwayat pesanan akun Anda.</p><button className="button" onClick={onAccount}>Masuk ke akun</button></div> : <>
             <p>Riwayat ini hanya memuat pesanan yang dibuat saat masuk ke akun ini. Pesanan tamu tidak otomatis ditautkan ke akun.</p>
@@ -138,6 +138,7 @@ export function CustomerOrders({ session, loading, sessionError, hasAccess, onAc
                         <div><strong>{item.title}</strong>{item.variant && <p>Varian: {item.variant}</p>}<p>{item.quantity} × {money(item.unit_price)}</p></div><strong>{money(item.subtotal)}</strong>
                     </li>)}</ul>
                     <footer className="customer-order-summary"><div>{order.coupon_code && <p>Kupon {order.coupon_code} · diskon {money(order.discount_amount)}</p>}{order.tracking_number ? <p>Resi: {order.carrier} · {order.tracking_number}</p> : <p>Resi belum tersedia.</p>}</div><div><small>Total pesanan</small><strong>{money(order.total_price)}</strong></div></footer>
+                    <button className="button secondary" onClick={() => onReceipt(order.id)}>Lihat detail & pembayaran</button>
                 </article>)}</div>
                 {result.count > 0 && <Pagination page={page} count={result.count} size={CUSTOMER_ORDER_PAGE_SIZE} disabled={busy} onChange={changePage} />}
             </>}

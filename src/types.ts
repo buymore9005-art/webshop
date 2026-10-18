@@ -178,6 +178,7 @@ export interface OrderItem {
     weight_grams?: number;
 }
 export interface Receipt {
+    customer?: Customer;
     id: string;
     order_number: string;
     items: OrderItem[];

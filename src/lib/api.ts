@@ -1,6 +1,6 @@
 import { client, projectStorageKey } from '../../supabaseClient';
 import type { Article, BrandGalleryImage, CartLine, Coupon, Customer, FooterInfo, OrderAccess, Order, Product, Settings, ShippingArea, ShippingOrigin, PaymentMethod, Receipt, ShippingRate, ShippingShipment, Summary } from '../types';
-import { articleSlug, checkoutItems, validateCustomer, safeFooterHref, safeImageUrl, csvCell, errorMessage, serializeOrderAccessBackup, normalizePhone } from './domain';
+import { articleSlug, checkoutItems, validateCustomer, safeFooterHref, safeImageUrl, csvCell, errorMessage, normalizePhone } from './domain';
 import type { ProductImportRow } from './domain';
 import type { CustomerOrderHistory } from '../types';
 export interface CatalogFilter {
@@ -252,7 +252,9 @@ export async function saveCoupon(value: Omit<Coupon, 'id' | 'times_used'>, id?: 
 export async function validateCoupon(code: string, subtotal: number, phone: string) {
     return shopAction<{ code: string; discount_amount: number }>({ action: 'validate-coupon', code, subtotal, phone });
 }
+let pendingAccess: OrderAccess | null = null;
 export function readOrderAccess(): OrderAccess | null {
+    if (pendingAccess) return pendingAccess;
     try {
         const x = JSON.parse(sessionStorage.getItem(projectStorageKey + 'order-access') || 'null');
         return x && typeof x.signature === 'string' && /^[0-9a-f]{64}$/.test(x.receiptToken) && /^[0-9a-f-]{36}$/.test(x.requestId) ? x : null;
@@ -261,21 +263,15 @@ export function readOrderAccess(): OrderAccess | null {
         return null;
     }
 }
-function saveAccess(value: OrderAccess) { try {
+function saveAccess(value: OrderAccess) { pendingAccess = value; try {
     sessionStorage.setItem(projectStorageKey + 'order-access', JSON.stringify(value));
 }
-catch { /* In-memory access still works; receipt page explains per-tab storage. */ } }
-export function downloadOrderAccessBackup(access: OrderAccess, orderNumber: string) {
-    const contents = serializeOrderAccessBackup(access, orderNumber);
-    const url = URL.createObjectURL(new Blob([contents], { type: 'application/json' }));
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `zyha-order-access-${orderNumber}.json`;
-    link.click();
-    setTimeout(() => URL.revokeObjectURL(url), 5000);
-}
+catch { /* Keep the retry proof in memory when browser storage is unavailable. */ } }
 export async function submitOrder(cart: CartLine[], customer: Customer, methodId: string, prior: OrderAccess | null, couponCode = '', shippingQuoteId = '', shippingServiceKey = '') {
+    const { data: auth, error } = await client().auth.getUser();
+    if (error || !auth.user || auth.user.is_anonymous) throw new Error('Masuk ke akun sebelum checkout.');
     const body = {
+        customerUserId: auth.user.id,
         items: checkoutItems(cart), customer: validateCustomer(customer), methodId, couponCode,
         shippingQuoteId, shippingServiceKey, shippingAreaId: customer.destination_area_id || '',
     };
@@ -292,9 +288,12 @@ export async function submitOrder(cart: CartLine[], customer: Customer, methodId
     saveAccess(access);
     return { access, receipt: result.receipt };
 }
-export async function loadReceipt(access: OrderAccess) { const x = await shopAction<{
-    receipt: Receipt;
-}>({ ...access, action: 'receipt' }); return x.receipt; }
+export async function loadReceipt(orderId: string): Promise<Receipt> {
+    const { data, error } = await client().rpc('zyha_customer_receipt', { p_order_id: orderId });
+    if (error) throw error;
+    if (!data?.id) throw new Error('Pesanan tidak ditemukan atau bukan milik akun ini.');
+    return data as Receipt;
+}
 export async function saveProduct(value: Partial<Product>, original?: Product) {
     const payload = {
         title: value.title?.trim(), description: value.description?.trim() || '', category: value.category?.trim() || '',

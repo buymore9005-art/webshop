@@ -5,6 +5,7 @@ import { cartTotals, money, validateCustomer, errorMessage } from '../lib/domain
 import { getShippingRates, readOrderAccess, submitOrder, validateCoupon } from '../lib/api';
 import { Field, Message, Photo } from '../components/UI';
 import { ShippingAreaPicker } from '../components/ShippingAreaPicker';
+import { client } from '../../supabaseClient';
 export function Checkout({ cart, settings, methods, onDone, onBack }: {
   cart: CartLine[];
   settings: Settings;
@@ -99,6 +100,9 @@ export function Checkout({ cart, settings, methods, onDone, onBack }: {
       const valid = validateCustomer(customer);
       if (!payment)
         throw new Error('Pilih metode pembayaran.');
+      const { data: auth, error: authError } = await client().auth.getUser();
+      if (authError || !auth.user || auth.user.is_anonymous)
+        throw new Error('Sesi berakhir. Masuk kembali sebelum membuat pesanan. Keranjang tetap tersimpan.');
       if (couponCode.trim() && !validCouponQuote)
         throw new Error('Periksa dan gunakan kembali kupon setelah perubahan nomor WhatsApp atau isi keranjang.');
       if (biteship && validShippingQuote && Date.parse(validShippingQuote.expires_at) <= Date.now())

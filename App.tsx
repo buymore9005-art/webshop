@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { client, projectStorageKey } from './supabaseClient';
 import type { CartLine, Customer, OrderAccess, Product, Receipt } from './src/types';
-import { addCartLine, errorMessage, money, parseCart, parseOrderAccessBackup, setCartQuantity, whatsappUrl } from './src/lib/domain';
+import { addCartLine, errorMessage, money, parseCart, setCartQuantity, whatsappUrl } from './src/lib/domain';
 import { getBrandGallery, getFooterInfo, getMethods, getProduct, getProducts, getPublishedArticles, getSettings, getWishlist, loadReceipt, readOrderAccess, setWishlisted } from './src/lib/api';
 import { useResource } from './src/lib/useResource';
 import { useCustomerSession } from './src/lib/useCustomerSession';
@@ -26,7 +26,9 @@ export default function App() {
     }
   });
   const [error, setError] = useState('');
-  const [receipt, setReceipt] = useState<Receipt | null>(null), [access, setAccess] = useState<OrderAccess | null>(readOrderAccess), [customer, setCustomer] = useState<Customer | undefined>();
+  const [receipt, setReceipt] = useState<Receipt | null>(null);
+  const [receiptOwner, setReceiptOwner] = useState('');
+  const orderId = params.get('order') || '';
   const [revision, setRevision] = useState(0);
   const { session, loading: sessionLoading, error: sessionError } = useCustomerSession();
   const search = params.get('q') || '', category = params.get('category') || '', sort = params.get('sort') || 'newest';
@@ -65,15 +67,18 @@ export default function App() {
       document.title = settings.data.store_name;
   }, [settings.data?.store_name]);
   useEffect(() => {
-    if (view !== 'receipt' || !access || receipt)
-      return; let active = true; void loadReceipt(access).then(r => {
-        if (active)
+    setReceipt(null);
+    if (view !== 'receipt' || !orderId || sessionLoading || !session || session.user.is_anonymous)
+      return; let active = true; void loadReceipt(orderId).then(r => {
+        if (active) {
+          setReceiptOwner(session.user.id);
           setReceipt(r);
+        }
       }).catch(e => {
         if (active)
           setError(errorMessage(e));
       }); return () => { active = false; };
-  }, [view, access?.requestId]);
+  }, [view, orderId, session?.user.id, sessionLoading]);
   function navigate(nextView = 'shop', productId = '') {
     const next = new URLSearchParams(params); next.delete('product'); next.delete('slug'); next.delete('view'); if (nextView !== 'shop')
       next.set('view', nextView); if (productId)
@@ -113,7 +118,8 @@ export default function App() {
       setError(errorMessage(e));
     }
   }
-  function done(order: Receipt, ref: OrderAccess, data: Customer) { setReceipt(order); setAccess(ref); setCustomer(data); setCart([]); navigate('receipt'); }
+  function openReceipt(id: string) { setReceipt(null); setError(''); setParams({ view: 'receipt', order: id }); }
+  function done(order: Receipt, _ref: OrderAccess, _data: Customer) { setCart([]); openReceipt(order.id); }
   async function toggleWishlist(product: Product) {
     if (!session) {
       navigate('account');
@@ -185,37 +191,14 @@ export default function App() {
         {(settings.error || methods.error) && <button className="button secondary" onClick={() => { settings.reload(); methods.reload(); }}>Coba kembali</button>}
       </div>
       {view === 'account' ? <CustomerAccount session={session} loading={sessionLoading} sessionError={sessionError} onOrders={() => navigate('orders')} />
-        : view === 'orders' ? <CustomerOrders key={session?.user.id || 'guest'} session={session} loading={sessionLoading} sessionError={sessionError} hasAccess={!!access} onAccount={() => navigate('account')} onReceipt={() => navigate('receipt')} />
+        : view === 'orders' ? <CustomerOrders key={session?.user.id || 'guest'} session={session} loading={sessionLoading} sessionError={sessionError} onAccount={() => navigate('account')} onReceipt={openReceipt} />
         : view === 'wishlist' ? <WishlistPage session={session} products={wishlist.data || []} loading={sessionLoading || wishlist.loading} error={sessionError || wishlist.error || ''} onRemove={toggleWishlist} onProduct={id => navigate('shop', id)} />
           : view === 'article' ? params.get('slug') ? <ArticleDetail slug={params.get('slug') || ''} onBack={() => navigateArticle()} /> : <ArticleIndex onOpen={navigateArticle} />
-            : view === 'checkout' && store ? <Checkout cart={cart} settings={store} methods={methods.data || []} onDone={done} onBack={() => navigate()} /> : view === 'receipt' && store ? <>
-        {receipt && access ? <OrderReceipt key={receipt.id} initial={receipt} access={access} settings={store} customer={customer} onBack={() => navigate()} /> : <section className="container section">
-          <Message loading={!error && !!access} />
-          {!access && <>
-            <h1>Pulihkan bukti pesanan</h1>
-            <p>Pilih file kunci pemulihan yang pernah Anda unduh. File ini tidak berisi alamat atau nomor telepon.</p>
-            <Field label="File kunci pemulihan">
-              <input type="file" accept=".json,application/json" onChange={async e => {
-                const input = e.currentTarget;
-                const file = input.files?.[0];
-                input.value = '';
-                if (!file)
-                  return;
-                try {
-                  if (file.size > 4096)
-                    throw new Error('Ukuran file kunci pemulihan tidak valid.');
-                  const recovered = parseOrderAccessBackup(await file.text());
-                  setError('');
-                  setAccess(recovered);
-                }
-                catch (e) {
-                  setError(errorMessage(e));
-                }
-              }} />
-            </Field>
-            <p>Belum memiliki file? Bukti pesanan baru hanya dapat dibuka kembali dari tab saat pesanan dibuat.</p>
-          </>}
-          <button className="button secondary" onClick={() => navigate()}>Kembali ke katalog</button>
+            : view === 'checkout' && store ? sessionLoading ? <Message loading /> : !session || session.user.is_anonymous ? <CustomerAccount session={null} loading={false} sessionError={sessionError} onOrders={() => navigate('orders')} /> : <Checkout key={session.user.id} cart={cart} settings={store} methods={methods.data || []} onDone={done} onBack={() => navigate()} /> : view === 'receipt' && store ? <>
+        {!sessionLoading && session && receiptOwner === session.user.id && !session.user.is_anonymous && receipt && receipt.id === orderId ? <OrderReceipt key={session.user.id + receipt.id} initial={receipt} settings={store} onBack={() => navigate('orders')} /> : <section className="container section">
+          <Message loading={sessionLoading || (!!session && !!orderId && !error)} />
+          {!session && <button className="button" onClick={() => navigate('account')}>Masuk untuk melihat pesanan</button>}
+          <button className="button secondary" onClick={() => navigate('orders')}>Pesanan saya</button>
         </section>}
       </> : detailId ? <section className="container section product-section">
         <button className="text-button back-link" onClick={() => navigate()}><StoreIcon name="arrow-left" />Kembali ke katalog</button>

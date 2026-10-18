@@ -248,6 +248,8 @@ async function optionalCustomerId(request: Request): Promise<string | null> {
     if (!response.ok)
         throw new HttpError(401, 'Sesi pelanggan telah berakhir. Masuk kembali lalu ulangi.');
     const user = await response.json();
+    if (user.is_anonymous === true)
+        throw new HttpError(401, 'Masuk ke akun pelanggan sebelum checkout.');
     return uuid(user.id);
 }
 Deno.serve(async (request: Request) => {
@@ -311,6 +313,9 @@ Deno.serve(async (request: Request) => {
         }
         const requestId = uuid(body.requestId);
         const token = proof(body.receiptToken);
+        const customerUserId = await optionalCustomerId(request);
+        if (!customerUserId)
+            throw new HttpError(401, 'Masuk ke akun pelanggan sebelum checkout.');
         if (action === 'checkout') {
             await db.limit('checkout:global', 250);
             await db.limit('checkout:' + actor, 8);
@@ -318,7 +323,6 @@ Deno.serve(async (request: Request) => {
             const shippingQuoteId = typeof body.shippingQuoteId === 'string' && body.shippingQuoteId ? uuid(body.shippingQuoteId) : '';
             const shippingServiceKey = typeof body.shippingServiceKey === 'string' ? body.shippingServiceKey : '';
             const shippingAreaId = typeof body.shippingAreaId === 'string' ? body.shippingAreaId.trim() : '';
-            const customerUserId = await optionalCustomerId(request);
             const couponCode = typeof body.couponCode === 'string' ? body.couponCode.trim().toUpperCase() : '';
             if (couponCode && !/^[A-Z0-9_-]{3,40}$/.test(couponCode))
                 throw new HttpError(400, 'Format kode kupon tidak valid.');
@@ -335,34 +339,32 @@ Deno.serve(async (request: Request) => {
             const settings = await db.row<{ shipping_provider: string }>('settings', { select: 'shipping_provider', id: 'eq.1' });
             const requestHash = await hash(JSON.stringify({ ...data, couponCode, shippingQuoteId, shippingServiceKey, shippingAreaId }));
             if (settings?.shipping_provider === 'biteship') {
+                // The account wrapper calls zyha_place_order_with_biteship and links ownership in one transaction.
                 if (!shippingQuoteId || !/^[a-f0-9]{64}$/.test(shippingServiceKey) || !/^[a-z0-9_-]{3,120}$/i.test(shippingAreaId))
                     throw new HttpError(400, 'Pilih layanan tarif Biteship yang masih berlaku.');
-                await db.rpc('zyha_place_order_with_biteship', {
+                await db.rpc('zyha_account_checkout', { p_user_id: customerUserId, p_biteship: true, p_payload: {
                     p_request_id: requestId, p_receipt_token: token, p_request_hash: requestHash,
                     p_items: data.items, p_customer: { ...data.customer, destination_area_id: shippingAreaId },
                     p_method_id: data.methodId, p_coupon_code: couponCode, p_customer_key: customerKey,
                     p_quote_id: shippingQuoteId, p_service_key: shippingServiceKey,
-                });
+                } });
             }
             else {
                 if (shippingQuoteId || shippingServiceKey)
                     throw new HttpError(409, 'Mode ongkir berubah. Muat ulang checkout dan hitung kembali tarif.');
-                await db.rpc('zyha_place_order_with_coupon', {
+                await db.rpc('zyha_account_checkout', { p_user_id: customerUserId, p_biteship: false, p_payload: {
                     p_request_id: requestId, p_receipt_token: token,
                     p_request_hash: requestHash,
                     p_items: data.items, p_customer: data.customer, p_method_id: data.methodId,
                     p_coupon_code: couponCode, p_customer_key: customerKey,
-                });
-            }
-            if (customerUserId) {
-                const linked = await db.rpc<boolean>('zyha_attach_customer_order', { p_request_id: requestId, p_user_id: customerUserId });
-                if (!linked)
-                    throw new HttpError(409, 'Pesanan ini sudah terhubung ke akun lain. Gunakan kunci pemulihan untuk membukanya.');
+                } });
             }
         }
         else if (action !== 'receipt')
             throw new HttpError(400, 'Tindakan tidak dikenal.');
-        let receipt = await db.rpc<Record<string, unknown>>('zyha_receipt', { p_request_id: requestId, p_receipt_token: token });
+        const owned = await db.row<{ id: string }>('orders', { select: 'id', request_id: 'eq.' + requestId, customer_user_id: 'eq.' + customerUserId });
+        if (!owned) throw new HttpError(404, 'Pesanan tidak ditemukan.');
+        const receipt = await db.rpc<Record<string, unknown>>('zyha_receipt', { p_request_id: requestId, p_receipt_token: token });
         return json({ receipt }, 200, headers);
     }
     catch (error) {

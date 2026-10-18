@@ -93,42 +93,6 @@ export function parseCart(raw: string | null): CartLine[] {
         return [];
     }
 }
-export function parseOrderAccessBackup(raw: string): OrderAccess {
-    let data: unknown;
-    try {
-        data = JSON.parse(raw);
-    }
-    catch {
-        throw new Error('File kunci pemulihan bukan JSON yang valid.');
-    }
-    if (!data || typeof data !== 'object' || Array.isArray(data))
-        throw new Error('Format kunci pemulihan tidak valid.');
-    const backup = data as Record<string, unknown>;
-    if (backup.format !== 'zyha-order-access' || backup.version !== 1 ||
-        typeof backup.requestId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(backup.requestId) ||
-        typeof backup.receiptToken !== 'string' || !/^[0-9a-f]{64}$/.test(backup.receiptToken) ||
-        typeof backup.signature !== 'string' || !/^[0-9a-f]{64}$/.test(backup.signature) ||
-        typeof backup.orderNumber !== 'string' || !/^ZYHA-[A-F0-9]{32}$/.test(backup.orderNumber))
-        throw new Error('Isi file kunci pemulihan tidak lengkap atau tidak dikenali.');
-    return {
-        requestId: backup.requestId.toLowerCase(),
-        receiptToken: backup.receiptToken,
-        signature: backup.signature,
-    };
-}
-export function serializeOrderAccessBackup(access: OrderAccess, orderNumber: string): string {
-    const backup = {
-        format: 'zyha-order-access',
-        version: 1,
-        orderNumber,
-        requestId: access.requestId,
-        receiptToken: access.receiptToken,
-        signature: access.signature,
-    };
-    const contents = JSON.stringify(backup, null, 2);
-    parseOrderAccessBackup(contents);
-    return contents;
-}
 export function articleSlug(value: string): string {
     const slug = value.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
         .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 120).replace(/-+$/g, '');
