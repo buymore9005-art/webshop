@@ -3,20 +3,19 @@ import { useEffect, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import type { Article, Product } from '../types';
 import { client } from '../../supabaseClient';
-import { getCustomerOrderHistory, getPublishedArticle, getPublishedArticles } from '../lib/api';
+import { CUSTOMER_ORDER_PAGE_SIZE, getCustomerOrderHistory, getPublishedArticle, getPublishedArticles } from '../lib/api';
 import { errorMessage, fulfillmentLabels, money, orderLabels } from '../lib/domain';
-import type { OrderStatus } from '../types';
+import type { CustomerOrderHistory } from '../types';
 import { useResource } from '../lib/useResource';
-import { Field, Message, Photo } from '../components/UI';
+import { Field, Message, Pagination, Photo } from '../components/UI';
 
-export function CustomerAccount({ session, loading, sessionError }: { session: Session | null; loading: boolean; sessionError: string }) {
+export function CustomerAccount({ session, loading, sessionError, onOrders }: { session: Session | null; loading: boolean; sessionError: string; onOrders: () => void }) {
     const [registering, setRegistering] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
     const [busy, setBusy] = useState(false);
-    const orders = useResource('customer-orders:' + session?.user.id, () => session ? getCustomerOrderHistory() : Promise.resolve([]), 'customer-orders:' + session?.user.id);
     async function submit(event: FormEvent) {
         event.preventDefault();
         if (busy)
@@ -85,20 +84,64 @@ export function CustomerAccount({ session, loading, sessionError }: { session: S
             <div><p className="eyebrow">Akun pelanggan</p><h1>Halo, {session.user.email}</h1></div>
             <button className="button secondary" onClick={() => void signOut()}>Keluar</button>
         </div>
-        <Message error={sessionError || orders.error || error} loading={orders.loading} />
-        <div className="section-heading"><h2>Riwayat pesanan</h2><button className="button secondary" onClick={orders.reload}>Perbarui</button></div>
-        {!orders.loading && !orders.error && !orders.data?.length && <p className="empty">Belum ada pesanan yang dibuat setelah masuk ke akun ini.</p>}
-        <div className="customer-order-list">
-            {orders.data?.map(order => <article className="panel stack" key={order.id}>
-                <div className="split"><strong>{order.order_number}</strong><span className={'status ' + order.status}>{orderLabels[order.status as OrderStatus]}</span></div>
-                <span>{new Date(order.created_at).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}</span>
-                <span>{(order.items as Array<{ title: string; quantity: number }>).map(item => `${item.title} × ${item.quantity}`).join(', ')}</span>
-                <div className="split"><span>{fulfillmentLabels[order.fulfillment_status as keyof typeof fulfillmentLabels]}</span><strong>{money(order.total_price)}</strong></div>
-                {order.coupon_code && <small>Kupon {order.coupon_code} · diskon {money(order.discount_amount)}</small>}
-                {order.tracking_number && <span>Resi: {order.carrier} · {order.tracking_number}</span>}
-            </article>)}
+        <Message error={sessionError || error} />
+        <div className="panel stack"><h2>Profil pelanggan</h2><p>Email: {session.user.email}</p><p>Lihat status pembayaran dan pengiriman melalui halaman Pesanan saya.</p><button className="button secondary" onClick={onOrders}>Lihat pesanan saya</button></div>
+    </section>;
+}
+
+export function CustomerOrders({ session, loading, sessionError, hasAccess, onAccount, onReceipt }: {
+    session: Session | null; loading: boolean; sessionError: string; hasAccess: boolean;
+    onAccount: () => void; onReceipt: () => void;
+}) {
+    const [page, setPage] = useState(0);
+    const [revision, setRevision] = useState(0);
+    const [result, setResult] = useState<{ rows: CustomerOrderHistory[]; count: number } | null>(null);
+    const [busy, setBusy] = useState(true);
+    const [error, setError] = useState('');
+    useEffect(() => {
+        if (loading || !session) return;
+        const controller = new AbortController();
+        setBusy(true);
+        setError('');
+        setResult(null);
+        void getCustomerOrderHistory(page, controller.signal).then(data => {
+            if (controller.signal.aborted) return;
+            const lastPage = Math.max(0, Math.ceil(data.count / CUSTOMER_ORDER_PAGE_SIZE) - 1);
+            if (page > lastPage) { setPage(lastPage); return; }
+            setResult(data);
+            setBusy(false);
+        }).catch(e => {
+            if (!controller.signal.aborted) { setError(errorMessage(e)); setBusy(false); }
+        });
+        return () => controller.abort();
+    }, [session?.user.id, loading, page, revision]);
+    function changePage(next: number) { setResult(null); setBusy(true); setPage(next); }
+    return <section className="container section stack customer-orders">
+        <div className="section-heading"><div><p className="eyebrow">Riwayat pesanan</p><h1>Pesanan saya</h1></div>
+            {session && <button className="button secondary" disabled={busy || loading} onClick={() => { setBusy(true); setRevision(value => value + 1); }}>Perbarui</button>}
         </div>
-        <small>Riwayat akun hanya berisi pesanan yang dibuat saat Anda masuk. Pesanan checkout tamu tetap dapat diakses menggunakan kunci pemulihannya.</small>
+        <div className="panel stack"><h2>Bukti pesanan & pembayaran</h2><p>Buka bukti pesanan terakhir di perangkat ini untuk petunjuk pembayaran, atau pulihkan pesanan dengan file kunci pemulihan. Berlaku juga untuk checkout tamu.</p><button className="button secondary" onClick={onReceipt}>{hasAccess ? 'Buka bukti pesanan terakhir' : 'Pulihkan bukti pesanan'}</button></div>
+        <Message error={sessionError || error} />
+        {loading ? <p role="status">Memuat akun...</p> : !session ? <div className="panel stack"><p>Masuk untuk melihat seluruh riwayat pesanan akun Anda.</p><button className="button" onClick={onAccount}>Masuk ke akun</button></div> : <>
+            <p>Riwayat ini hanya memuat pesanan yang dibuat saat masuk ke akun ini. Pesanan tamu tidak otomatis ditautkan ke akun.</p>
+            {busy && <p role="status">Memuat riwayat pesanan...</p>}
+            {!busy && error && <button className="button secondary" onClick={() => { setBusy(true); setRevision(value => value + 1); }}>Coba kembali</button>}
+            {!busy && result?.count === 0 && <p className="empty">Belum ada pesanan di akun ini.</p>}
+            {!busy && result && <>
+                <p className="muted" role="status">{result.count} pesanan · Halaman {page + 1}</p>
+                <div className="customer-order-list">{result.rows.map(order => <article className="panel stack customer-order-card" key={order.id}>
+                    <header className="customer-order-heading"><div><h2>{order.order_number}</h2><time dateTime={order.created_at}>{new Date(order.created_at).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB</time></div>
+                        <div className="customer-order-statuses"><span>Pembayaran: <span className={'status ' + order.status}>{orderLabels[order.status] || order.status}</span></span><span>Pengiriman: {fulfillmentLabels[order.fulfillment_status] || order.fulfillment_status}</span></div>
+                    </header>
+                    <ul className="customer-order-items">{order.items.map((item, index) => <li className="customer-order-item" key={index}>
+                        <Photo src={item.image} alt={item.title} />
+                        <div><strong>{item.title}</strong>{item.variant && <p>Varian: {item.variant}</p>}<p>{item.quantity} × {money(item.unit_price)}</p></div><strong>{money(item.subtotal)}</strong>
+                    </li>)}</ul>
+                    <footer className="customer-order-summary"><div>{order.coupon_code && <p>Kupon {order.coupon_code} · diskon {money(order.discount_amount)}</p>}{order.tracking_number ? <p>Resi: {order.carrier} · {order.tracking_number}</p> : <p>Resi belum tersedia.</p>}</div><div><small>Total pesanan</small><strong>{money(order.total_price)}</strong></div></footer>
+                </article>)}</div>
+                {result.count > 0 && <Pagination page={page} count={result.count} size={CUSTOMER_ORDER_PAGE_SIZE} disabled={busy} onChange={changePage} />}
+            </>}
+        </>}
     </section>;
 }
 

@@ -2,6 +2,7 @@ import { client, projectStorageKey } from '../../supabaseClient';
 import type { Article, BrandGalleryImage, CartLine, Coupon, Customer, FooterInfo, OrderAccess, Order, Product, Settings, ShippingArea, ShippingOrigin, PaymentMethod, Receipt, ShippingRate, ShippingShipment, Summary } from '../types';
 import { articleSlug, checkoutItems, validateCustomer, safeFooterHref, safeImageUrl, csvCell, errorMessage, serializeOrderAccessBackup, normalizePhone } from './domain';
 import type { ProductImportRow } from './domain';
+import type { CustomerOrderHistory } from '../types';
 export interface CatalogFilter {
     page: number;
     search: string;
@@ -199,11 +200,22 @@ export async function setWishlisted(productId: string, saved: boolean) {
             throw error;
     }
 }
-export async function getCustomerOrderHistory() {
-    const { data, error } = await client().from('orders').select('id,order_number,items,total_price,coupon_code,discount_amount,status,fulfillment_status,tracking_number,carrier,created_at').order('created_at', { ascending: false }).limit(100);
+export const CUSTOMER_ORDER_PAGE_SIZE = 10;
+export async function getCustomerOrderHistory(page = 0, signal?: AbortSignal): Promise<{ rows: CustomerOrderHistory[]; count: number }> {
+    if (!Number.isSafeInteger(page) || page < 0)
+        throw new Error('Halaman pesanan tidak valid.');
+    const { data: auth, error: authError } = await client().auth.getUser();
+    if (authError) throw authError;
+    if (!auth.user) throw new Error('Masuk untuk melihat riwayat pesanan.');
+    let query = client().from('orders').select('id,order_number,items,total_price,coupon_code,discount_amount,status,fulfillment_status,tracking_number,carrier,created_at', { count: 'exact' })
+        .eq('customer_user_id', auth.user.id)
+        .order('created_at', { ascending: false }).order('id', { ascending: false })
+        .range(page * CUSTOMER_ORDER_PAGE_SIZE, (page + 1) * CUSTOMER_ORDER_PAGE_SIZE - 1);
+    if (signal) query = query.abortSignal(signal);
+    const { data, error, count } = await query;
     if (error)
         throw error;
-    return data || [];
+    return { rows: (data || []) as CustomerOrderHistory[], count: count || 0 };
 }
 export async function getAdminCoupons() {
     const { data, error } = await client().from('coupons').select('*').order('created_at', { ascending: false });

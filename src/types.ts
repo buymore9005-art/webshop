@@ -198,6 +198,7 @@ export interface Receipt {
     shipping_service_name?: string;
     created_at: string;
 }
+export type CustomerOrderHistory = Pick<Receipt, 'id' | 'order_number' | 'items' | 'total_price' | 'coupon_code' | 'discount_amount' | 'status' | 'fulfillment_status' | 'tracking_number' | 'carrier' | 'created_at'>;
 export interface Order extends Receipt {
     customer_name: string;
     customer_phone: string;

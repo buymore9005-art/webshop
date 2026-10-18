@@ -11,7 +11,7 @@ import { Dropdown } from './src/components/Dropdown';
 import { CartPanel } from './src/shop/CartPanel';
 import { Checkout } from './src/shop/Checkout';
 import { OrderReceipt } from './src/shop/OrderReceipt';
-import { ArticleDetail, ArticleIndex, CustomerAccount, WishlistPage } from './src/shop/CustomerPages';
+import { ArticleDetail, ArticleIndex, CustomerAccount, CustomerOrders, WishlistPage } from './src/shop/CustomerPages';
 import { openLiveChat } from './src/shop/payment';
 // Existing storefront: catalog -> detail/cart -> checkout. No production-app code.
 export default function App() {
@@ -171,7 +171,7 @@ export default function App() {
           <button className="text-button store-nav-link" aria-current={view === 'article' ? 'page' : undefined} onClick={() => navigateArticle()}>Artikel</button>
           <button className="text-button store-nav-link icon-nav-link" aria-label={'Wishlist, ' + (wishlist.data?.length || 0) + ' produk'} title="Wishlist" aria-current={view === 'wishlist' ? 'page' : undefined} onClick={() => navigate('wishlist')}><StoreIcon name="heart" /><span className="store-nav-label">Wishlist</span>{!!wishlist.data?.length && <span className="nav-count">{wishlist.data.length}</span>}</button>
           <button className="text-button store-nav-link icon-nav-link" aria-label={session?.user.email ? 'Akun: ' + session.user.email : 'Akun'} title="Akun" aria-current={view === 'account' ? 'page' : undefined} onClick={() => navigate('account')}><StoreIcon name="user" /><span className="store-nav-label">{session?.user.email || 'Akun'}</span></button>
-          {access && <button className="text-button store-nav-link store-receipt-link" aria-current={view === 'receipt' ? 'page' : undefined} onClick={() => navigate('receipt')}>Pesanan terakhir</button>}
+          <button className="text-button store-nav-link icon-nav-link store-orders-link" aria-label="Pesanan saya" title="Pesanan saya" aria-current={view === 'orders' ? 'page' : undefined} onClick={() => navigate('orders')}><StoreIcon name="orders" /><span className="store-nav-label">Pesanan saya</span></button>
           <button className="button store-cart-button" aria-label={'Keranjang belanja, ' + cart.reduce((s, x) => s + x.quantity, 0) + ' barang'} title="Keranjang belanja" onClick={() => setShowCart(true)}>
             <StoreIcon name="bag" />
             {!!cart.length && <span className="cart-count">{cart.reduce((s, x) => s + x.quantity, 0)}</span>}
@@ -184,7 +184,8 @@ export default function App() {
         <Message error={error || settings.error || methods.error} />
         {(settings.error || methods.error) && <button className="button secondary" onClick={() => { settings.reload(); methods.reload(); }}>Coba kembali</button>}
       </div>
-      {view === 'account' ? <CustomerAccount session={session} loading={sessionLoading} sessionError={sessionError} />
+      {view === 'account' ? <CustomerAccount session={session} loading={sessionLoading} sessionError={sessionError} onOrders={() => navigate('orders')} />
+        : view === 'orders' ? <CustomerOrders key={session?.user.id || 'guest'} session={session} loading={sessionLoading} sessionError={sessionError} hasAccess={!!access} onAccount={() => navigate('account')} onReceipt={() => navigate('receipt')} />
         : view === 'wishlist' ? <WishlistPage session={session} products={wishlist.data || []} loading={sessionLoading || wishlist.loading} error={sessionError || wishlist.error || ''} onRemove={toggleWishlist} onProduct={id => navigate('shop', id)} />
           : view === 'article' ? params.get('slug') ? <ArticleDetail slug={params.get('slug') || ''} onBack={() => navigateArticle()} /> : <ArticleIndex onOpen={navigateArticle} />
             : view === 'checkout' && store ? <Checkout cart={cart} settings={store} methods={methods.data || []} onDone={done} onBack={() => navigate()} /> : view === 'receipt' && store ? <>
@@ -294,7 +295,7 @@ export default function App() {
       </>}
     </main>
     <footer className="store-footer">
-      {!!brandGallery.data?.length && <section className="footer-showcase" aria-labelledby="footer-showcase-title">
+      {view === 'shop' && !detailId && !!brandGallery.data?.length && <section className="footer-showcase" aria-labelledby="footer-showcase-title">
         <div className="container">
           <div className="footer-showcase-heading">
             <p className="eyebrow">Showcase / Portfolio</p>
@@ -421,11 +422,12 @@ function ProductDetail({ product: p, whatsappPhone, onAdd, onShare, wishlisted, 
 }
 
 /** Small functional outline glyphs. Labels remain visible; no icon package or remote assets. */
-function StoreIcon({ name }: { name: 'bag' | 'search' | 'arrow-left' | 'arrow-right' | 'heart' | 'user' | 'share' | 'whatsapp' | 'bank' | 'wallet' | 'qris' }) {
+function StoreIcon({ name }: { name: 'bag' | 'search' | 'arrow-left' | 'arrow-right' | 'heart' | 'user' | 'share' | 'whatsapp' | 'bank' | 'wallet' | 'qris' | 'orders' }) {
   return <svg className={'store-icon store-icon-' + name} viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
     {name === 'bag' ? <><path d="M5 7h14l1 14H4L5 7Z" /><path d="M8 8V6a4 4 0 0 1 8 0v2" /></> : name === 'search' ? <><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 5 5" /></> : name === 'arrow-left' ? <path d="M20 12H4m7-7-7 7 7 7" /> : name === 'arrow-right' ? <path d="M4 12h16m-7-7 7 7-7 7" /> : null}
     {name === 'heart' && <path d="M20.8 8.7c0 5.3-8.8 10.1-8.8 10.1S3.2 14 3.2 8.7a4.5 4.5 0 0 1 8.8-1.2 4.5 4.5 0 0 1 8.8 1.2Z" />}
     {name === 'user' && <><circle cx="12" cy="8" r="3.5" /><path d="M5 20c.4-3.4 3.2-5.5 7-5.5s6.6 2.1 7 5.5" /></>}
+    {name === 'orders' && <><rect x="5" y="3" width="14" height="18" rx="2" /><path d="M9 8h6M9 12h6M9 16h4" /></>}
     {name === 'share' && <><circle cx="18" cy="5" r="2.5" /><circle cx="6" cy="12" r="2.5" /><circle cx="18" cy="19" r="2.5" /><path d="m8.2 10.8 7.5-4.4m-7.5 6.8 7.5 4.4" /></>}
     {name === 'whatsapp' && <><path d="M20.2 11.7a8.2 8.2 0 0 1-12.1 7.2L3.5 20l1.2-4.4a8.2 8.2 0 1 1 15.5-3.9Z" /><path d="M8.2 8.3c.3-.5.6-.5.9-.5h.5c.2 0 .4.1.5.4l.8 1.8c.1.2.1.4-.1.6l-.6.7c-.2.2-.2.4-.1.6.6 1 1.5 1.8 2.6 2.3.2.1.4.1.6-.1l.8-.9c.2-.2.4-.2.6-.1l1.7.8c.3.1.4.3.4.5 0 .3-.2 1.3-.8 1.7-.5.4-1.2.6-2 .4-1-.2-2.3-.8-3.7-2-1.7-1.5-2.8-3.4-3.1-4.3-.3-.9 0-1.6.4-1.9Z" /></>}
     {name === 'bank' && <><path d="m3 9 9-5 9 5" /><path d="M4 10h16M5 10v8m4-8v8m6-8v8m4-8v8M3 20h18" /></>}
