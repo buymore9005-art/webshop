@@ -35,23 +35,23 @@ export default function Orders() {
         setRev(n => n + 1);
         setMessage('Perubahan pesanan disimpan.');
       }
-      async function bookShipment() {
-        if (!editing || busy)
-          return;
-        setBusy(true);
-        setError('');
-        try {
-          const result = await bookBiteshipShipment(editing.id);
-          setRev(n => n + 1);
-          setMessage(result.already_booked ? 'Booking Biteship sudah tercatat.' : 'Shipment Biteship berhasil dibuat.');
-        }
-        catch (e) {
-          setError(errorMessage(e));
-        }
-        finally {
-          setBusy(false);
-        }
-      }
+    catch (e) {
+      setError(errorMessage(e));
+    }
+    finally {
+      setBusy(false);
+    }
+  }
+  async function bookShipment() {
+    if (!editing || busy)
+      return;
+    setBusy(true);
+    setError('');
+    try {
+      const result = await bookBiteshipShipment(editing.id);
+      setRev(n => n + 1);
+      setMessage(result.already_booked ? 'Booking Biteship sudah tercatat.' : 'Shipment Biteship berhasil dibuat.');
+    }
     catch (e) {
       setError(errorMessage(e));
     }

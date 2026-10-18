@@ -333,9 +333,6 @@ export async function importProducts(products: ProductImportRow[]) {
         length_cm: product.length_cm,
         width_cm: product.width_cm,
         height_cm: product.height_cm,
-        length_cm: product.length_cm,
-        width_cm: product.width_cm,
-        height_cm: product.height_cm,
         is_active: product.is_active,
     }));
     const { data, error } = await client().from('products').insert(rows).select('id');
@@ -414,11 +411,12 @@ export async function searchShippingAreas(input: string) {
     });
     return result.areas;
 }
-export async function getShippingRates(items: CartLine[], destinationAreaId: string) {
+export async function getShippingRates(items: CartLine[], destinationAreaId: string, destinationPostalCode: string) {
     return shopAction<{ quote_id: string; expires_at: string; subtotal: number; rates: ShippingRate[] }>({
         action: 'shipping-rates',
         items: items.map(item => ({ product_id: item.product_id, variant: item.variant, quantity: item.quantity })),
         destinationAreaId,
+        destinationPostalCode,
     });
 }
 export async function bookBiteshipShipment(orderId: string) {
