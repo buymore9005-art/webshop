@@ -65,7 +65,6 @@ export function CustomerAccount({ session, loading, sessionError, onOrders }: { 
         return <section className="container section">
             <div className="panel auth-panel customer-auth-panel">
                 <h1>{registering ? 'Buat akun pelanggan' : 'Masuk ke akun pelanggan'}</h1>
-                <p>Gunakan akun untuk menyimpan wishlist dan melihat riwayat pesanan dari perangkat lain.</p>
                 <Message error={sessionError || error} success={message} />
                 <form className="stack" onSubmit={submit}>
                     <Field label="Email"><input type="email" required autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} /></Field>
@@ -85,7 +84,7 @@ export function CustomerAccount({ session, loading, sessionError, onOrders }: { 
             <button className="button secondary" onClick={() => void signOut()}>Keluar</button>
         </div>
         <Message error={sessionError || error} />
-        <div className="panel stack"><h2>Profil pelanggan</h2><p>Email: {session.user.email}</p><p>Lihat status pembayaran dan pengiriman melalui halaman Pesanan saya.</p><button className="button secondary" onClick={onOrders}>Lihat pesanan saya</button></div>
+        <div className="panel stack"><h2>Profil pelanggan</h2><p>Email: {session.user.email}</p><button className="button secondary" onClick={onOrders}>Lihat pesanan saya</button></div>
     </section>;
 }
 
@@ -120,7 +119,7 @@ export function CustomerOrders({ session, loading, sessionError, onAccount, onRe
         <div className="section-heading"><div><p className="eyebrow">Riwayat pesanan</p><h1>Pesanan saya</h1></div>
             {session && <button className="button secondary" disabled={busy || loading} onClick={() => { setBusy(true); setRevision(value => value + 1); }}>Perbarui</button>}
         </div>
-        <div className="panel stack"><h2>Bukti pesanan & pembayaran</h2><p>Pilih detail pesanan untuk melihat instruksi pembayaran dan alamat pengiriman, termasuk dari perangkat lain. Untuk pesanan tamu lama, hubungi Admin dengan nomor pesanan.</p></div>
+        <div className="panel stack"><h2>Bukti pesanan & pembayaran</h2></div>
         <Message error={sessionError || error} />
         {loading ? <p role="status">Memuat akun...</p> : !session ? <div className="panel stack"><p>Masuk untuk melihat seluruh riwayat pesanan akun Anda.</p><button className="button" onClick={onAccount}>Masuk ke akun</button></div> : <>
             <p>Riwayat ini hanya memuat pesanan yang dibuat saat masuk ke akun ini. Pesanan tamu tidak otomatis ditautkan ke akun.</p>
@@ -161,7 +160,7 @@ export function WishlistPage({ session, products, loading, error, onRemove, onPr
     return <section className="container section">
         <div className="section-heading"><div><p className="eyebrow">Tersimpan di akun</p><h1>Wishlist</h1></div><span className="muted">{products.length} produk</span></div>
         <Message error={error} loading={loading} />
-        {!loading && !error && !products.length && <p className="empty">Wishlist masih kosong. Simpan produk favorit dari katalog.</p>}
+        {!loading && !error && !products.length && <p className="empty">Wishlist masih kosong.</p>}
         <div className="product-grid">
             {products.map(product => <article className="product-card" key={product.id}>
                 <button className="product-photo" onClick={() => onProduct(product.id)} aria-label={'Lihat ' + product.title}><Photo src={product.image_url || product.images[0]} alt={product.title} /></button>

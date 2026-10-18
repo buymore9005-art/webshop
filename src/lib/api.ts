@@ -452,12 +452,14 @@ export async function uploadImage(file: File, prefix: string) {
         throw error;
     return safeImageUrl(client().storage.from('products').getPublicUrl(path).data.publicUrl);
 }
-export async function getOrders(page: number, status: string, search: string, start: string, end: string) {
+export async function getOrders(page: number, status: string, search: string, start: string, end: string, fulfillment = '') {
     if (start && end && start > end)
         throw new Error('Tanggal awal tidak boleh melewati tanggal akhir.');
     let q = client().from('orders').select(ORDER_FIELDS, { count: 'exact' }).order('created_at', { ascending: false }).order('id');
     if (status)
         q = q.eq('status', status);
+    if (fulfillment)
+        q = q.eq('fulfillment_status', fulfillment);
     if (search.trim())
         q = q.ilike('order_number', `%${search.trim().replace(/[^a-zA-Z0-9-]/g, '').slice(0, 80)}%`);
     if (start)

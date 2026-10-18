@@ -7,10 +7,13 @@ import { printPackingSlip } from '../lib/shipping';
 import { dateTime, errorMessage, fulfillmentLabels, money, orderLabels } from '../lib/domain';
 import { useResource } from '../lib/useResource';
 import { Field, Message, Modal, Pagination } from '../components/UI';
+import { adminOrderActions, availableOrderActions, canBookOrderShipment, type AdminOrderAction } from '../lib/adminOrders';
 export default function Orders() {
   const [page, setPage] = useState(0), [status, setStatus] = useState(''), [search, setSearch] = useState(''), [start, setStart] = useState(''), [end, setEnd] = useState(''), [rev, setRev] = useState(0);
-  const result = useResource(JSON.stringify([page, status, search, start, end, rev]), () => getOrders(page, status, search, start, end), JSON.stringify(['admin-orders', page, status, search, start, end]));
-  const [editing, setEditing] = useState<Order | null>(null), [action, setAction] = useState(''), [reason, setReason] = useState(''), [tracking, setTracking] = useState(''), [carrier, setCarrier] = useState('');
+  const [fulfillment, setFulfillment] = useState('');
+  const result = useResource(JSON.stringify([page, status, search, start, end, fulfillment, rev]), () => getOrders(page, status, search, start, end, fulfillment), JSON.stringify(['admin-orders', page, status, search, start, end, fulfillment]));
+  const [editing, setEditing] = useState<Order | null>(null), [action, setAction] = useState<AdminOrderAction | ''>(''), [reason, setReason] = useState(''), [tracking, setTracking] = useState(''), [carrier, setCarrier] = useState('');
+  const [confirmed, setConfirmed] = useState(false);
   const [busy, setBusy] = useState(false), [error, setError] = useState(''), [message, setMessage] = useState('');
   const events = useResource('events:' + editing?.id + ':' + rev, async () => {
     if (!editing)
@@ -26,9 +29,22 @@ export default function Orders() {
     return data;
   }, 'admin-order-shipment:' + editing?.id);
   useEffect(() => { const channel = client().channel('admin-orders').on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => setRev(n => n + 1)).subscribe(); return () => { void client().removeChannel(channel); }; }, []);
-  function edit(o: Order) { setEditing(o); setAction(''); setReason(''); setTracking(o.tracking_number); setCarrier(o.carrier); setError(''); }
+  function edit(o: Order) { setEditing(o); setAction(''); setConfirmed(false); setReason(''); setTracking(o.tracking_number); setCarrier(o.carrier); setError(''); setMessage(''); }
+  async function refreshDetail() {
+    if (!editing || busy) return;
+    setBusy(true);
+    setError('');
+    try {
+      const { data, error: loadError } = await client().from('orders').select('*').eq('id', editing.id).single();
+      if (loadError) throw loadError;
+      edit(data as Order);
+      setRev(n => n + 1);
+    }
+    catch (e) { setError(errorMessage(e)); }
+    finally { setBusy(false); }
+  }
   async function save(event: FormEvent) {
-    event.preventDefault(); if (!editing || busy)
+    event.preventDefault(); if (!editing || busy || !action || !availableOrderActions(editing).includes(action) || (['paid', 'cancelled'].includes(action) && !confirmed))
       return; setBusy(true); setError(''); try {
         await orderAction(editing.id, editing.version, action, reason, tracking, carrier);
         setEditing(null);
@@ -43,7 +59,7 @@ export default function Orders() {
     }
   }
   async function bookShipment() {
-    if (!editing || busy)
+    if (!editing || busy || !canBookOrderShipment(editing) || shipment.loading || shipment.error || shipment.data)
       return;
     setBusy(true);
     setError('');
@@ -51,9 +67,11 @@ export default function Orders() {
       const result = await bookBiteshipShipment(editing.id);
       setRev(n => n + 1);
       setMessage(result.already_booked ? 'Booking Biteship sudah tercatat.' : 'Shipment Biteship berhasil dibuat.');
+      setEditing(null);
     }
     catch (e) {
       setError(errorMessage(e));
+      shipment.reload();
     }
     finally {
       setBusy(false);
@@ -77,13 +95,17 @@ export default function Orders() {
   }
   return <section className="stack">
     <div className="section-heading">
-      <h1>Pesanan</h1>
+      <div><h1>Pesanan</h1><p className="muted">Verifikasi pembayaran, siapkan paket, lalu pantau pengiriman.</p></div>
       <div className="actions">
         <button className="button secondary" onClick={() => setRev(n => n + 1)}>Perbarui</button>
         <button className="button secondary" onClick={exportPage} disabled={!result.data?.rows.length}>Ekspor halaman CSV</button>
       </div>
     </div>
-    <div className="panel form-grid">
+    <div className="panel stack">
+      <div className="order-filter-shortcuts" role="group" aria-label="Filter cepat pembayaran">
+        {[['', 'Semua pesanan'], ['pending', 'Perlu verifikasi'], ['paid', 'Lunas']].map(([value, label]) => <button type="button" key={value} className="button secondary" aria-pressed={status === value} onClick={() => { setStatus(value); setPage(0); }}>{label}</button>)}
+      </div>
+      <div className="form-grid">
       <Field label="Cari nomor pesanan">
         <input type="search" value={search} onChange={e => { setSearch(e.target.value); setPage(0); }} />
       </Field>
@@ -101,6 +123,14 @@ export default function Orders() {
       <Field label="Sampai tanggal">
         <input type="date" value={end} onChange={e => { setEnd(e.target.value); setPage(0); }} />
       </Field>
+      <Field label="Status pengiriman">
+        <select value={fulfillment} onChange={e => { setFulfillment(e.target.value); setPage(0); }}>
+          <option value="">Semua pengiriman</option>
+          {Object.entries(fulfillmentLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+        </select>
+      </Field>
+      </div>
+      <div className="split"><small>{result.data?.count || 0} pesanan sesuai filter</small><button type="button" className="text-button" disabled={!status && !search && !start && !end && !fulfillment} onClick={() => { setStatus(''); setSearch(''); setStart(''); setEnd(''); setFulfillment(''); setPage(0); }}>Reset filter</button></div>
     </div>
     <Message error={editing ? '' : error || result.error} success={message} loading={result.loading} />
     <div className="table-wrap">
@@ -140,12 +170,10 @@ export default function Orders() {
               <span className={'status ' + o.status}>
                 {orderLabels[o.status]}
               </span>
-              <small>
-                {fulfillmentLabels[o.fulfillment_status]}
-              </small>
+              <small><span className={'status ' + o.fulfillment_status}>{fulfillmentLabels[o.fulfillment_status]}</span></small>
             </td>
             <td data-label="Aksi">
-              <button className="button secondary" onClick={() => edit(o)}>Lihat detail</button>
+              <button className="button secondary" onClick={() => edit(o)}>{availableOrderActions(o).length || canBookOrderShipment(o) ? 'Kelola pesanan' : 'Lihat detail'}</button>
             </td>
           </tr>)}
         </tbody>
@@ -154,10 +182,15 @@ export default function Orders() {
     </div>
     <Pagination page={page} count={result.data?.count || 0} size={20} onChange={setPage} disabled={result.loading} />
     <Modal open={!!editing} title="Detail pesanan" onClose={() => setEditing(null)} busy={busy}>
-      {editing && <div className="stack">
-        <p className="order-reference">
+      {editing && <div className="stack order-detail">
+        <div className="order-summary stack"><p className="order-reference">
           {editing.order_number}
         </p>
+        <div className="actions"><span className={'status ' + editing.status}>{orderLabels[editing.status]}</span><span className={'status ' + editing.fulfillment_status}>{fulfillmentLabels[editing.fulfillment_status]}</span></div>
+        <small>{dateTime(editing.created_at)} · {editing.payment_method}</small>
+        <strong>{money(editing.total_price)}</strong>
+        <div className="actions"><button type="button" className="button" onClick={() => document.getElementById('order-actions')?.focus()}>Ke tindakan pesanan</button><button type="button" className="button secondary" disabled={busy} onClick={() => void refreshDetail()}>Muat ulang detail</button></div></div>
+        <h3>Pembeli & alamat pengiriman</h3>
         <p>
           <strong>
             {editing.customer_name}
@@ -175,6 +208,7 @@ export default function Orders() {
         {editing.customer_note && <p>Catatan: {editing.customer_note}
         </p>}
         <div className="panel stack">
+          <h3>Rincian belanja</h3>
           {editing.items.map((item, i) => <div className="split" key={i}>
             <span>
               {item.title}
@@ -204,6 +238,7 @@ export default function Orders() {
           {editing.payment_method} · {orderLabels[editing.status]} · {fulfillmentLabels[editing.fulfillment_status]}
         </p>
         {editing.shipping_courier_name && <p>Tarif terpilih: {editing.shipping_courier_name} · {editing.shipping_service_name} · {money(editing.shipping_fee)}</p>}
+        {editing.tracking_number && <p>Resi: <strong>{editing.tracking_number}</strong> · {editing.carrier}</p>}
         <button type="button" className="button secondary" onClick={() => printSlip(editing)}>Cetak packing slip</button>
         {editing.shipping_quote_id && <section className="panel stack">
           <h3>Pengiriman Biteship</h3>
@@ -216,24 +251,16 @@ export default function Orders() {
             {shipment.data.provider_error && <p className="message error">{shipment.data.provider_error}</p>}
             {shipment.data.status === 'created' && <p className="message">Permintaan booking sudah dimulai. Periksa dashboard Biteship sebelum mencoba tindakan lain.</p>}
           </>}
-          {!shipment.data && ['paid', 'partial_refund'].includes(editing.status) && editing.fulfillment_status === 'processing' &&
-            <button type="button" className="button" disabled={busy || shipment.loading} onClick={() => void bookShipment()}>{busy ? 'Membuat booking…' : 'Buat booking & label Biteship'}</button>}
+          {!shipment.data && canBookOrderShipment(editing) &&
+            <button type="button" className="button" disabled={busy || shipment.loading || !!shipment.error} onClick={() => void bookShipment()}>{busy ? 'Membuat booking…' : 'Buat booking & label Biteship'}</button>}
+          {shipment.error && <button type="button" className="button secondary" disabled={busy} onClick={shipment.reload}>Periksa ulang status booking</button>}
         </section>}
-        <form className="stack" onSubmit={save}>
-          <Field label="Tindakan">
-            <select required value={action} onChange={e => setAction(e.target.value)}>
-              <option value="">Pilih tindakan</option>
-              {editing.status === 'pending' && <>
-                <option value="paid">Konfirmasi pembayaran diterima</option>
-                <option value="cancelled">Batalkan pesanan dan kembalikan stok</option>
-              </>}
-              {['paid', 'partial_refund'].includes(editing.status) && <>
-                {editing.fulfillment_status === 'unfulfilled' && <option value="processing">Mulai proses pesanan</option>}
-                {editing.fulfillment_status === 'processing' && !editing.shipping_quote_id && <option value="shipped">Kirim pesanan</option>}
-                {editing.fulfillment_status === 'shipped' && <option value="completed">Selesaikan pesanan</option>}
-              </>}
-            </select>
-          </Field>
+        <form id="order-actions" tabIndex={-1} aria-label="Tindakan pesanan" className="panel stack order-action-panel" onSubmit={save}>
+          <div><h3>Tindakan pesanan</h3><p className="muted">{editing.status === 'pending' ? 'Periksa mutasi rekening sebelum mengonfirmasi pembayaran.' : 'Lanjutkan sesuai status pesanan. Setiap perubahan dicatat dalam riwayat.'}</p></div>
+          <div className="actions">
+            {availableOrderActions(editing).map(value => <button type="button" key={value} disabled={busy} aria-pressed={action === value} className={'button ' + (value === 'cancelled' ? 'secondary order-danger' : '')} onClick={() => { setAction(value); setReason(''); setConfirmed(false); setError(''); }}>{adminOrderActions[value]}</button>)}
+          </div>
+          {!availableOrderActions(editing).length && <p className="muted">{canBookOrderShipment(editing) ? 'Gunakan bagian pengiriman Biteship untuk booking dan label.' : 'Tidak ada tindakan lanjutan untuk status ini.'}</p>}
           {action === 'shipped' && <div className="form-grid">
             <Field label="Kurir">
               <input required maxLength={80} value={carrier} onChange={e => setCarrier(e.target.value)} />
@@ -243,12 +270,14 @@ export default function Orders() {
             </Field>
           </div>}
           {action && <>
+            <h3>{adminOrderActions[action]}</h3>
             <Field label="Alasan / catatan verifikasi" hint={action === 'paid' ? 'Periksa mutasi rekening terlebih dahulu. Tangkapan layar pembeli bukan bukti tunggal.' : undefined}>
               <textarea required minLength={3} maxLength={2000} rows={2} value={reason} onChange={e => setReason(e.target.value)} />
             </Field>
-            <button className="button" disabled={busy}>
-              {busy ? 'Menyimpan…' : 'Simpan tindakan'}
-            </button>
+            {['paid', 'cancelled'].includes(action) && <label className="check"><input type="checkbox" required checked={confirmed} disabled={busy} onChange={e => setConfirmed(e.target.checked)} /><span>{action === 'paid' ? `Saya sudah memeriksa mutasi dan menerima ${money(editing.total_price)}. Konfirmasi ini tidak otomatis memproses pesanan.` : 'Saya memahami pesanan akan dibatalkan dan stok dikembalikan. Tindakan ini tidak dapat dibatalkan dari halaman ini.'}</span></label>}
+            <div className="actions"><button className="button" disabled={busy || (['paid', 'cancelled'].includes(action) && !confirmed)}>
+              {busy ? 'Menyimpan…' : action === 'paid' ? 'Konfirmasi pembayaran diterima' : action === 'cancelled' ? 'Ya, batalkan pesanan' : adminOrderActions[action]}
+            </button><button type="button" className="button secondary" disabled={busy} onClick={() => { setAction(''); setConfirmed(false); }}>Batal tindakan</button></div>
           </>}
           <Message error={error} />
         </form>

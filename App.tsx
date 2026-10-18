@@ -251,7 +251,6 @@ export default function App() {
           {catalog.error && <button className="button secondary" onClick={catalog.reload}>Muat ulang katalog</button>}
           {!catalog.loading && !catalog.error && !catalog.data?.rows.length && <div className="empty">
             <h3>Belum ada produk untuk pilihan ini</h3>
-            <p>Ubah pencarian atau kategori untuk melihat pilihan lainnya.</p>
           </div>}
           <div className="product-grid" key={JSON.stringify([search, category, sort, page])} aria-busy={catalog.loading}>
             {catalog.data?.rows.map((p, index) => <article className="product-card" key={p.id} style={{ animationDelay: Math.min(index, 7) * 45 + 'ms' }}>
@@ -380,7 +379,6 @@ function ProductDetail({ product: p, whatsappPhone, onAdd, onShare, wishlisted, 
       </p>}
       {p.variants.length > 0 && <fieldset className="variant-panel">
         <legend>Pilih varian</legend>
-        <p className="variant-hint">Pilihan ini akan dicantumkan pada pesanan Anda.</p>
         <div className="variants">
           {p.variants.map(v => <button type="button" key={v.name} disabled={v.stock === 0} title={v.stock === 0 ? 'Varian ini habis' : undefined} className={'button secondary variant-option ' + (variant === v.name ? 'selected' : '') + (v.stock === 0 ? ' sold-out' : '')} aria-pressed={variant === v.name} onClick={() => {
             setVariant(v.name); if (v.image)

@@ -689,7 +689,66 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .admin-nav {
   display: flex;
   flex-direction: column;
-  gap: 6px
+  gap: 22px
+}
+.admin-nav-group {
+  display: grid;
+  gap: 5px
+}
+.admin-nav-caption {
+  padding: 0 14px 4px;
+  font-size: .7rem;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--muted)
+}
+.admin-sidebar .admin-nav-caption {
+  color: #94a3b8
+}
+.order-filter-shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px
+}
+.order-filter-shortcuts .button[aria-pressed=true] {
+  background: #eff6ff;
+  color: #1e40af;
+  border-color: #93c5fd
+}
+.order-summary {
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #f8fafc;
+  gap: 10px
+}
+.order-action-panel {
+  border-color: #93c5fd;
+  background: #f8fbff
+}
+.order-action-panel .button[aria-pressed=true] {
+  outline: 2px solid #2563eb;
+  outline-offset: 3px
+}
+.button.order-danger {
+  color: #b91c1c;
+  border-color: #fecaca
+}
+.order-detail .check {
+  align-items: flex-start
+}
+.order-detail p,.order-detail strong,.order-detail small {
+  overflow-wrap: anywhere
+}
+.order-detail .split strong {
+  flex-shrink: 1;
+  text-align: right
+}
+.order-detail .status.processing,.order-detail .status.shipped {
+  color: #1e40af;
+  background: #eff6ff;
+  border-color: #bfdbfe
 }
 .admin-nav button {
   padding: 13px 14px;
