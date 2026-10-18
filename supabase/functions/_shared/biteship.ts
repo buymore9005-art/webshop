@@ -80,6 +80,20 @@ export interface BiteshipRateItem {
     weight: number;
 }
 
+export function normalizeBiteshipItems(items: unknown): Record<string, unknown>[] {
+    if (!Array.isArray(items) || !items.length)
+        throw new HttpError(400, 'Data paket Biteship tidak valid.');
+    return items.map(item => {
+        if (!item || typeof item !== 'object' || Array.isArray(item))
+            throw new HttpError(400, 'Data paket Biteship tidak valid.');
+        const category = typeof item.category === 'string' ? item.category.trim().toLowerCase() : '';
+        // Normalize at the provider boundary so stored quote snapshots are covered too.
+        if (['totebag', 'tote bag', 'tote-bag'].includes(category))
+            return { ...item, category: 'fashion' };
+        return { ...item };
+    });
+}
+
 export async function getRates(input: {
     origin_area_id: string;
     destination_area_id: string;
@@ -88,13 +102,13 @@ export async function getRates(input: {
 }) {
     return request('/v1/rates/couriers', {
         method: 'POST',
-        body: JSON.stringify(input),
+        body: JSON.stringify({ ...input, items: normalizeBiteshipItems(input.items) }),
     });
 }
 
 export async function createOrder(input: Record<string, unknown>) {
     return request('/v1/orders', {
         method: 'POST',
-        body: JSON.stringify(input),
+        body: JSON.stringify({ ...input, items: normalizeBiteshipItems(input.items) }),
     });
 }
