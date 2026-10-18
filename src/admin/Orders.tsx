@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { client } from '../../supabaseClient';
 import type { Order } from '../types';
 import { bookBiteshipShipment, exportOrderPage, getOrders, orderAction } from '../lib/api';
-import { printPackingSlip } from '../lib/shipping';
+import { printPackingSlip, visibleShipmentLinks } from '../lib/shipping';
 import { dateTime, errorMessage, fulfillmentLabels, money, orderLabels } from '../lib/domain';
 import { useResource } from '../lib/useResource';
 import { Field, Message, Modal, Pagination } from '../components/UI';
@@ -28,6 +28,7 @@ export default function Orders() {
       throw e;
     return data;
   }, 'admin-order-shipment:' + editing?.id);
+  const shipmentLinks = visibleShipmentLinks(shipment.data);
   useEffect(() => { const channel = client().channel('admin-orders').on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => setRev(n => n + 1)).subscribe(); return () => { void client().removeChannel(channel); }; }, []);
   function edit(o: Order) { setEditing(o); setAction(''); setConfirmed(false); setReason(''); setTracking(o.tracking_number); setCarrier(o.carrier); setError(''); setMessage(''); }
   async function refreshDetail() {
@@ -240,6 +241,7 @@ export default function Orders() {
         {editing.shipping_courier_name && <p>Tarif terpilih: {editing.shipping_courier_name} · {editing.shipping_service_name} · {money(editing.shipping_fee)}</p>}
         {editing.tracking_number && <p>Resi: <strong>{editing.tracking_number}</strong> · {editing.carrier}</p>}
         <button type="button" className="button secondary" onClick={() => printSlip(editing)}>Cetak packing slip</button>
+        <small>Packing slip adalah dokumen internal, bukan label resmi kurir.</small>
         {editing.shipping_quote_id && <section className="panel stack">
           <h3>Pengiriman Biteship</h3>
           <Message error={shipment.error} loading={shipment.loading} />
@@ -247,12 +249,15 @@ export default function Orders() {
             <p>{shipment.data.carrier_name} · {shipment.data.service_name} · status {shipment.data.status}</p>
             {shipment.data.tracking_number && <p>Resi: <strong>{shipment.data.tracking_number}</strong></p>}
             <small>Referensi booking: {shipment.data.provider_request_id}</small>
-            {shipment.data.label_url && <a className="button secondary" href={shipment.data.label_url} target="_blank" rel="noopener noreferrer">Buka label pengiriman</a>}
+            {shipmentLinks.label_url
+              ? <a className="button secondary" href={shipmentLinks.label_url} target="_blank" rel="noopener noreferrer">Buka label resmi pengiriman</a>
+              : <p>Label resmi provider belum tersedia atau belum terverifikasi. Periksa dashboard Biteship.</p>}
+            {shipmentLinks.tracking_url && <a className="button secondary" href={shipmentLinks.tracking_url} target="_blank" rel="noopener noreferrer">Lacak pengiriman</a>}
             {shipment.data.provider_error && <p className="message error">{shipment.data.provider_error}</p>}
             {shipment.data.status === 'created' && <p className="message">Permintaan booking sudah dimulai. Periksa dashboard Biteship sebelum mencoba tindakan lain.</p>}
           </>}
           {!shipment.data && canBookOrderShipment(editing) &&
-            <button type="button" className="button" disabled={busy || shipment.loading || !!shipment.error} onClick={() => void bookShipment()}>{busy ? 'Membuat booking…' : 'Buat booking & label Biteship'}</button>}
+            <button type="button" className="button" disabled={busy || shipment.loading || !!shipment.error} onClick={() => void bookShipment()}>{busy ? 'Membuat booking…' : 'Buat booking Biteship'}</button>}
           {shipment.error && <button type="button" className="button secondary" disabled={busy} onClick={shipment.reload}>Periksa ulang status booking</button>}
         </section>}
         <form id="order-actions" tabIndex={-1} aria-label="Tindakan pesanan" className="panel stack order-action-panel" onSubmit={save}>
@@ -260,7 +265,7 @@ export default function Orders() {
           <div className="actions">
             {availableOrderActions(editing).map(value => <button type="button" key={value} disabled={busy} aria-pressed={action === value} className={'button ' + (value === 'cancelled' ? 'secondary order-danger' : '')} onClick={() => { setAction(value); setReason(''); setConfirmed(false); setError(''); }}>{adminOrderActions[value]}</button>)}
           </div>
-          {!availableOrderActions(editing).length && <p className="muted">{canBookOrderShipment(editing) ? 'Gunakan bagian pengiriman Biteship untuk booking dan label.' : 'Tidak ada tindakan lanjutan untuk status ini.'}</p>}
+          {!availableOrderActions(editing).length && <p className="muted">{canBookOrderShipment(editing) ? 'Gunakan bagian pengiriman Biteship untuk booking.' : 'Tidak ada tindakan lanjutan untuk status ini.'}</p>}
           {action === 'shipped' && <div className="form-grid">
             <Field label="Kurir">
               <input required maxLength={80} value={carrier} onChange={e => setCarrier(e.target.value)} />

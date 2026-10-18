@@ -58,6 +58,8 @@ export interface ShippingShipment {
     tracking_number: string;
     status: 'created' | 'booked' | 'picked_up' | 'in_transit' | 'delivered' | 'failed' | 'cancelled';
     label_url: string;
+    label_url_verified: boolean;
+    tracking_url: string;
     provider_error: string;
     created_at: string;
     updated_at: string;

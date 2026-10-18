@@ -1,4 +1,5 @@
 import type { Order } from '../types';
+export { visibleShipmentLinks } from '../../supabase/functions/_shared/shipmentLinks';
 
 function escapeHtml(value: unknown): string {
     return String(value ?? '').replace(/[&<>"']/g, char => ({

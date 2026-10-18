@@ -35,6 +35,7 @@ export interface ShipmentLabel {
     provider_shipment_id: string;
     tracking_number: string;
     label_url: string;
+    tracking_url: string;
     status: 'booked' | 'picked_up' | 'in_transit' | 'delivered' | 'failed' | 'cancelled';
 }
 

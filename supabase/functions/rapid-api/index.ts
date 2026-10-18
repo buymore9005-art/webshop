@@ -1,6 +1,7 @@
 import { checkoutInput, uuid, proof, string, HttpError } from '../_shared/validation.ts';
 import { cors, Database, env, failure, hash, json, readJson } from '../_shared/server.ts';
 import { createOrder as createBiteshipOrder, getRates as getBiteshipRates, searchAreas } from '../_shared/biteship.ts';
+import { providerShipmentLinks } from '../_shared/shipmentLinks.ts';
 
 interface RateCartItem {
     product_id: string;
@@ -208,11 +209,11 @@ async function bookShipment(db: Database, request: Request, body: Record<string,
         if (!providerId)
             throw new HttpError(502, 'Biteship tidak mengembalikan ID booking. Periksa dashboard Biteship sebelum mengulangi.');
         const tracking = String(courier.waybill_id ?? providerOrder.waybill_id ?? courier.tracking_id ?? '').slice(0, 120);
-        const label = String(providerOrder.label_url ?? courier.label_url ?? courier.link ?? '');
-        const safeLabel = /^https:\/\//i.test(label) ? label.slice(0, 2048) : '';
-        await db.rpc('zyha_complete_biteship_shipment', {
+        const links = providerShipmentLinks(providerOrder);
+        await db.rpc('zyha_complete_biteship_shipment_v2', {
             p_order_id: orderId, p_provider_shipment_id: providerId,
-            p_tracking_number: tracking, p_label_url: safeLabel, p_status: 'booked',
+            p_tracking_number: tracking, p_label_url: links.label_url,
+            p_tracking_url: links.tracking_url, p_status: 'booked',
         });
     }
     catch (error) {
