@@ -264,7 +264,7 @@ Deno.serve(async (request: Request) => {
         const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown';
         const actor = await hash(db.key + ':' + ip);
         await db.limit('request:' + actor, 90);
-        const action = string(body.action, 'Tindakan', 1, 20);
+        const action = string(body.action, 'Tindakan', 1, 32);
         if (action === 'shipping-areas') {
             await db.limit('shipping-areas:' + actor, 20, 60);
             return json({ areas: await searchAreas(body.input) }, 200, headers);
