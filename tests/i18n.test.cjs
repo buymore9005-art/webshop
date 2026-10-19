@@ -36,12 +36,42 @@ test('locale preference survives reload with project isolation and blocked write
   assert.equal(readLocale(storage, 'project-b:locale'), 'id');
   assert.doesNotThrow(() => writeLocale({ setItem() { throw Error('blocked'); } }, 'locale', 'en'));
 });
-test('language selector derives value and options from the same supported locale contract', () => {
+test('language toggle exposes supported locales, pressed state, and language actions', () => {
   const source = fs.readFileSync('src/components/LanguageSelector.tsx', 'utf8');
-  assert.match(source, /value=\{normalizeLocale\(i18n.resolvedLanguage\)\}/);
-  assert.match(source, /htmlFor=\{id\}/);
-  assert.deepEqual([...source.matchAll(/<option value="([^"]+)"/g)].map(match => match[1]).sort(), ['en', 'id']);
+  assert.doesNotMatch(source, /<select/);
+  const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } }).outputText;
+  for (const locale of ['id', 'en', undefined]) {
+    const changes = [];
+    const module = { exports: {} };
+    const dependencies = name => name === 'react-i18next'
+      ? { useTranslation: () => ({ t: key => key, i18n: { resolvedLanguage: locale, changeLanguage: value => changes.push(value) } }) }
+      : name === '../i18n/preference' ? { normalizeLocale } : require(name);
+    new Function('require', 'module', 'exports', compiled)(dependencies, module, module.exports);
+    const group = module.exports.LanguageSelector();
+    assert.equal(group.props.role, 'group');
+    assert.equal(group.props['aria-label'], 'language.label');
+    const buttons = group.props.children.filter(child => child.type === 'button');
+    assert.deepEqual(buttons.map(button => button.props.children), ['ID', 'ENG']);
+    for (const button of buttons) {
+      assert.equal(button.props.type, 'button');
+      assert.equal(button.props['aria-pressed'], button.props.lang === normalizeLocale(locale));
+      assert.ok(button.props['aria-label']);
+      button.props.onClick();
+    }
+    assert.deepEqual(changes, ['id', 'en']);
+  }
   const setup = fs.readFileSync('src/i18n/index.ts', 'utf8');
   assert.match(setup, /projectStorageKey \+ 'locale'/);
   assert.match(setup, /document.documentElement.lang = locale/);
+});
+test('storefront navigation keeps conventional order and language utility after cart', () => {
+  const source = fs.readFileSync('App.tsx', 'utf8');
+  const header = source.slice(source.indexOf('<header'), source.indexOf('</header>'));
+  const tokens = ["t('store.catalog')", "t('store.articles')", 'name="orders"', 'name="heart"', 'name="user"', 'name="bag"', '<LanguageSelector />'];
+  const positions = tokens.map(token => header.indexOf(token));
+  assert.ok(positions.every(position => position >= 0));
+  assert.deepEqual(positions, [...positions].sort((a, b) => a - b));
+  const css = fs.readFileSync('index.css', 'utf8');
+  assert.match(css, /\.language-selector button\s*\{[^}]*border: 0/);
+  assert.match(css, /\.language-selector button:focus-visible\s*\{[^}]*outline: 2px/);
 });

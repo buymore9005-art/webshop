@@ -187,18 +187,18 @@ export default function App() {
         <button className="brand" onClick={() => navigate()}>
           {store?.store_name || 'ZYHA ID'}
         </button>
-        <LanguageSelector />
         <nav aria-label={t('store.navigation')}>
           <button className="text-button store-nav-link" aria-current={view === 'shop' && !detailId ? 'page' : undefined} onClick={() => navigate()}>{t('store.catalog')}</button>
           <button className="text-button store-nav-link" aria-current={view === 'article' ? 'page' : undefined} onClick={() => navigateArticle()}>{t('store.articles')}</button>
+          <button className="text-button store-nav-link icon-nav-link store-orders-link" aria-label="Pesanan saya" title="Pesanan saya" aria-current={view === 'orders' ? 'page' : undefined} onClick={() => navigate('orders')}><StoreIcon name="orders" /><span className="store-nav-label">Pesanan saya</span></button>
           <button className="text-button store-nav-link icon-nav-link" aria-label={'Wishlist, ' + (wishlist.data?.length || 0) + ' produk'} title="Wishlist" aria-current={view === 'wishlist' ? 'page' : undefined} onClick={() => navigate('wishlist')}><StoreIcon name="heart" /><span className="store-nav-label">Wishlist</span>{!!wishlist.data?.length && <span className="nav-count">{wishlist.data.length}</span>}</button>
           <button className="text-button store-nav-link icon-nav-link" aria-label={session?.user.email ? 'Akun: ' + session.user.email : 'Akun'} title="Akun" aria-current={view === 'account' ? 'page' : undefined} onClick={() => navigate('account')}><StoreIcon name="user" /><span className="store-nav-label">{session?.user.email || 'Akun'}</span></button>
-          <button className="text-button store-nav-link icon-nav-link store-orders-link" aria-label="Pesanan saya" title="Pesanan saya" aria-current={view === 'orders' ? 'page' : undefined} onClick={() => navigate('orders')}><StoreIcon name="orders" /><span className="store-nav-label">Pesanan saya</span></button>
           <button className="button store-cart-button" aria-label={'Keranjang belanja, ' + cart.reduce((s, x) => s + x.quantity, 0) + ' barang'} title="Keranjang belanja" onClick={() => setShowCart(true)}>
             <StoreIcon name="bag" />
             {!!cart.length && <span className="cart-count">{cart.reduce((s, x) => s + x.quantity, 0)}</span>}
           </button>
         </nav>
+        <LanguageSelector />
       </div>
     </header>
     <main>

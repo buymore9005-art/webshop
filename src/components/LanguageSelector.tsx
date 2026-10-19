@@ -1,14 +1,12 @@
-import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { normalizeLocale } from '../i18n/preference';
 
 export function LanguageSelector() {
   const { t, i18n } = useTranslation();
-  const id = useId();
-  return <div className="language-selector">
-    <select id={id} aria-label={t('language.label')} value={normalizeLocale(i18n.resolvedLanguage)} onChange={event => void i18n.changeLanguage(normalizeLocale(event.target.value))}>
-      <option value="id" lang="id">ID</option>
-      <option value="en" lang="en">ENG</option>
-    </select>
+  const locale = normalizeLocale(i18n.resolvedLanguage);
+  return <div className="language-selector" role="group" aria-label={t('language.label')}>
+    <button type="button" lang="id" aria-label="Bahasa Indonesia" aria-pressed={locale === 'id'} onClick={() => void i18n.changeLanguage('id')}>ID</button>
+    <span className="language-divider" aria-hidden="true">/</span>
+    <button type="button" lang="en" aria-label="English" aria-pressed={locale === 'en'} onClick={() => void i18n.changeLanguage('en')}>ENG</button>
   </div>;
 }

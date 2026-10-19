@@ -1,6 +1,10 @@
-/* Native language controls remain usable at narrow widths and browser zoom. */
-.language-selector { display: inline-flex; align-items: center; flex: 0 0 auto; max-width: 100%; }
-.language-selector select { width: 4.5rem; max-width: 100%; min-height: 36px; padding: .35rem .45rem; font-size: .75rem; }
+/* Shared borderless language utility, including admin and sign-in screens. */
+.language-selector { display: inline-flex; align-items: center; flex: 0 0 auto; max-width: 100%; gap: 2px; }
+.language-selector button { border: 0; background: transparent; box-shadow: none; min-height: 36px; padding: 6px; border-radius: 4px; color: #64748b; font-size: .7rem; font-weight: 500; letter-spacing: .06em; cursor: pointer; }
+.language-selector button[aria-pressed=true] { color: #0f172a; font-weight: 800; text-decoration: underline; text-underline-offset: 5px; }
+.language-selector button:hover { color: #0f172a; background: #64748b0d; }
+.language-selector button:focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; }
+.language-divider { color: #94a3b8; font-size: .7rem; user-select: none; }
 /* Label preview scaling is screen-only; the iframe owns the print renderer. */
 .label-template-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1.25rem;align-items:start}
 .label-template-grid fieldset{min-width:0}
@@ -1862,7 +1866,7 @@ meter {
 }
 
 /* Reflow belongs to the storefront only; shared backoffice primitives stay unchanged. */
-.storefront .header-inner { flex-wrap: wrap; padding-block: 12px; }
+.storefront .header-inner { display: flex; flex-wrap: wrap; padding-block: 12px; }
 .storefront .header-inner > .brand { flex: 1 1 8rem; }
 .storefront .header-inner nav { min-width: 0; max-width: 100%; flex: 1 1 36rem; flex-wrap: wrap; justify-content: flex-end; }
 .storefront .header-inner nav > .store-nav-link { min-width: 0; max-width: 100%; white-space: normal; }
@@ -1887,6 +1891,8 @@ meter {
 .storefront .quantity { flex-wrap: wrap; }
 .storefront .qris { width: 100%; }
 @media (max-width: 1000px) {
+  .storefront .header-inner > .language-selector { margin-left: auto; }
+  .storefront .header-inner nav { order: 1; flex-basis: 100%; }
   .storefront .checkout-grid { grid-template-columns: minmax(0,1fr); }
   .storefront .checkout-summary { position: static; }
   .storefront .footer-inner { grid-template-columns: repeat(2,minmax(0,1fr)); }
@@ -1894,7 +1900,9 @@ meter {
 }
 @media (max-width: 640px) {
   .storefront .header-inner { flex-wrap: wrap; }
-  .storefront .header-inner nav { flex: 1 1 15rem; flex-wrap: wrap; }
+  .storefront .header-inner > .language-selector { margin-left: auto; }
+  .storefront .header-inner nav { order: 1; flex: 1 1 100%; flex-wrap: wrap; gap: clamp(4px, 2vw, 12px); }
+  .storefront .header-inner .store-cart-button { margin-left: 0; }
   .storefront .footer-inner { grid-template-columns: minmax(0,1fr); }
   .storefront .catalog-filters { grid-template-columns: minmax(0,1fr); }
   .storefront .product-grid { grid-template-columns: repeat(auto-fit,minmax(min(100%,10rem),1fr)); }
