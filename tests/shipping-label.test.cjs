@@ -8,13 +8,46 @@ function load(file) {
   const filename = path.resolve(file);
   const output = ts.transpileModule(fs.readFileSync(filename, 'utf8'), {compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
   const module = {exports:{}};
-  new Function('require','module','exports',output)(name => load(path.resolve(path.dirname(filename), name.endsWith('.ts') ? name : name + '.ts')),module,module.exports);
+  new Function('require','module','exports',output)(name => name === 'jsbarcode' ? {default:require(name)} : load(path.resolve(path.dirname(filename), name.endsWith('.ts') ? name : name + '.ts')),module,module.exports);
   return module.exports;
 }
 const {normalizeShippingLabel} = load('supabase/functions/_shared/shippingLabel.ts');
 const {adminShippingLabel} = load('supabase/functions/_shared/adminShippingLabel.ts');
-const {shippingLabelHtml,printShippingLabel} = load('src/lib/shippingLabel.ts');
+const {shippingLabelHtml,printShippingLabel,labelBarcode} = load('src/lib/shippingLabel.ts');
 const raw = () => ({success:true,id:'provider-1',reference_id:'STORE-1',courier:{waybill_id:'AWB-123',tracking_id:'not-an-awb',company:'jne',type:'reg'},origin:null,destination:{cash_on_delivery:{amount:0}},items:null});
+test('shipment fee is explicit, nullable and never substituted with order price', () => {
+  for (const [input, expected] of [[25000,25000],[0,0],[null,null],[undefined,null],['25000',null],[-1,null],[Infinity,null],[NaN,null]]) {
+    const payload = raw(); payload.price=27500; payload.courier.shipment_fee=input;
+    assert.equal(normalizeShippingLabel(payload,'provider-1','STORE-1').shippingFee,expected);
+  }
+});
+test('CODE128 SVG contains exact encoder modules with quiet zones and no dynamic markup', () => {
+  for (const value of ['AWB-123','STORE-1','01234567890123456789']) {
+    const target={}; require('jsbarcode')(target,value,{format:'CODE128',displayValue:false,margin:0});
+    const bits=target.encodings.map(e=>e.data).join('');
+    const svg=labelBarcode(value,86,15);
+    assert.match(svg,/<svg/);
+    const actual=Array(bits.length).fill('0');
+    for (const match of svg.matchAll(/<rect x="(\d+)" y="0" width="(\d+)"/g)) actual.fill('1',Number(match[1])-10,Number(match[1])-10+Number(match[2]));
+    assert.equal(actual.join(''),bits);
+    assert.ok((bits.length+20)*0.25<=86);
+    assert.doesNotMatch(svg,/<text|<script|href=|onload=/);
+  }
+  for (const value of ['X'.repeat(200),'Unicode-é','bad\nAWB','<script>alert(1)</script>']) {
+    const svg=labelBarcode(value,40,10);
+    assert.doesNotMatch(svg,/<script|onload=|href=/);
+  }
+  assert.match(labelBarcode('X'.repeat(200),40,10),/terlalu panjang/);
+});
+test('layout preserves group order, carrier, missing fee and computed item totals', () => {
+  const payload=raw(); payload.items=[{name:'Dummy item',quantity:2,weight:100}];
+  const html=shippingLabelHtml(normalizeShippingLabel(payload,'provider-1','STORE-1'));
+  const groups=['class="brand"','Nomor Resi -','Ongkos Kirim','Reference Number','PENERIMA','PENGIRIM','Jenis Barang','CATATAN','Pengiriman melalui platform'];
+  groups.reduce((last,group)=>{const next=html.indexOf(group);assert.ok(next>last);return next;},-1);
+  assert.match(html,/Rp -/); assert.match(html,/>jne</); assert.doesNotMatch(html,/J&T Express/);
+  assert.match(html,/200 g/); assert.match(html,/default-src 'none'/);
+  assert.doesNotMatch(html,/overflow:hidden|max-height:/);
+});
 test('normalization preserves nulls and zero COD; strips metadata and tracking identifiers', () => {
   const result = normalizeShippingLabel({...raw(),metadata:{secret:'hidden'}},'provider-1','STORE-1');
   assert.equal(result.cod,0); assert.equal(result.routing,''); assert.deepEqual(result.items,[]);

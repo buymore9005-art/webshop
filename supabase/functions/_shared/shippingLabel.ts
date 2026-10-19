@@ -1,10 +1,10 @@
-// This allowlisted DTO deliberately excludes provider metadata, links and financial totals.
+// This allowlisted DTO excludes metadata, links and order totals (not shipment fees).
 export interface LabelContact {
     name: string; phone: string; address: string; postalCode: string; note: string;
 }
 export interface ShippingLabel {
     reference: string; waybill: string; routing: string; courier: string; service: string;
-    sender: LabelContact; recipient: LabelContact; note: string; cod: number | null;
+    sender: LabelContact; recipient: LabelContact; note: string; cod: number | null; shippingFee: number | null;
     items: { name: string; quantity: number | null; weight: number | null; length: number | null; width: number | null; height: number | null }[];
 }
 const record = (v: unknown): Record<string, unknown> => v && typeof v === 'object' && !Array.isArray(v) ? v as Record<string, unknown> : {};
@@ -29,6 +29,8 @@ export function normalizeShippingLabel(raw: Record<string, unknown>, id: string,
         reference, waybill, routing: text(courier.routing_code, 200), courier: text(courier.company, 120), service: text(courier.type, 120),
         sender: contact(order.origin), recipient: contact(destination), note: text(order.note),
         cod: number(record(destination.cash_on_delivery).amount),
+        // Retrieve API: price can include insurance; never substitute it for shipment_fee.
+        shippingFee: number(courier.shipment_fee),
         items: Array.isArray(order.items) ? order.items.map(value => {
             const item = record(value);
             return { name: text(item.name, 200), quantity: number(item.quantity), weight: number(item.weight),
