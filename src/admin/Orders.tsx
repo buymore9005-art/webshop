@@ -4,6 +4,8 @@ import { client } from '../../supabaseClient';
 import type { Order } from '../types';
 import { bookBiteshipShipment, exportOrderPage, getOrders, orderAction } from '../lib/api';
 import { printPackingSlip, visibleShipmentLinks } from '../lib/shipping';
+import { shopAction } from '../lib/api';
+import { printShippingLabel, type ShippingLabel } from '../lib/shippingLabel';
 import { dateTime, errorMessage, fulfillmentLabels, money, orderLabels } from '../lib/domain';
 import { useResource } from '../lib/useResource';
 import { Field, Message, Modal, Pagination } from '../components/UI';
@@ -85,6 +87,15 @@ export default function Orders() {
     catch (e) {
       setError(errorMessage(e));
     }
+  }
+  async function printLabel() {
+    if (!editing || busy) return;
+    setBusy(true); setError('');
+    try {
+      await printShippingLabel(() => shopAction<ShippingLabel>({ action: 'biteship-shipping-label', orderId: editing.id }));
+    }
+    catch (e) { setError(errorMessage(e)); }
+    finally { setBusy(false); }
   }
   function printSlip(order: Order) {
     try {
@@ -249,6 +260,8 @@ export default function Orders() {
             <p>{shipment.data.carrier_name} · {shipment.data.service_name} · status {shipment.data.status}</p>
             {shipment.data.tracking_number && <p>Resi: <strong>{shipment.data.tracking_number}</strong></p>}
             <small>Referensi booking: {shipment.data.provider_request_id}</small>
+            <button type="button" className="button secondary" disabled={busy || !['booked', 'picked_up', 'in_transit', 'delivered'].includes(shipment.data.status)} onClick={() => void printLabel()}>Cetak label resi</button>
+            <small>Label toko 100 x 150 mm dari data terbaru Biteship, bukan PDF resmi kurir.</small>
             {shipmentLinks.label_url
               ? <a className="button secondary" href={shipmentLinks.label_url} target="_blank" rel="noopener noreferrer">Buka label resmi pengiriman</a>
               : <p>Label resmi provider belum tersedia atau belum terverifikasi. Periksa dashboard Biteship.</p>}

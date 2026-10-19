@@ -112,3 +112,7 @@ export async function createOrder(input: Record<string, unknown>) {
         body: JSON.stringify({ ...input, items: normalizeBiteshipItems(input.items) }),
     });
 }
+
+export async function getOrder(id: string) {
+    return request('/v1/orders/' + encodeURIComponent(id), { method: 'GET' });
+}

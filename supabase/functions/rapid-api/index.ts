@@ -2,6 +2,8 @@ import { checkoutInput, uuid, proof, string, HttpError } from '../_shared/valida
 import { cors, Database, env, failure, hash, json, readJson } from '../_shared/server.ts';
 import { createOrder as createBiteshipOrder, getRates as getBiteshipRates, searchAreas } from '../_shared/biteship.ts';
 import { providerShipmentLinks } from '../_shared/shipmentLinks.ts';
+import { getOrder as getBiteshipOrder } from '../_shared/biteship.ts';
+import { adminShippingLabel } from '../_shared/adminShippingLabel.ts';
 
 interface RateCartItem {
     product_id: string;
@@ -276,6 +278,8 @@ Deno.serve(async (request: Request) => {
             return json(await normalizedRates(db, actor, body), 200, headers);
         if (action === 'book-biteship-shipment')
             return json(await bookShipment(db, request, body), 200, headers);
+        if (action === 'biteship-shipping-label')
+            return json(await adminShippingLabel(db, request, body.orderId, optionalCustomerId, getBiteshipOrder), 200, headers);
         if (action === 'validate-coupon') {
             const code = string(body.code, 'Kode kupon', 3, 40).toUpperCase();
             if (!/^[A-Z0-9_-]{3,40}$/.test(code))
