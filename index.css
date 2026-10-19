@@ -727,6 +727,17 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   border-color: #93c5fd;
   background: #f8fbff
 }
+.order-workflow > * {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.order-workflow .actions {
+  flex-wrap: wrap;
+}
+.order-workflow summary {
+  cursor: pointer;
+  font-weight: 600;
+}
 .order-action-panel .button[aria-pressed=true] {
   outline: 2px solid #2563eb;
   outline-offset: 3px

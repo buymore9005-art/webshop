@@ -1,13 +1,16 @@
 import type { Order } from '../types';
 
 export const adminOrderActions = {
-  paid: 'Verifikasi pembayaran',
+  paid: 'Konfirmasi pembayaran',
   cancelled: 'Batalkan pesanan',
-  processing: 'Mulai proses pesanan',
+  processing: 'Proses pesanan',
   shipped: 'Kirim & simpan resi',
   completed: 'Selesaikan pesanan',
 };
 export type AdminOrderAction = keyof typeof adminOrderActions;
+export function requiresOrderReason(action: AdminOrderAction): boolean {
+  return action !== 'paid' && action !== 'processing';
+}
 type OrderState = Pick<Order, 'status' | 'fulfillment_status' | 'shipping_quote_id'>;
 
 // Presentation only: the RPC remains authoritative for permissions and transitions.

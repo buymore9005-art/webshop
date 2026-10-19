@@ -9,7 +9,7 @@ import { printShippingLabel, type ShippingLabel } from '../lib/shippingLabel';
 import { dateTime, errorMessage, fulfillmentLabels, money, orderLabels } from '../lib/domain';
 import { useResource } from '../lib/useResource';
 import { Field, Message, Modal, Pagination } from '../components/UI';
-import { adminOrderActions, availableOrderActions, canBookOrderShipment, type AdminOrderAction } from '../lib/adminOrders';
+import { adminOrderActions, availableOrderActions, canBookOrderShipment, requiresOrderReason, type AdminOrderAction } from '../lib/adminOrders';
 export default function Orders() {
   const [page, setPage] = useState(0), [status, setStatus] = useState(''), [search, setSearch] = useState(''), [start, setStart] = useState(''), [end, setEnd] = useState(''), [rev, setRev] = useState(0);
   const [fulfillment, setFulfillment] = useState('');
@@ -50,12 +50,14 @@ export default function Orders() {
     event.preventDefault(); if (!editing || busy || !action || !availableOrderActions(editing).includes(action) || (['paid', 'cancelled'].includes(action) && !confirmed))
       return; setBusy(true); setError(''); try {
         await orderAction(editing.id, editing.version, action, reason, tracking, carrier);
-        setEditing(null);
+        const { data, error: loadError } = await client().from('orders').select('*').eq('id', editing.id).single();
+        if (loadError) throw loadError;
+        edit(data as Order);
         setRev(n => n + 1);
         setMessage('Perubahan pesanan disimpan.');
       }
     catch (e) {
-      setError(errorMessage(e));
+      setError(errorMessage(e) + ' Muat ulang detail sebelum mencoba lagi.');
     }
     finally {
       setBusy(false);
@@ -70,7 +72,9 @@ export default function Orders() {
       const result = await bookBiteshipShipment(editing.id);
       setRev(n => n + 1);
       setMessage(result.already_booked ? 'Booking Biteship sudah tercatat.' : 'Shipment Biteship berhasil dibuat.');
-      setEditing(null);
+      const { data, error: loadError } = await client().from('orders').select('*').eq('id', editing.id).single();
+      if (loadError) throw loadError;
+      setEditing(data as Order);
     }
     catch (e) {
       setError(errorMessage(e));
@@ -253,14 +257,31 @@ export default function Orders() {
         {editing.tracking_number && <p>Resi: <strong>{editing.tracking_number}</strong> · {editing.carrier}</p>}
         <button type="button" className="button secondary" onClick={() => printSlip(editing)}>Cetak packing slip</button>
         <small>Packing slip adalah dokumen internal, bukan label resmi kurir.</small>
-        {editing.shipping_quote_id && <section className="panel stack">
-          <h3>Pengiriman Biteship</h3>
+        <div className="stack order-workflow">
+        <form id="order-actions" tabIndex={-1} aria-label="Tindakan pesanan" className="panel stack order-action-panel" onSubmit={save}>
+          <h3>1. Konfirmasi pembayaran</h3>
+          <p className="muted">{editing.status === 'pending' ? 'Periksa mutasi rekening. Tangkapan layar pembeli bukan bukti tunggal.' : orderLabels[editing.status]}</p>
+          {availableOrderActions(editing).includes('paid') && <button type="button" className="button" disabled={busy} aria-pressed={action === 'paid'} onClick={() => { setAction('paid'); setReason(''); setConfirmed(false); setError(''); }}>Konfirmasi pembayaran</button>}
+          <h3>2. Proses pesanan</h3>
+          <p className="muted">Siapkan paket setelah pembayaran diterima. Langkah ini tidak membuat booking kurir.</p>
+          {availableOrderActions(editing).includes('processing') && <button type="button" className="button" disabled={busy} aria-pressed={action === 'processing'} onClick={() => { setAction('processing'); setReason(''); setConfirmed(false); setError(''); }}>Proses pesanan</button>}
+          {action && !requiresOrderReason(action) && <div className="stack">
+            <h3>{adminOrderActions[action]}</h3>
+            {action === 'paid' && <label className="check"><input type="checkbox" required checked={confirmed} disabled={busy} onChange={e => setConfirmed(e.target.checked)} /><span>Saya sudah memeriksa mutasi dan menerima {money(editing.total_price)}. Konfirmasi ini tidak otomatis memproses pesanan.</span></label>}
+            <div className="actions"><button className="button" disabled={busy || (action === 'paid' && !confirmed)}>{busy ? 'Menyimpan…' : adminOrderActions[action]}</button><button type="button" className="button secondary" disabled={busy} onClick={() => { setAction(''); setConfirmed(false); }}>Batal tindakan</button></div>
+          </div>}
+        </form>
+        <section className="panel stack order-label-step">
+          <h3>3. Cetak label</h3>
+          {!editing.shipping_quote_id && <p>Pesanan ini memakai pengiriman manual. Simpan kurir dan resi melalui tindakan lanjutan; label resmi diperoleh dari kurir, bukan packing slip.</p>}
+          {editing.shipping_quote_id && <>
+          <p>Prasyarat: pembayaran dikonfirmasi, pesanan diproses, lalu booking Biteship. Booking membuat pengiriman nyata dan dapat menimbulkan biaya kurir; bukan sekadar mencetak label.</p>
           <Message error={shipment.error} loading={shipment.loading} />
           {shipment.data && <>
             <p>{shipment.data.carrier_name} · {shipment.data.service_name} · status {shipment.data.status}</p>
             {shipment.data.tracking_number && <p>Resi: <strong>{shipment.data.tracking_number}</strong></p>}
             <small>Referensi booking: {shipment.data.provider_request_id}</small>
-            <button type="button" className="button secondary" disabled={busy || !['booked', 'picked_up', 'in_transit', 'delivered'].includes(shipment.data.status)} onClick={() => void printLabel()}>Cetak label resi</button>
+            <button type="button" className="button" disabled={busy || shipment.loading || !!shipment.error || !['booked', 'picked_up', 'in_transit', 'delivered'].includes(shipment.data.status)} onClick={() => void printLabel()}>Cetak label</button>
             <small>Label toko 100 x 150 mm dari data terbaru Biteship, bukan PDF resmi kurir.</small>
             {shipmentLinks.label_url
               ? <a className="button secondary" href={shipmentLinks.label_url} target="_blank" rel="noopener noreferrer">Buka label resmi pengiriman</a>
@@ -268,16 +289,17 @@ export default function Orders() {
             {shipmentLinks.tracking_url && <a className="button secondary" href={shipmentLinks.tracking_url} target="_blank" rel="noopener noreferrer">Lacak pengiriman</a>}
             {shipment.data.provider_error && <p className="message error">{shipment.data.provider_error}</p>}
             {shipment.data.status === 'created' && <p className="message">Permintaan booking sudah dimulai. Periksa dashboard Biteship sebelum mencoba tindakan lain.</p>}
+            {shipment.data.status === 'failed' && <p className="message error">Booking gagal atau hasilnya belum pasti. Periksa dashboard Biteship dan rekonsiliasi booking; jangan membuat booking ulang karena berisiko pengiriman ganda.</p>}
           </>}
           {!shipment.data && canBookOrderShipment(editing) &&
             <button type="button" className="button" disabled={busy || shipment.loading || !!shipment.error} onClick={() => void bookShipment()}>{busy ? 'Membuat booking…' : 'Buat booking Biteship'}</button>}
-          {shipment.error && <button type="button" className="button secondary" disabled={busy} onClick={shipment.reload}>Periksa ulang status booking</button>}
-        </section>}
-        <form id="order-actions" tabIndex={-1} aria-label="Tindakan pesanan" className="panel stack order-action-panel" onSubmit={save}>
-          <div><h3>Tindakan pesanan</h3><p className="muted">{editing.status === 'pending' ? 'Periksa mutasi rekening sebelum mengonfirmasi pembayaran.' : 'Lanjutkan sesuai status pesanan. Setiap perubahan dicatat dalam riwayat.'}</p></div>
-          <div className="actions">
-            {availableOrderActions(editing).map(value => <button type="button" key={value} disabled={busy} aria-pressed={action === value} className={'button ' + (value === 'cancelled' ? 'secondary order-danger' : '')} onClick={() => { setAction(value); setReason(''); setConfirmed(false); setError(''); }}>{adminOrderActions[value]}</button>)}
-          </div>
+          <button type="button" className="button secondary" disabled={busy || shipment.loading} onClick={shipment.reload}>Periksa ulang status booking</button>
+          </>}
+        </section>
+        <form aria-label="Tindakan lanjutan" className="panel stack" onSubmit={save}>
+          <details><summary>Tindakan lanjutan / pengecualian</summary><p>Pembatalan di luar alur utama dan tetap memerlukan alasan. Refund tidak tersedia di halaman ini dan bukan bagian dari alur utama.</p><div className="actions">
+            {availableOrderActions(editing).filter(requiresOrderReason).map(value => <button type="button" key={value} disabled={busy} aria-pressed={action === value} className="button secondary" onClick={() => { setAction(value); setReason(''); setConfirmed(false); setError(''); }}>{adminOrderActions[value]}</button>)}
+          </div></details>
           {!availableOrderActions(editing).length && <p className="muted">{canBookOrderShipment(editing) ? 'Gunakan bagian pengiriman Biteship untuk booking.' : 'Tidak ada tindakan lanjutan untuk status ini.'}</p>}
           {action === 'shipped' && <div className="form-grid">
             <Field label="Kurir">
@@ -287,18 +309,19 @@ export default function Orders() {
               <input required maxLength={120} value={tracking} onChange={e => setTracking(e.target.value)} />
             </Field>
           </div>}
-          {action && <>
+          {action && requiresOrderReason(action) && <>
             <h3>{adminOrderActions[action]}</h3>
-            <Field label="Alasan / catatan verifikasi" hint={action === 'paid' ? 'Periksa mutasi rekening terlebih dahulu. Tangkapan layar pembeli bukan bukti tunggal.' : undefined}>
+            {requiresOrderReason(action) && <Field label="Alasan tindakan">
               <textarea required minLength={3} maxLength={2000} rows={2} value={reason} onChange={e => setReason(e.target.value)} />
-            </Field>
-            {['paid', 'cancelled'].includes(action) && <label className="check"><input type="checkbox" required checked={confirmed} disabled={busy} onChange={e => setConfirmed(e.target.checked)} /><span>{action === 'paid' ? `Saya sudah memeriksa mutasi dan menerima ${money(editing.total_price)}. Konfirmasi ini tidak otomatis memproses pesanan.` : 'Saya memahami pesanan akan dibatalkan dan stok dikembalikan. Tindakan ini tidak dapat dibatalkan dari halaman ini.'}</span></label>}
+            </Field>}
+            {action === 'cancelled' && <label className="check"><input type="checkbox" required checked={confirmed} disabled={busy} onChange={e => setConfirmed(e.target.checked)} /><span>Saya memahami pesanan akan dibatalkan dan stok dikembalikan. Tindakan ini tidak dapat dibatalkan dari halaman ini.</span></label>}
             <div className="actions"><button className="button" disabled={busy || (['paid', 'cancelled'].includes(action) && !confirmed)}>
               {busy ? 'Menyimpan…' : action === 'paid' ? 'Konfirmasi pembayaran diterima' : action === 'cancelled' ? 'Ya, batalkan pesanan' : adminOrderActions[action]}
             </button><button type="button" className="button secondary" disabled={busy} onClick={() => { setAction(''); setConfirmed(false); }}>Batal tindakan</button></div>
           </>}
           <Message error={error} />
         </form>
+        </div>
         <h3>Riwayat pesanan</h3>
         <Message error={events.error} loading={events.loading} />
         <div className="event-list">
