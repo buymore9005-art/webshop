@@ -7,13 +7,14 @@ import Products from './src/admin/Products';
 import Payments from './src/admin/Payments';
 import Orders from './src/admin/Orders';
 import Settings from './src/admin/Settings';
+import LabelTemplates from './src/admin/LabelTemplates';
 import Content from './src/admin/Content';
 import Coupons from './src/admin/Coupons';
 import { Modal } from './src/components/UI';
 const navigationGroups = [
   { label: 'Operasional', items: [['dashboard', 'Ringkasan'], ['orders', 'Pesanan'], ['products', 'Produk & katalog']] },
   { label: 'Pengembangan toko', items: [['coupons', 'Kupon'], ['analytics', 'Analitik'], ['content', 'Artikel & footer']] },
-  { label: 'Konfigurasi', items: [['banks', 'Metode bayar'], ['wa', 'WhatsApp'], ['settings', 'Pengaturan']] },
+  { label: 'Konfigurasi', items: [['banks', 'Metode bayar'], ['wa', 'WhatsApp'], ['settings', 'Pengaturan'], ['labels', 'Template label']] },
 ];
 const navigation = navigationGroups.flatMap(group => group.items);
 export default function Admin() {
@@ -58,6 +59,7 @@ function AdminWorkspace() {
         {view === 'content' && <Content />}
         {view === 'wa' && <Settings whatsappOnly />}
         {view === 'settings' && <Settings />}
+        {view === 'labels' && <LabelTemplates />}
       </main>
     </div>
     <Modal open={mobileMenu} title="Navigasi admin" onClose={() => setMobileMenu(false)}>

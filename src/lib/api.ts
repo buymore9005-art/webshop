@@ -35,6 +35,11 @@ export async function getProduct(id: string) { const { data, error } = await cli
     throw error; return data as Product | null; }
 export async function getSettings() { const { data, error } = await client().from('settings').select('*').eq('id', 1).single(); if (error)
     throw error; return data as Settings; }
+export async function getLabelTemplate() {
+    // Read fresh on each print. Transport/auth errors must propagate, not become defaults.
+    const settings = await getSettings();
+    return settings.shipping_label_template;
+}
 export async function getShippingOrigin() { const { data, error } = await client().from('shipping_origin').select('*').eq('id', 1).single(); if (error)
     throw error; return data as ShippingOrigin; }
 export async function getMethods(admin = false) { let q = client().from('payment_methods').select('*').order('sort_order').order('name'); if (!admin)
@@ -384,6 +389,10 @@ export async function getInventoryMovements(productId: string, variant: string) 
 export async function saveMethod(value: Omit<PaymentMethod, 'id'>, id?: string) { const q = id ? client().from('payment_methods').update(value).eq('id', id) : client().from('payment_methods').insert(value); const { data, error } = await q.select('id').single(); if (error)
     throw error; return data; }
 export async function saveSettings(payload: Partial<Settings>, expected?: string) {
+    if (Object.hasOwn(payload, 'shipping_label_template')) {
+        const { normalizeLabelTemplate } = await import('./labelTemplate');
+        payload = { ...payload, shipping_label_template: normalizeLabelTemplate(payload.shipping_label_template) };
+    }
     if (payload.shipping_provider && !['flat_rate', 'biteship'].includes(payload.shipping_provider))
         throw new Error('Penyedia ongkir tidak valid.');
     if (payload.shipping_couriers && (payload.shipping_couriers.length > 200 || !/^[a-z0-9,-]+$/.test(payload.shipping_couriers)))

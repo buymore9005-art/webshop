@@ -65,6 +65,7 @@ export interface ShippingShipment {
     updated_at: string;
 }
 export interface Settings {
+    shipping_label_template?: import('./lib/labelTemplate').LabelTemplate | null;
     id: number;
     store_name: string;
     banner_url: string;

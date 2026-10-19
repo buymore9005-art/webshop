@@ -6,6 +6,7 @@ import { bookBiteshipShipment, exportOrderPage, getOrders, orderAction } from '.
 import { printPackingSlip, visibleShipmentLinks } from '../lib/shipping';
 import { shopAction } from '../lib/api';
 import { printShippingLabel, type ShippingLabel } from '../lib/shippingLabel';
+import { getLabelTemplate } from '../lib/api';
 import { dateTime, errorMessage, fulfillmentLabels, money, orderLabels } from '../lib/domain';
 import { useResource } from '../lib/useResource';
 import { Field, Message, Modal, Pagination } from '../components/UI';
@@ -96,7 +97,7 @@ export default function Orders() {
     if (!editing || busy) return;
     setBusy(true); setError('');
     try {
-      await printShippingLabel(() => shopAction<ShippingLabel>({ action: 'biteship-shipping-label', orderId: editing.id }));
+      await printShippingLabel(() => shopAction<ShippingLabel>({ action: 'biteship-shipping-label', orderId: editing.id }), getLabelTemplate);
     }
     catch (e) { setError(errorMessage(e)); }
     finally { setBusy(false); }

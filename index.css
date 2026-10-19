@@ -1,3 +1,11 @@
+/* Label preview scaling is screen-only; the iframe owns the print renderer. */
+.label-template-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1.25rem;align-items:start}
+.label-template-grid fieldset{min-width:0}
+.label-template-preview{position:sticky;top:1rem;min-width:0}
+.label-template-canvas{width:100%;overflow:auto;background:#e7e5e4;border:1px solid #d6d3d1}
+.label-template-toggle{display:flex;align-items:center;gap:.6rem}
+.label-template-toggle input{width:auto}
+@media(max-width:1000px){.label-template-grid{grid-template-columns:minmax(0,1fr)}.label-template-preview{position:static}}
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

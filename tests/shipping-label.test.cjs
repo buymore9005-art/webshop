@@ -19,6 +19,37 @@ const {normalizeShippingLabel} = load('supabase/functions/_shared/shippingLabel.
 const {adminShippingLabel} = load('supabase/functions/_shared/adminShippingLabel.ts');
 const {shippingLabelHtml,printShippingLabel,labelBarcode} = load('src/lib/shippingLabel.ts');
 const raw = () => ({success:true,id:'provider-1',reference_id:'STORE-1',courier:{waybill_id:'AWB-123',tracking_id:'not-an-awb',company:'jne',type:'reg'},origin:null,destination:{cash_on_delivery:{amount:0}},items:null});
+const {normalizeLabelTemplate,templateDefaults,numericLimits}=load('src/lib/labelTemplate.ts');
+test('template missing defaults, partial upgrades, strict bounds and schema',()=>{
+  assert.deepEqual(normalizeLabelTemplate(null),templateDefaults);
+  assert.deepEqual(normalizeLabelTemplate(undefined),templateDefaults);
+  assert.equal(normalizeLabelTemplate({paper:'A6'}).width,105);
+  assert.equal(normalizeLabelTemplate({paper:'100x100'}).height,100);
+  for(const [key,[min,max]] of Object.entries(numericLimits)) {
+    for(const value of [min-1,max+1,NaN,Infinity,'10',null]) assert.throws(()=>normalizeLabelTemplate({[key]:value}));
+  }
+  for(const value of [[],true,'bad',{version:2},{css:'evil'},{layout:'evil'},{alignment:'evil'},{products:0},{quietZone:10.5},{title:'x'.repeat(81)}]) assert.throws(()=>normalizeLabelTemplate(value));
+});
+test('template render parity, escaped text, mandatory fields and safe optional reference',()=>{
+  const label=normalizeShippingLabel(raw(),'provider-1','STORE-1');
+  assert.equal(shippingLabelHtml(label),shippingLabelHtml(label,normalizeLabelTemplate(undefined)));
+  const html=shippingLabelHtml(label,{title:'</style><script>alert(1)</script>',footer:'<img onerror=x>',sender:false,products:false,notes:false,reference:false,recipientPhone:false});
+  assert.match(html,/&lt;script&gt;/); assert.doesNotMatch(html,/<script|<img onerror/);
+  for(const required of ['Nomor Resi - AWB-123','PENERIMA','Kode pos','CODE128','COD:']) assert.ok(html.includes(required));
+  for(const absent of ['PENGIRIM','Jenis Barang','CATATAN','Reference Number']) assert.ok(!html.includes(absent));
+  assert.throws(()=>shippingLabelHtml({...label,waybill:'W'.repeat(30)},{paper:'custom',width:80,margin:10,padding:5,moduleWidth:0.5}),/ukuran aman/);
+  assert.match(shippingLabelHtml({...label,reference:'W'.repeat(200)}),/reference-text-only/);
+  for(const args of [[86,15,0.2,10],[86,15,0.25,9],[86,NaN,0.25,10]]) assert.doesNotMatch(labelBarcode('AWB-123',...args),/<svg/);
+});
+test('fresh template errors close popup without print or stale fallback',async()=>{
+  let closed=false,printed=false,loaded=0;
+  global.window={open:()=>({document:{body:{}},close(){closed=true;},print(){printed=true;}})};
+  try {
+    await assert.rejects(printShippingLabel(async()=>normalizeShippingLabel(raw(),'provider-1','STORE-1'),async()=>{loaded++;throw new Error('offline settings');}),/offline settings/);
+    assert.equal(loaded,1); assert.equal(closed,true); assert.equal(printed,false);
+    await assert.rejects(printShippingLabel(async()=>normalizeShippingLabel(raw(),'provider-1','STORE-1'),async()=>({moduleWidth:0.01})),/moduleWidth/);
+  } finally {delete global.window;}
+});
 test('J&T uses the verified official red foreground asset, not the white header logo', () => {
   const {courierLogo}=load('src/lib/courierLogos.ts');
   const asset=fs.readFileSync('src/assets/couriers/jnt.png');
