@@ -2,9 +2,11 @@
 
 Assets retrieved 2026-10-19. Trademarks remain their owners' property; these identify shipping services, not courier certification of this store template.
 
+J&T contrast correction: the original official `logo.png` is white artwork intended for the site's colored header, so it disappears on white label stock. The replacement is the official red PNG, unchanged, rendered as the existing foreground image on both screen and print. No background graphics setting, CSS recoloring, or changes to other courier assets are required. The label regression test pins the verified replacement's SHA-256 to prevent accidentally restoring the white variant.
+
 | Code | Bundled source |
 | --- | --- |
-| jnt | https://www.jet.co.id/static/images/logo.png?t=1 (linked by the official homepage `.logo_line`) |
+| jnt | https://www.jet.co.id/static/images/logo-red.png?t=1 (linked by https://www.jet.co.id/about/company) |
 | jne | https://biteship.com/images/couriers/jne.webp |
 | sicepat | https://biteship.com/images/couriers/sicepat.webp |
 | anteraja | https://biteship.com/images/couriers/anteraja.webp |

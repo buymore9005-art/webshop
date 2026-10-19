@@ -19,6 +19,22 @@ const {normalizeShippingLabel} = load('supabase/functions/_shared/shippingLabel.
 const {adminShippingLabel} = load('supabase/functions/_shared/adminShippingLabel.ts');
 const {shippingLabelHtml,printShippingLabel,labelBarcode} = load('src/lib/shippingLabel.ts');
 const raw = () => ({success:true,id:'provider-1',reference_id:'STORE-1',courier:{waybill_id:'AWB-123',tracking_id:'not-an-awb',company:'jne',type:'reg'},origin:null,destination:{cash_on_delivery:{amount:0}},items:null});
+test('J&T uses the verified official red foreground asset, not the white header logo', () => {
+  const {courierLogo}=load('src/lib/courierLogos.ts');
+  const asset=fs.readFileSync('src/assets/couriers/jnt.png');
+  // Pin the visually verified red logo from jet.co.id/about/company.
+  assert.equal(require('node:crypto').createHash('sha256').update(asset).digest('hex'),
+    '4e0efb94759c0ccf458bb083645875b39d982157a63b4b313c0450906bdb956c');
+  const payload=raw(); payload.courier.company='jnt';
+  const html=shippingLabelHtml(normalizeShippingLabel(payload,'provider-1','STORE-1'));
+  assert.ok(html.includes(`<img alt="J&amp;T Express" src="${courierLogo('jnt')}"`));
+  // Foreground images print without enabling browser background graphics.
+  assert.doesNotMatch(html,/filter:|background-image:|print-color-adjust:/);
+  for (const code of ['jne','sicepat','anteraja','pos','tiki','biteship']) {
+    const ext=code==='biteship' ? 'png' : 'webp';
+    assert.equal(courierLogo(code),`data:image/${ext};base64,${fs.readFileSync(`src/assets/couriers/${code}.${ext}`).toString('base64')}`);
+  }
+});
 test('shipment fee is explicit, nullable and never substituted with order price', () => {
   for (const [input, expected] of [[25000,25000],[0,0],[null,null],[undefined,null],['25000',null],[-1,null],[Infinity,null],[NaN,null]]) {
     const payload = raw(); payload.price=27500; payload.courier.shipment_fee=input;
