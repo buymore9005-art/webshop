@@ -316,6 +316,9 @@ Deno.serve(async (request: Request) => {
                 throw new HttpError(400, 'Diskon kupon kurang dari Rp1 untuk subtotal ini.');
             return json({ code: coupon.code, discount_amount: discountAmount }, 200, headers);
         }
+        // Only checkout/receipt actions accept checkout credentials.
+        if (action !== 'checkout' && action !== 'receipt')
+            throw new HttpError(400, 'Tindakan tidak dikenal.');
         const requestId = uuid(body.requestId);
         const token = proof(body.receiptToken);
         const customerUserId = await optionalCustomerId(request);
