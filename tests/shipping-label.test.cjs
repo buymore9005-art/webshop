@@ -12,7 +12,7 @@ function load(file) {
   const filename = path.resolve(file);
   const output = ts.transpileModule(fs.readFileSync(filename, 'utf8'), {compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
   const module = {exports:{}};
-  new Function('require','module','exports',output)(name => name === 'jsbarcode' ? {default:require(name)} : load(path.resolve(path.dirname(filename), /(?:\.ts|\?inline)$/.test(name) ? name : name + '.ts')),module,module.exports);
+  new Function('require','module','exports',output)(name => name === 'jsbarcode' ? {default:require(name)} : !name.startsWith('.') ? require(name) : load(path.resolve(path.dirname(filename), /(?:\.ts|\?inline)$/.test(name) ? name : name + '.ts')),module,module.exports);
   return module.exports;
 }
 const {normalizeShippingLabel} = load('supabase/functions/_shared/shippingLabel.ts');

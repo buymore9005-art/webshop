@@ -1,4 +1,5 @@
 import type { Order } from '../types';
+import { phrase, displayDate, displayLocale } from '../i18n/runtime';
 export { visibleShipmentLinks } from '../../supabase/functions/_shared/shipmentLinks';
 
 function escapeHtml(value: unknown): string {
@@ -12,14 +13,14 @@ function escapeHtml(value: unknown): string {
 }
 
 export function buildPackingSlipHtml(order: Order): string {
-    const weightSummary = order.total_weight_grams > 0 ? `${escapeHtml(order.total_weight_grams)} g total barang` : 'Berat barang belum dicatat';
+    const weightSummary = order.total_weight_grams > 0 ? `${escapeHtml(order.total_weight_grams)} ${phrase('g total barang')}` : phrase('Berat barang belum dicatat');
     const itemRows = order.items.map(item => `<tr>
       <td>${escapeHtml(item.title)}${item.variant ? `<small>${escapeHtml(item.variant)}</small>` : ''}${item.weight_grams ? `<small>${escapeHtml(item.weight_grams)} g per item</small>` : ''}</td>
       <td class="number">${escapeHtml(item.quantity)}</td>
     </tr>`).join('');
     const address = [order.customer_address, order.customer_district, order.customer_city, order.customer_province, order.customer_postal_code]
         .filter(Boolean).map(escapeHtml).join('<br>');
-    return `<!doctype html><html lang="id"><head><meta charset="utf-8">
+    return `<!doctype html><html lang="${displayLocale().startsWith('en') ? 'en' : 'id'}"><head><meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1"><title>Packing slip ${escapeHtml(order.order_number)}</title>
       <style>
         @page{size:A4;margin:16mm}*{box-sizing:border-box}body{font:14px/1.5 Arial,sans-serif;color:#17212b;margin:0}
@@ -31,13 +32,13 @@ export function buildPackingSlipHtml(order: Order): string {
         @media print{.print{display:none}}
       </style></head><body>
       <header class="head"><div><h1>Packing slip</h1><div class="muted">${escapeHtml(order.order_number)}</div></div>
-      <div class="number"><strong>${escapeHtml(new Date(order.created_at).toLocaleString('id-ID'))}</strong><div>${weightSummary}</div></div></header>
-      <p class="notice">Dokumen pengepakan internal. Ini bukan label pengiriman atau resi resmi kurir.</p>
-      <h2>Penerima</h2><strong>${escapeHtml(order.customer_name)}</strong><div>${escapeHtml(order.customer_phone)}</div><div>${address}</div>
-      ${order.customer_note ? `<p><strong>Catatan:</strong> ${escapeHtml(order.customer_note)}</p>` : ''}
-      <h2>Isi paket</h2><table><thead><tr><th>Produk</th><th>Jumlah</th></tr></thead><tbody>${itemRows}</tbody></table>
-      <div class="meta">Kurir: ${escapeHtml(order.carrier || 'Belum ditentukan')}<br>Resi: ${escapeHtml(order.tracking_number || 'Belum tersedia')}</div>
-      <button class="print" id="print">Cetak packing slip</button></body></html>`;
+    <div class="number"><strong>${escapeHtml(displayDate(order.created_at))}</strong><div>${weightSummary}</div></div></header>
+    <p class="notice">${phrase('Dokumen pengepakan internal. Ini bukan label pengiriman atau resi resmi kurir.')}</p>
+    <h2>${phrase('Penerima')}</h2><strong>${escapeHtml(order.customer_name)}</strong><div>${escapeHtml(order.customer_phone)}</div><div>${address}</div>
+    ${order.customer_note ? `<p><strong>${phrase('Catatan:')}</strong> ${escapeHtml(order.customer_note)}</p>` : ''}
+    <h2>${phrase('Isi paket')}</h2><table><thead><tr><th>${phrase('Produk')}</th><th>${phrase('Jumlah')}</th></tr></thead><tbody>${itemRows}</tbody></table>
+    <div class="meta">${phrase('Kurir')}: ${escapeHtml(order.carrier || phrase('Belum ditentukan'))}<br>${phrase('Resi:')} ${escapeHtml(order.tracking_number || phrase('Belum tersedia'))}</div>
+    <button class="print" id="print">${phrase('Cetak packing slip')}</button></body></html>`;
 }
 
 export function printPackingSlip(order: Order): void {

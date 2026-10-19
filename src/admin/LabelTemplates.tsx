@@ -4,14 +4,16 @@ import { normalizeLabelTemplate, numericLimits, templateDefaults, type LabelTemp
 import { shippingLabelHtml, type ShippingLabel } from '../lib/shippingLabel';
 import { errorMessage } from '../lib/domain';
 import { Field, Message } from '../components/UI';
+import { phrase } from '../i18n/runtime';
 
-const labels: Record<string, string> = {
+const labelCopy: Record<string, string> = {
     width: 'Lebar kertas (mm)', height: 'Tinggi kertas (mm)', margin: 'Margin kertas (mm)', padding: 'Padding bagian (mm)',
     fontSize: 'Ukuran teks (px)', headingSize: 'Ukuran judul (px)', lineHeight: 'Jarak baris', border: 'Ketebalan garis (px)',
     logoWidth: 'Lebar logo Biteship (mm)', barcodeHeight: 'Tinggi barcode resi (mm)', moduleWidth: 'Lebar modul barcode (mm)', quietZone: 'Quiet zone (modul per sisi)',
     courierLogo: 'Logo kurir', biteshipLogo: 'Logo Biteship', sender: 'Identitas pengirim', senderPhone: 'Telepon pengirim', recipientPhone: 'Telepon penerima',
     products: 'Daftar barang', notes: 'Catatan', reference: 'Referensi internal', referenceBarcode: 'Barcode referensi opsional', totals: 'Total jumlah / berat', shippingFee: 'Ongkos kirim', routing: 'Kode rute',
 };
+const labels = Object.defineProperties({}, Object.fromEntries(Object.entries(labelCopy).map(([key, value]) => [key, { enumerable: true, get: () => phrase(value) }]))) as Record<string, string>;
 export function demoLabel(courier = 'jnt', long = false): ShippingLabel {
     const contact = { name: 'CONTOH - bukan pelanggan', phone: '0000000000', address: 'Alamat dummy untuk pratinjau', postalCode: '00000', note: 'Data contoh, bukan pengiriman nyata.' };
     return { reference: long ? 'DEMO-' + 'REFERENSI-PANJANG-'.repeat(5) : 'DEMO-001', waybill: 'J00330160962', routing: 'DEMO', courier, service: 'reg', shippingFee: 15000, cod: 0,

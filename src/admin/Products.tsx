@@ -382,7 +382,7 @@ export default function Products() {
         <div className="panel inventory-adjust-current"><span>{stockTarget.product.title}{stockTarget.variant ? ` · ${stockTarget.variant}` : ''}</span><strong>{stockTarget.stock === null ? 'Tidak dibatasi' : `${stockTarget.stock.toLocaleString('id-ID')} unit saat ini`}</strong></div>
         <Field label="Jenis penyesuaian">
           <select value={stockReason} onChange={e => setStockReason(e.target.value)}>
-            <option>Penerimaan stok</option><option>Pengurangan stok</option><option>Stok rusak</option><option>Retur pelanggan</option><option>Koreksi stok</option>
+            <option value="Penerimaan stok">Penerimaan stok</option><option value="Pengurangan stok">Pengurangan stok</option><option value="Stok rusak">Stok rusak</option><option value="Retur pelanggan">Retur pelanggan</option><option value="Koreksi stok">Koreksi stok</option>
           </select>
         </Field>
         <Field label="Jumlah unit" hint={stockReason === 'Pengurangan stok' || stockReason === 'Stok rusak' ? 'Jumlah mengurangi stok; Supabase menolak hasil di bawah nol.' : 'Jumlah ditambahkan ke stok.'}>

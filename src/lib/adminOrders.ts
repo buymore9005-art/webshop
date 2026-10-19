@@ -1,11 +1,12 @@
 import type { Order } from '../types';
+import { phrase } from '../i18n/runtime';
 
 export const adminOrderActions = {
-  paid: 'Konfirmasi pembayaran',
-  cancelled: 'Batalkan pesanan',
-  processing: 'Proses pesanan',
-  shipped: 'Kirim & simpan resi',
-  completed: 'Selesaikan pesanan',
+  get paid() { return phrase('Konfirmasi pembayaran'); },
+  get cancelled() { return phrase('Batalkan pesanan'); },
+  get processing() { return phrase('Proses pesanan'); },
+  get shipped() { return phrase('Kirim & simpan resi'); },
+  get completed() { return phrase('Selesaikan pesanan'); },
 };
 export type AdminOrderAction = keyof typeof adminOrderActions;
 export function requiresOrderReason(action: AdminOrderAction): boolean {

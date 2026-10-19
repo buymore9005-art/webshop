@@ -1,5 +1,6 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
 import { safeImageUrl } from '../lib/domain';
+import { localizedMessage } from '../i18n';
 export function Message({ error = '', success = '', loading = false }: {
   error?: string;
   success?: string;
@@ -8,10 +9,10 @@ export function Message({ error = '', success = '', loading = false }: {
   void loading;
   return <>
     {error && <p className="message error" role="alert">
-      {error}
+      {localizedMessage(error)}
     </p>}
     {success && <p className="message success" role="status">
-      {success}
+      {localizedMessage(success)}
     </p>}
   </>;
 }

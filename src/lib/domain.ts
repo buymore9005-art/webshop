@@ -1,13 +1,14 @@
 import type { CartLine, CheckoutItem, Customer, Product, OrderAccess, OrderStatus, FulfillmentStatus } from '../types';
+import { displayLocale, phrase } from '../i18n/runtime';
 export const MAX_LINES = 50;
 export const MAX_QUANTITY = 99;
 export const MAX_MONEY = 1000000000;
 export function money(value: number | null | undefined): string {
-    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(Number(value) || 0);
+    return new Intl.NumberFormat(displayLocale(), { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(Number(value) || 0);
 }
 export function dateTime(value: string): string {
     const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? '—' : date.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', dateStyle: 'medium', timeStyle: 'short' });
+    return Number.isNaN(date.getTime()) ? '—' : date.toLocaleString(displayLocale(), { timeZone: 'Asia/Jakarta', dateStyle: 'medium', timeStyle: 'short' });
 }
 export function safeImageUrl(value: unknown): string {
     if (typeof value !== 'string' || value.length > 2048)
@@ -248,8 +249,11 @@ export function parseProductCsv(raw: string): ProductImportRow[] {
         return { title, price, description, category, image_url: safeImageUrl(imageUrl), stock, weight_grams, length_cm, width_cm, height_cm, is_active: rawActive ? rawActive.toLowerCase() === 'true' : true };
     });
 }
-export const orderLabels: Record<OrderStatus, string> = { pending: 'Menunggu pembayaran', paid: 'Lunas', cancelled: 'Dibatalkan', expired: 'Kedaluwarsa', failed: 'Gagal', refunded: 'Dikembalikan', partial_refund: 'Pengembalian sebagian' };
-export const fulfillmentLabels: Record<FulfillmentStatus, string> = { unfulfilled: 'Belum diproses', processing: 'Diproses', shipped: 'Dikirim', completed: 'Selesai' };
+function localizedLabels<T extends string>(labels: Record<T, string>): Record<T, string> {
+    return Object.defineProperties({}, Object.fromEntries(Object.entries(labels).map(([key, value]) => [key, { enumerable: true, get: () => phrase(String(value)) }]))) as Record<T, string>;
+}
+export const orderLabels = localizedLabels<OrderStatus>({ pending: 'Menunggu pembayaran', paid: 'Lunas', cancelled: 'Dibatalkan', expired: 'Kedaluwarsa', failed: 'Gagal', refunded: 'Dikembalikan', partial_refund: 'Pengembalian sebagian' });
+export const fulfillmentLabels = localizedLabels<FulfillmentStatus>({ unfulfilled: 'Belum diproses', processing: 'Diproses', shipped: 'Dikirim', completed: 'Selesai' });
 export function errorMessage(error: unknown): string {
     if (error && typeof error === 'object' && 'message' in error)
         return String(error.message);

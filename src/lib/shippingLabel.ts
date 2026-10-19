@@ -2,6 +2,7 @@ import type { LabelContact, ShippingLabel } from '../../supabase/functions/_shar
 import JsBarcode from 'jsbarcode';
 import { courierLogo } from './courierLogos';
 import { normalizeLabelTemplate, barcodeAvailableWidth } from './labelTemplate';
+import { phrase, displayLocale } from '../i18n/runtime';
 export type { ShippingLabel };
 const escape = (value: unknown): string => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
 const shown = (value: unknown) => value === null || value === '' || value === undefined ? '-' : escape(value);
@@ -21,7 +22,7 @@ export function labelBarcode(value: string, widthMm: number, heightMm: number, m
     return `<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Barcode CODE128" width="${modules * moduleWidth}mm" height="${heightMm}mm" viewBox="0 0 ${modules} ${heightMm}" preserveAspectRatio="none"><g fill="black">${rects}</g></svg>`;
 }
 
-const amount = (value: number | null | undefined) => typeof value === 'number' && Number.isFinite(value) && value >= 0 ? escape(value.toLocaleString('id-ID')) : '-';
+const amount = (value: number | null | undefined) => typeof value === 'number' && Number.isFinite(value) && value >= 0 ? escape(value.toLocaleString(displayLocale())) : '-';
 
 export function shippingLabelHtml(label: ShippingLabel, template?: unknown): string {
     const t = normalizeLabelTemplate(template);
@@ -55,7 +56,7 @@ export async function printShippingLabel(load: () => Promise<ShippingLabel>, loa
     const popup = window.open('', '_blank');
     if (!popup) throw new Error('Izinkan pop-up untuk mencetak label resi.');
     popup.opener = null;
-    popup.document.body.textContent = 'Memuat label resi...';
+    popup.document.body.textContent = phrase('Memuat label resi...');
     try {
         const [label, template] = await Promise.all([load(), loadTemplate()]);
         const html = shippingLabelHtml(label, template);

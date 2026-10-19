@@ -4,9 +4,13 @@ import { Link, useLocation } from 'react-router-dom';
 import { client } from '../../supabaseClient';
 import { Field, Message } from './UI';
 import { clearResourceCache } from '../lib/useResource';
+import { useTranslation } from 'react-i18next';
+import { localizedMessage } from '../i18n';
+import { LanguageSelector } from './LanguageSelector';
 export default function AdminGate({ children }: {
   children: ReactNode;
 }) {
+  const { t } = useTranslation();
   const [state, setState] = useState<'loading' | 'login' | 'denied' | 'ready' | 'recovery'>('loading');
   const [email, setEmail] = useState(''), [password, setPassword] = useState(''), [error, setError] = useState(''), [message, setMessage] = useState(''), [busy, setBusy] = useState(false);
   const generation = useRef(0), recovery = useRef(false), authUser = useRef<string | null>(null);
@@ -127,40 +131,42 @@ export default function AdminGate({ children }: {
       {children}
     </>;
   if (state === 'loading')
-    return null;
+    return <main className="auth-page"><section className="panel auth-panel"><LanguageSelector /><p role="status">{t('common.loading')}</p></section></main>;
   if (state === 'denied')
     return <main className="auth-page">
       <section className="panel auth-panel">
-        <h1>Akses Admin diperlukan</h1>
-        <p>Akun ini belum mendapat izin, atau koneksi pemeriksaan akses sedang gagal.</p>
-        <Message error={error} />
-        <button className="button" onClick={() => window.location.reload()}>Periksa kembali</button>
-        <button className="button secondary" onClick={() => void client().auth.signOut()}>Keluar</button>
-        <Link to="/">Kembali ke toko</Link>
+        <LanguageSelector />
+        <h1>{t('auth.denied')}</h1>
+        <p>{t('auth.deniedHelp')}</p>
+        <Message error={localizedMessage(error)} />
+        <button className="button" onClick={() => window.location.reload()}>{t('common.retry')}</button>
+        <button className="button secondary" onClick={() => void client().auth.signOut()}>{t('common.logout')}</button>
+        <Link to="/">{t('common.back')}</Link>
       </section>
     </main>;
   return <main className="auth-page">
     <section className="panel auth-panel">
+      <LanguageSelector />
       <Link to="/" className="brand">ZYHA <span>ID</span>
       </Link>
       <h1>
-        {state === 'recovery' ? 'Atur password baru' : 'Masuk Backoffice'}
+        {t(state === 'recovery' ? 'auth.resetTitle' : 'auth.title')}
       </h1>
-      <p>Gunakan akun Admin yang telah diaktifkan.</p>
+      <p>{t('auth.help')}</p>
       <form onSubmit={state === 'recovery' ? updatePassword : login} className="stack">
-        {state !== 'recovery' && <Field label="Email">
+        {state !== 'recovery' && <Field label={t('common.email')}>
           <input type="email" required autoComplete="username" value={email} onChange={e => setEmail(e.target.value)} />
         </Field>}
-        <Field label="Password">
+        <Field label={t('common.password')}>
           <input type="password" required minLength={state === 'recovery' ? 12 : 1} autoComplete={state === 'recovery' ? 'new-password' : 'current-password'} value={password} onChange={e => setPassword(e.target.value)} />
         </Field>
-        <Message error={error} success={message} />
+        <Message error={localizedMessage(error)} success={localizedMessage(message)} />
         <button className="button" disabled={busy}>
-          {busy ? 'Memproses…' : state === 'recovery' ? 'Simpan password' : 'Masuk'}
+          {t(busy ? 'auth.busy' : state === 'recovery' ? 'auth.savePassword' : 'auth.login')}
         </button>
       </form>
-      {state === 'login' && <button className="button secondary" disabled={busy} onClick={reset}>Lupa password</button>}
-      <Link to="/">Kembali ke toko</Link>
+      {state === 'login' && <button className="button secondary" disabled={busy} onClick={reset}>{t('auth.forgot')}</button>}
+      <Link to="/">{t('common.back')}</Link>
     </section>
   </main>;
 }
