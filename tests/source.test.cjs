@@ -49,4 +49,21 @@ test('packing slip escapes customer-provided HTML and is explicitly not an AWB',
 test('shipping provider contract adds no frontend credentials or fake adapter',()=>{const contract=read('supabase/functions/_shared/shipping.ts'),settings=read('src/admin/Settings.tsx');assert.match(contract,/interface ShippingProvider/);assert.match(contract,/createShipment/);assert.match(contract,/validateParcelWeight/);assert.doesNotMatch(contract,/server.?key|api.?key|token/i);assert.match(settings,/ongkir tetap di bawah/);assert.match(settings,/belum aktif sampai provider dipilih/);});
 test('page resources cache public content locally and clear private memory data on auth changes',()=>{const hook=read('src/lib/useResource.ts'),gate=read('src/components/AdminGate.tsx'),session=read('src/lib/useCustomerSession.ts'),app=read('App.tsx');assert.match(hook,/CACHE_TTL_MS/);assert.match(hook,/new Map/);assert.match(hook,/public-resource-cache:v1/);assert.match(hook,/persist = false/);assert.match(hook,/writeCache\(cacheKey, data, persist\)/);assert.match(hook,/cacheKey = key/);assert.match(gate,/clearResourceCache\(\)/);assert.match(session,/clearResourceCache\(\)/);assert.match(app,/JSON\.stringify\(\['catalog', search, category, sort, page\]\), true/);assert.match(app,/store-settings/);assert.doesNotMatch(read('src/admin/Orders.tsx'),/useResource\([^;]*,\s*true\)/);});
 test('global message component does not render page loading indicators',()=>assert.doesNotMatch(read('src/components/UI.tsx'),/Memuat data|Memuat ulang/));
-test('mobile storefront header aligns the brand left and all navigation actions right',()=>{const css=read('index.css'),mobile=css.slice(css.lastIndexOf('@media (max-width: 640px)'));assert.match(mobile,/\.storefront \.header-inner\s*\{[\s\S]*?display:\s*flex[\s\S]*?flex-wrap:\s*nowrap[\s\S]*?justify-content:\s*space-between/);assert.match(mobile,/\.storefront \.header-inner nav\s*\{[\s\S]*?flex:\s*0 0 auto[\s\S]*?justify-content:\s*flex-end[\s\S]*?flex-wrap:\s*nowrap/);assert.match(mobile,/\.storefront \.header-inner nav > \.icon-nav-link\s*\{[\s\S]*?width:\s*38px[\s\S]*?min-width:\s*38px/);assert.match(mobile,/\.storefront \.header-inner \.icon-nav-link \.store-nav-label\s*\{\s*display:\s*none/);assert.match(mobile,/\.storefront \.header-inner \.store-cart-button\s*\{[\s\S]*?flex:\s*0 0 38px[\s\S]*?margin:\s*0 0 0 auto/);assert.match(mobile,/\.storefront \.header-inner > \.brand\s*\{[\s\S]*?text-overflow:\s*ellipsis/);const compact=css.slice(css.lastIndexOf('@media (max-width: 360px)'));assert.match(compact,/nav > \.icon-nav-link\s*\{[\s\S]*?width:\s*34px/);});
+test('storefront navigation reflows without clipping brand or account text',()=>{
+	const css=read('index.css'),app=read('App.tsx');
+	const reflow=css.slice(css.indexOf('/* Reflow belongs'));
+	assert.match(reflow,/\.storefront \.header-inner nav\s*\{[^}]*min-width: 0[^}]*flex-wrap: wrap/);
+	assert.match(reflow,/\.storefront \.store-nav-label\s*\{[^}]*overflow-wrap: anywhere/);
+	assert.doesNotMatch(css,/\.storefront \.header-inner > \.brand\s*\{[^}]*text-overflow/);
+	assert.match(app,/new ResizeObserver/);
+	assert.match(app,/observer\.disconnect\(\)/);
+	assert.match(reflow,/top: calc\(var\(--store-header-height, 86px\) \+ 24px\)/);
+	assert.match(app,/aria-label="Pesanan saya"/);
+});
+test('storefront zoom rules preserve readable grids and do not mask overflow',()=>{
+	const css=read('index.css').split('/* Reflow belongs')[1];
+	assert.match(css,/minmax\(min\(100%,14rem\),1fr\)/);
+	assert.match(css,/@media \(max-width: 1000px\)[\s\S]*?\.storefront \.checkout-grid \{ grid-template-columns: minmax\(0,1fr\)/);
+	assert.match(css,/@media \(max-height: 480px\)/);
+	assert.doesNotMatch(css,/overflow(?:-x)?:\s*(?:hidden|clip)|\.admin/);
+});

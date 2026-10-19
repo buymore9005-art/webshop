@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { client, projectStorageKey } from './supabaseClient';
 import type { CartLine, Customer, OrderAccess, Product, Receipt } from './src/types';
@@ -15,6 +15,18 @@ import { ArticleDetail, ArticleIndex, CustomerAccount, CustomerOrders, WishlistP
 import { openLiveChat } from './src/shop/payment';
 // Existing storefront: catalog -> detail/cart -> checkout. No production-app code.
 export default function App() {
+  const storefrontRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!header) return;
+    // Navigation can wrap when zoomed or when an account email is long.
+    const observer = new ResizeObserver(() => {
+      storefrontRef.current?.style.setProperty('--store-header-height', `${header.getBoundingClientRect().height}px`);
+    });
+    observer.observe(header);
+    return () => observer.disconnect();
+  }, []);
   const [params, setParams] = useSearchParams();
   const [showCart, setShowCart] = useState(false);
   const [cart, setCart] = useState<CartLine[]>(() => {
@@ -166,8 +178,8 @@ export default function App() {
       wa = whatsappUrl(store.admin_phone, 'Halo, saya ingin bertanya tentang produk ZYHA ID.');
   }
   catch { }
-  return <div className="storefront">
-    <header className="store-header">
+  return <div className="storefront" ref={storefrontRef}>
+    <header className="store-header" ref={headerRef}>
       <div className="container header-inner">
         <button className="brand" onClick={() => navigate()}>
           {store?.store_name || 'ZYHA ID'}

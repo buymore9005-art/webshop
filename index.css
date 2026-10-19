@@ -1713,7 +1713,7 @@ meter {
 }
 .storefront .dropdown-trigger:hover, .storefront .dropdown.open .dropdown-trigger { border-color: #9eafb9; background: #fff; }
 .storefront .dropdown-trigger:focus-visible { outline: 2px solid var(--shop-accent); outline-offset: 3px; }
-.storefront .dropdown-trigger > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.storefront .dropdown-trigger > span { min-width: 0; overflow-wrap: anywhere; white-space: normal; }
 .storefront .dropdown-chevron { width: 18px; height: 18px; flex: 0 0 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; color: #71808a; transition: transform .18s ease; }
 .storefront .dropdown.open .dropdown-chevron { transform: rotate(180deg); }
 .storefront .dropdown-menu {
@@ -1756,11 +1756,10 @@ meter {
     flex: 0 1 auto;
     min-width: 0;
     max-width: 100%;
-    overflow: hidden;
+    overflow-wrap: anywhere;
     font-size: clamp(1rem, 4.6vw, 1.3rem);
     line-height: 1.25;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    white-space: normal;
   }
   .storefront .header-inner nav {
     display: flex;
@@ -1838,4 +1837,51 @@ meter {
     height: 36px;
     min-height: 36px;
   }
+}
+
+/* Reflow belongs to the storefront only; shared backoffice primitives stay unchanged. */
+.storefront .header-inner { flex-wrap: wrap; padding-block: 12px; }
+.storefront .header-inner > .brand { flex: 1 1 8rem; }
+.storefront .header-inner nav { min-width: 0; max-width: 100%; flex: 1 1 36rem; flex-wrap: wrap; justify-content: flex-end; }
+.storefront .header-inner nav > .store-nav-link { min-width: 0; max-width: 100%; white-space: normal; }
+.storefront .store-nav-label { min-width: 0; overflow-wrap: anywhere; }
+.storefront .header-inner .store-cart-button { flex-shrink: 0; }
+.storefront .section { scroll-margin-top: calc(var(--store-header-height, 86px) + 24px); }
+.storefront .product-gallery, .storefront .checkout-summary { top: calc(var(--store-header-height, 86px) + 24px); }
+.storefront :is(.hero-copy, .footer-inner > *, .actions > *, .split > *, .customer-order-heading > *, .customer-order-summary > *, .cart-line > *, .customer-order-item > *) { min-width: 0; }
+.storefront :is(h1, h2, h3, p, strong, small, .button, .text-button, .status, .dropdown-option) { overflow-wrap: anywhere; }
+.storefront .section-heading > * { min-width: 0; max-width: 100%; }
+.storefront :is(.button, .text-button) { max-width: 100%; }
+.storefront .split { flex-wrap: wrap; gap: 8px 16px; }
+.storefront .split > :last-child { margin-left: auto; text-align: right; }
+.storefront .split strong { flex-shrink: 1; }
+.storefront .form-grid { grid-template-columns: repeat(auto-fit,minmax(min(100%,14rem),1fr)); }
+.storefront .coupon-entry { grid-template-columns: repeat(auto-fit,minmax(min(100%,12rem),1fr)); }
+.storefront .checkout-grid .panel { padding: clamp(16px,2vw,26px); }
+.storefront .footer-inner { grid-template-columns: minmax(0,.7fr) minmax(0,1fr) minmax(0,1.4fr); }
+.storefront .footer-info-grid { grid-template-columns: repeat(auto-fit,minmax(min(100%,150px),1fr)); }
+.storefront .product-quick-actions { grid-template-columns: repeat(auto-fit,minmax(min(100%,7rem),1fr)); }
+.storefront .gallery-heading, .storefront .modal > header { flex-wrap: wrap; }
+.storefront .quantity { flex-wrap: wrap; }
+.storefront .qris { width: 100%; }
+@media (max-width: 1000px) {
+  .storefront .checkout-grid { grid-template-columns: minmax(0,1fr); }
+  .storefront .checkout-summary { position: static; }
+  .storefront .footer-inner { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .storefront .footer-info-grid { grid-column: 1/-1; }
+}
+@media (max-width: 640px) {
+  .storefront .header-inner { flex-wrap: wrap; }
+  .storefront .header-inner nav { flex: 1 1 15rem; flex-wrap: wrap; }
+  .storefront .footer-inner { grid-template-columns: minmax(0,1fr); }
+  .storefront .catalog-filters { grid-template-columns: minmax(0,1fr); }
+  .storefront .product-grid { grid-template-columns: repeat(auto-fit,minmax(min(100%,10rem),1fr)); }
+  .storefront .product-purchase { grid-template-columns: repeat(auto-fit,minmax(min(100%,12rem),1fr)); }
+}
+/* Short zoomed viewports must not trap content behind sticky panels. */
+@media (max-height: 800px) {
+  .storefront .product-gallery, .storefront .checkout-summary { position: static; }
+}
+@media (max-height: 480px) {
+  .storefront .store-header { position: static; }
 }

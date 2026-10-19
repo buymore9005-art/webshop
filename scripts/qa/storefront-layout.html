@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Storefront layout fixture (no backend)</title>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body>
+<div class="storefront" id="fixture"></div>
+<script>
+// Static presentation fixtures only: never connect to Auth, orders, or payments.
+const long = 'NamaProdukDenganTeksSangatPanjangTanpaSpasi'.repeat(3);
+const email = 'pelanggan.dengan.alamat.sangat.panjang'.repeat(3) + '@example.test';
+const icon = '<svg class="store-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor"/></svg>';
+const button = text => `<button class="button secondary">${text}</button>`;
+const field = text => `<div class="field"><label>${text}</label><input value="Data pengujian"></div>`;
+const header = `<header class="store-header"><div class="container header-inner"><button class="brand">ZYHA ID Koleksi Pilihan</button><nav aria-label="Navigasi toko"><button class="text-button store-nav-link">Katalog</button><button class="text-button store-nav-link">Artikel</button>${['Wishlist',email,'Pesanan saya'].map(x=>`<button class="text-button store-nav-link icon-nav-link" aria-label="${x}">${icon}<span class="store-nav-label">${x}</span></button>`).join('')}<button class="button store-cart-button" aria-label="Keranjang">${icon}<span class="cart-count">999</span></button></nav></div></header>`;
+const footer = '<footer class="store-footer"><div class="container footer-inner"><div class="footer-brand-block"><strong>ZYHA ID</strong><p>'+long+'</p></div><div><h2>Bantuan pelanggan</h2><p>Informasi pengiriman dan pembayaran</p></div><div class="footer-info-grid"><section><h2>Tentang toko</h2><p>'+long+'</p></section></div></div></footer>';
+const item = `<div class="photo photo-empty">Foto</div><div><h3>${long}</h3><p>Varian pilihan</p><div class="quantity">${button('Kurangi')}<output>99</output>${button('Tambah')}</div></div><strong>Rp 999.999.999</strong>`;
+const summary = `<aside class="panel checkout-summary stack"><h2>Ringkasan pesanan</h2><div class="split"><span>${long}</span><strong>Rp 999.999.999</strong></div><section class="panel stack"><h3>Tarif kurir</h3><label class="payment-option"><input type="radio"><span><strong>${long}</strong><small>Rp 100.000</small></span></label></section><div class="coupon-entry">${field('Kode kupon (opsional)')}${button('Gunakan kupon')}</div><div class="split total"><span>Estimasi total setelah diskon</span><strong>Rp 999.999.999</strong></div>${button('Buat pesanan')}</aside>`;
+const card = `<article class="product-card"><button class="product-photo"><div class="photo photo-empty">Foto pengujian</div></button><div class="product-copy"><h3 class="product-name">${long}</h3><strong>Rp 999.999.999</strong><div class="product-quick-actions">${button('Wishlist')}${button('Bagikan')}</div>${button('Pilih varian')}</div></article>`;
+const cases = {
+  catalog: `<div class="catalog-filters">${field('Cari produk')}<div class="field"><label>Kategori</label><button class="dropdown-trigger"><span>${long}</span>${icon}</button></div>${field('Urutkan')}</div><div class="product-grid">${card.repeat(4)}</div>`,
+  detail: `<div class="product-detail"><div class="product-gallery"><div class="photo photo-empty detail-photo">Foto produk</div></div><div class="stack product-info"><h1>${long}</h1><p>${long}</p><div class="product-purchase">${button('Tambah ke keranjang')}${button('Beli sekarang')}</div></div></div>`,
+  checkout: `<h1>Checkout</h1><form class="checkout-grid"><div class="stack"><section class="panel stack"><h2>Detail pengiriman</h2>${field('Nama lengkap')}${field('Nomor WhatsApp')}<div class="form-grid">${['Kecamatan','Kota/Kabupaten','Provinsi','Kode pos'].map(field).join('')}</div><section class="panel stack">${field('Cari kecamatan/kota tujuan')}</section></section></div>${summary}</form>`,
+  account: `<div class="section-heading"><div><h1>Halo, ${email}</h1></div>${button('Keluar')}</div><div class="panel stack"><h2>Profil pelanggan</h2><p>Email: ${email}</p>${button('Lihat pesanan saya')}</div><div class="panel auth-panel customer-auth-panel"><h1>Masuk ke akun pelanggan</h1>${field('Email')}${field('Password')}${button('Masuk')}</div>`,
+  history: `<h1>Pesanan saya</h1><article class="panel stack customer-order-card"><header class="customer-order-heading"><h2>${long}</h2><span class="status">Menunggu pembayaran</span></header><ul class="customer-order-items"><li class="customer-order-item">${item}</li></ul><footer class="customer-order-summary"><div><p>Resi: ${long}</p></div><strong>Rp 999.999.999</strong></footer>${button('Lihat detail & pembayaran')}</article>`,
+  cart: `<dialog class="modal"><header><h2>Keranjang Anda</h2>${button('Tutup')}</header><div class="modal-content stack"><article class="cart-line">${item}</article><div class="cart-bottom"><div class="split"><span>Total</span><strong>Rp 999.999.999</strong></div>${button('Lanjut ke checkout')}</div></div></dialog>`,
+  receipt: `<h1>Pembayaran pesanan</h1><div class="checkout-grid"><section class="panel stack"><h2>${long}</h2><p class="account-number">${long}</p><div class="photo qris">QRIS fixture</div></section>${summary}</div>`
+};
+const name = new URLSearchParams(location.search).get('case') || 'catalog';
+document.querySelector('#fixture').innerHTML = header + '<main class="container section">' + (cases[name] || cases.catalog) + '</main>' + footer;
+new ResizeObserver(([entry]) => document.querySelector('.storefront').style.setProperty('--store-header-height', `${entry.target.getBoundingClientRect().height}px`)).observe(document.querySelector('.store-header'));
+document.querySelector('dialog')?.showModal();
+</script>
+</body>
+</html>
