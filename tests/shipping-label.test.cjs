@@ -5,10 +5,14 @@ const ts = require('typescript');
 const path = require('node:path');
 // Transpile isolated Edge modules without importing the Deno server entry point.
 function load(file) {
+  if (file.endsWith('?inline')) {
+    const asset = file.slice(0, -7);
+    return {default:`data:image/${asset.endsWith('.png') ? 'png' : 'webp'};base64,${fs.readFileSync(asset).toString('base64')}`};
+  }
   const filename = path.resolve(file);
   const output = ts.transpileModule(fs.readFileSync(filename, 'utf8'), {compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
   const module = {exports:{}};
-  new Function('require','module','exports',output)(name => name === 'jsbarcode' ? {default:require(name)} : load(path.resolve(path.dirname(filename), name.endsWith('.ts') ? name : name + '.ts')),module,module.exports);
+  new Function('require','module','exports',output)(name => name === 'jsbarcode' ? {default:require(name)} : load(path.resolve(path.dirname(filename), /(?:\.ts|\?inline)$/.test(name) ? name : name + '.ts')),module,module.exports);
   return module.exports;
 }
 const {normalizeShippingLabel} = load('supabase/functions/_shared/shippingLabel.ts');
@@ -22,7 +26,7 @@ test('shipment fee is explicit, nullable and never substituted with order price'
   }
 });
 test('CODE128 SVG contains exact encoder modules with quiet zones and no dynamic markup', () => {
-  for (const value of ['AWB-123','STORE-1','01234567890123456789']) {
+  for (const value of ['J00330160962','AWB-123','STORE-1','01234567890123456789']) {
     const target={}; require('jsbarcode')(target,value,{format:'CODE128',displayValue:false,margin:0});
     const bits=target.encodings.map(e=>e.data).join('');
     const svg=labelBarcode(value,86,15);
@@ -44,9 +48,9 @@ test('layout preserves group order, carrier, missing fee and computed item total
   const html=shippingLabelHtml(normalizeShippingLabel(payload,'provider-1','STORE-1'));
   const groups=['class="brand"','Nomor Resi -','Ongkos Kirim','Reference Number','PENERIMA','PENGIRIM','Jenis Barang','CATATAN','Pengiriman melalui platform'];
   groups.reduce((last,group)=>{const next=html.indexOf(group);assert.ok(next>last);return next;},-1);
-  assert.match(html,/Rp -/); assert.match(html,/>jne</); assert.doesNotMatch(html,/J&T Express/);
+  assert.match(html,/Rp -/); assert.match(html,/alt="jne"/); assert.doesNotMatch(html,/J&T Express/);
   assert.match(html,/200 g/); assert.match(html,/default-src 'none'/);
-  assert.doesNotMatch(html,/overflow:hidden|max-height:/);
+  assert.doesNotMatch(html.replace(/<img[^>]*>/g,''),/overflow:hidden|max-height:/);
 });
 test('normalization preserves nulls and zero COD; strips metadata and tracking identifiers', () => {
   const result = normalizeShippingLabel({...raw(),metadata:{secret:'hidden'}},'provider-1','STORE-1');
@@ -61,14 +65,43 @@ test('requires successful matching provider ID/reference and real AWB', () => {
 });
 test('all print content is escaped and no provider URL becomes an asset or link', () => {
   const payload = raw(); const attack = '<img src=x onerror="alert(1)"><script>alert(2)</script>';
-  payload.courier.waybill_id=attack; payload.courier.routing_code=attack;
+  payload.courier.waybill_id='J00330160962'; payload.courier.routing_code=attack;
+  payload.courier.company=attack;
   payload.origin={contact_name:attack,address:attack,contact_phone:attack,note:attack};
   payload.destination={...payload.origin}; payload.items=[{name:attack,quantity:1,weight:100}];
   const html = shippingLabelHtml(normalizeShippingLabel(payload,'provider-1','STORE-1'));
-  assert.doesNotMatch(html,/<img|<script|<[^>]+\s(?:href|src)=/); assert.match(html,/&lt;script&gt;/);
+  assert.doesNotMatch(html.replace(/<img alt="Biteship" src="data:image\/png;base64,[A-Za-z0-9+/=]+"[^>]*>/g,''),/<img|<script|<[^>]+\s(?:href|src)=/); assert.match(html,/&lt;script&gt;/);
   assert.match(html,/100mm 150mm/); assert.match(html,/bukan resi/);
 });
 const orderId='11111111-1111-4111-8111-111111111111';
+test('realistic AWB is mandatory while long internal reference stays text only', () => {
+  const payload=raw(); payload.courier.waybill_id='J00330160962'; payload.courier.company='jnt';
+  delete payload.reference_id;
+  const label=normalizeShippingLabel(payload,'provider-1','ZYHA-91532DFACD9647D0A2764E2419C68964');
+  const html=shippingLabelHtml(label);
+  assert.equal((html.match(/<svg/g)||[]).length,1);
+  assert.match(html,/width="35.75mm"/);
+  assert.match(html,/reference-text-only/);
+  assert.match(html,/data:image\/png;base64,/);
+  assert.match(html,/img-src data:/);
+  assert.throws(()=>shippingLabelHtml({...label,waybill:'X'.repeat(200)}),/ukuran aman/);
+  const {courierLogo}=load('src/lib/courierLogos.ts');
+  for(const code of ['jnt','jne','sicepat','anteraja','pos','tiki']) assert.match(courierLogo(code),/^data:image\/(png|webp);base64,/);
+  for(const code of ['unknown','__proto__','https://evil.test/logo.svg']) assert.equal(courierLogo(code),undefined);
+});
+test('print waits for image decoding and layout', async () => {
+  const events=[]; let finishDecode;
+  const image={decode:()=>new Promise(resolve=>{finishDecode=resolve;})};
+  const popup={closed:false,document:{body:{},images:[image],fonts:{ready:Promise.resolve()},open(){},write(){},close(){}},
+    requestAnimationFrame(fn){events.push('layout');fn();return 1;},focus(){},print(){events.push('print');},close(){events.push('close');}};
+  global.window={open:()=>popup};
+  try {
+    const printing=printShippingLabel(async()=>normalizeShippingLabel(raw(),'provider-1','STORE-1'));
+    await Promise.resolve(); await Promise.resolve();
+    assert.deepEqual(events,[]); finishDecode(); await printing;
+    assert.deepEqual(events,['layout','print']);
+  } finally { delete global.window; }
+});
 function harness(admin=true,status='booked') {
   const calls=[];
   return {calls,db:{limit:async()=>{},row:async(table,filter)=>{
