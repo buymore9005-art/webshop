@@ -4,6 +4,7 @@ import { createOrder as createBiteshipOrder, getRates as getBiteshipRates, searc
 import { providerShipmentLinks } from '../_shared/shipmentLinks.ts';
 import { getOrder as getBiteshipOrder } from '../_shared/biteship.ts';
 import { adminShippingLabel } from '../_shared/adminShippingLabel.ts';
+import { manualShipmentSync } from '../_shared/shipmentSync.ts';
 
 interface RateCartItem {
     product_id: string;
@@ -280,6 +281,8 @@ Deno.serve(async (request: Request) => {
             return json(await bookShipment(db, request, body), 200, headers);
         if (action === 'biteship-shipping-label')
             return json(await adminShippingLabel(db, request, body.orderId, optionalCustomerId, getBiteshipOrder), 200, headers);
+        if (action === 'biteship-sync')
+            return json(await manualShipmentSync(db, request, body.orderId, optionalCustomerId), 200, headers);
         if (action === 'validate-coupon') {
             const code = string(body.code, 'Kode kupon', 3, 40).toUpperCase();
             if (!/^[A-Z0-9_-]{3,40}$/.test(code))

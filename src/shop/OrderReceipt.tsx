@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ShipmentStatus } from '../components/ShipmentStatus';
 import type { Customer, Receipt, Settings } from '../types';
 import { dateTime, errorMessage, fulfillmentLabels, money, orderLabels, whatsappUrl } from '../lib/domain';
 import { loadReceipt } from '../lib/api';
@@ -41,6 +42,7 @@ export function OrderReceipt({ initial, settings, customer = initial.customer, o
       {dateTime(receipt.created_at)} · Detail pembayaran tersedia kembali melalui Pesanan saya setelah masuk ke akun.</p>
     <div className="checkout-grid">
       <section className="panel stack">
+        <ShipmentStatus orderId={receipt.id} />
         <div className="split">
           <h2>Status pembayaran</h2>
           <span className={'status ' + receipt.status}>

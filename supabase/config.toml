@@ -1,3 +1,7 @@
 project_id = "zyha-id-webshop"
 [functions.rapid-api]
 verify_jwt = false
+[functions.biteship-webhook]
+verify_jwt = false
+[functions.biteship-sync]
+verify_jwt = true

@@ -1,4 +1,5 @@
 import type { FormEvent } from 'react';
+import { ShipmentStatus } from '../components/ShipmentStatus';
 import { useEffect, useState } from 'react';
 import { client } from '../../supabaseClient';
 import type { Order } from '../types';
@@ -200,6 +201,7 @@ export default function Orders() {
     <Pagination page={page} count={result.data?.count || 0} size={20} onChange={setPage} disabled={result.loading} />
     <Modal open={!!editing} title="Detail pesanan" onClose={() => setEditing(null)} busy={busy}>
       {editing && <div className="stack order-detail">
+        <ShipmentStatus orderId={editing.id} admin />
         <div className="order-summary stack"><p className="order-reference">
           {editing.order_number}
         </p>

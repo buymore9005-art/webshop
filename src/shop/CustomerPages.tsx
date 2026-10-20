@@ -1,4 +1,5 @@
 import type { FormEvent } from 'react';
+import { ShipmentStatus } from '../components/ShipmentStatus';
 import { useEffect, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import type { Article, Product } from '../types';
@@ -138,6 +139,7 @@ export function CustomerOrders({ session, loading, sessionError, onAccount, onRe
                     </li>)}</ul>
                     <footer className="customer-order-summary"><div>{order.coupon_code && <p>Kupon {order.coupon_code} · diskon {money(order.discount_amount)}</p>}{order.tracking_number ? <p>Resi: {order.carrier} · {order.tracking_number}</p> : <p>Resi belum tersedia.</p>}</div><div><small>Total pesanan</small><strong>{money(order.total_price)}</strong></div></footer>
                     <button className="button secondary" onClick={() => onReceipt(order.id)}>Lihat detail & pembayaran</button>
+                    <ShipmentStatus orderId={order.id} />
                 </article>)}</div>
                 {result.count > 0 && <Pagination page={page} count={result.count} size={CUSTOMER_ORDER_PAGE_SIZE} disabled={busy} onChange={changePage} />}
             </>}
