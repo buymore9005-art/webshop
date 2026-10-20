@@ -54,11 +54,14 @@ export async function webhookNotification(db: Database, body: Record<string, unk
 export async function webhookHandler(request: Request) {
     try {
         if (request.method !== 'POST') throw new HttpError(405, 'POST required.');
+        const body = await readJson(request, 16000, true);
+        // Installation probes acknowledge reachability only, never mutate shipments.
+        if (Object.keys(body).length === 0) return json({ ok: true });
         if (env('BITESHIP_SYNC_ENABLED') !== 'true') throw new HttpError(503, 'Sync disabled.');
         env('BITESHIP_API_KEY');
         const db = new Database();
         await db.limit('shipment-webhook:global', 120);
-        await webhookNotification(db, await readJson(request, 16000));
+        await webhookNotification(db, body);
         return json({ accepted: true });
     } catch (error) { return failure(error); }
 }

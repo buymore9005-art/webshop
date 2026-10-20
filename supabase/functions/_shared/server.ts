@@ -4,7 +4,8 @@ export function env(name: string): string { const v = Deno.env.get(name)?.trim()
 export async function hash(value: string, algorithm = 'SHA-256'): Promise<string> {
     return Array.from(new Uint8Array(await crypto.subtle.digest(algorithm, new TextEncoder().encode(value))), n => n.toString(16).padStart(2, '0')).join('');
 }
-export async function readJson(request: Request, max = 20000): Promise<Record<string, unknown>> {
+export async function readJson(request: Request, max = 20000, allowEmpty = false): Promise<Record<string, unknown>> {
+    if (!request.body && allowEmpty) return {};
     if (!request.body)
         throw new HttpError(400, 'Permintaan kosong.');
     const reader = request.body.getReader();
@@ -32,8 +33,10 @@ export async function readJson(request: Request, max = 20000): Promise<Record<st
         all.set(x, offset);
         offset += x.length;
     }
+    const text = new TextDecoder().decode(all);
+    if (allowEmpty && !text.trim()) return {};
     try {
-        return object(JSON.parse(new TextDecoder().decode(all)));
+        return object(JSON.parse(text));
     }
     catch (e) {
         if (e instanceof HttpError)
