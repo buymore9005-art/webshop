@@ -67,9 +67,19 @@ berkupon. Server mengidentifikasi pelanggan memakai user ID yang diverifikasi Su
 Auth; RPC checkout menimpa nilai identitas dari payload browser. Migration
 `supabase/migrations/20261107000000_coupon_account_identity.sql` menambah kolom
 identitas akun, backfill redemption dari order yang sudah tertaut, dan mempertahankan
-jatah redemption tamu lama hanya dalam batas total. Tes lokal memeriksa kontrak source
-Edge Function dan SQL; SQL belum dijalankan pada Supabase/PostgreSQL staging dan
-Edge Function belum dideploy.
+jatah redemption tamu lama hanya dalam batas total.
+
+Pada 7 November 2026, migration diterapkan ke Supabase production
+`WEBSHOPGLOBAL`, setelah verifikasi read-only atas prasyarat tabel dan RPC. Verifikasi
+pasca-migration memastikan kolom UUID, indeks akun, pengikatan identitas di RPC,
+serta tidak ada redemption dari order yang tertaut akun tetapi terlewat backfill.
+Edge Function `rapid-api` berhasil dideploy ulang dan berstatus ACTIVE versi 11.
+Tes source, `npm test`, `npm run build`, dan `git diff --check` lulus.
+
+Project tersebut tidak memiliki tabel histori `supabase_migrations.schema_migrations`.
+Karena itu `supabase db push --remote` menampilkan semua 13 migration lokal sebagai
+pending; hanya file migration baru yang dijalankan. Jangan jalankan `db push` sebelum
+histori migration lama direkonsiliasi/baseline dengan aman.
 
 ## Yang benar-benar dijalankan
 

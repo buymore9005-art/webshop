@@ -121,6 +121,13 @@ pemakaian kupon. Deploy ulang Edge Function `rapid-api` dari source terbaru sete
 menerapkan migration. Menu Produk & katalog menyediakan impor CSV maksimal 250
 produk sekali operasi; galeri/varian tidak termasuk impor massal.
 
+Pada project Supabase production yang digunakan, migration kupon akun sudah
+diterapkan dan `rapid-api` dideploy ulang. Project ini belum memiliki tabel histori
+`supabase_migrations.schema_migrations`; `supabase db push --remote` akan menganggap
+semua migration lokal sebagai pending. Jangan menjalankan `db push` sebelum migration
+lama yang sudah diterapkan manual direkonsiliasi dengan histori CLI. Untuk sementara,
+jalankan hanya file SQL yang belum diterapkan setelah memverifikasi skema target.
+
 Setelah migration pertumbuhan, jalankan `supabase/migrations/20261011000000_remove_midtrans.sql`
 untuk membersihkan skema lama yang mungkin tertinggal. Backup dahulu: kolom
 konfigurasi/token/transaksi dihapus, tetapi pesanan dan snapshot metode pembayaran

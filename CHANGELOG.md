@@ -122,7 +122,8 @@ SQL, role, atau dependency dari aplikasi PRODUCTION BUYMORE.
   mengikat identitas pada wrapper checkout server-side termasuk jalur Biteship.
 - Redemption lama milik tamu tidak dapat dikaitkan ke akun; tetap masuk hitungan batas
   pemakaian total, tetapi tidak ke kuota per akun.
-- Migration dan perubahan Edge Function belum diterapkan ke Supabase pengguna.
+- Migration telah diterapkan ke project Supabase produksi dan Edge Function
+  `rapid-api` telah dideploy ulang.
 
 ## Penghapusan pembayaran otomatis
 
