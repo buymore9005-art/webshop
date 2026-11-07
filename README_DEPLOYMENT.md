@@ -109,11 +109,17 @@ Filter Kategori dan Urutkan pada katalog memakai menu dropdown kustom dengan ops
 berbentuk kartu, penanda pilihan, dan dukungan keyboard (panah, Home/End, Enter,
 Escape, serta pencarian huruf). Kontrol pilihan lain yang tidak diganti tetap memakai
 select native browser.
-Kupon dikelola lewat menu “Kupon”, satu kode per checkout. Sistem menghitung ulang
-diskon dan batas pemakaian di database pada saat checkout, menggunakan hash nomor
-WhatsApp untuk batas per pelanggan. Pembatalan order tidak otomatis mengembalikan
-pemakaian kupon. Menu Produk & katalog menyediakan impor CSV maksimal 250 produk
-sekali operasi; galeri/varian tidak termasuk impor massal.
+Kupon dikelola lewat menu “Kupon”, satu kode per checkout. Kupon hanya dapat
+divalidasi dan digunakan oleh pelanggan yang login; batas per pelanggan dihitung
+berdasarkan UUID akun yang diverifikasi server, bukan nomor WhatsApp yang dikirim
+browser. Migration `20261107000000_coupon_account_identity.sql` harus dijalankan
+setelah migration account checkout dan setelah Biteship jika fitur itu digunakan.
+Redemption lama yang tertaut ke akun lewat pesanan akan di-backfill; redemption tamu
+yang tidak memiliki akun tertaut tidak dapat dipetakan ke akun dan tetap dihitung
+dalam batas penggunaan total kupon. Pembatalan order tidak otomatis mengembalikan
+pemakaian kupon. Deploy ulang Edge Function `rapid-api` dari source terbaru setelah
+menerapkan migration. Menu Produk & katalog menyediakan impor CSV maksimal 250
+produk sekali operasi; galeri/varian tidak termasuk impor massal.
 
 Setelah migration pertumbuhan, jalankan `supabase/migrations/20261011000000_remove_midtrans.sql`
 untuk membersihkan skema lama yang mungkin tertinggal. Backup dahulu: kolom
@@ -142,6 +148,8 @@ Pada project kosong yang baru dibuat, urutannya:
 5. `supabase/migrations/20261013000000_brand_gallery.sql`
 6. `supabase/migrations/20261014000000_variant_inventory.sql`
 7. `supabase/migrations/20261015000000_biteship.sql` (optional; enables Biteship)
+8. `supabase/migrations/20261020000000_account_checkout.sql`
+9. `supabase/migrations/20261107000000_coupon_account_identity.sql`
 
 Pada project yang sudah aktif, JANGAN ulangi setup awal. Jalankan hanya migration
 yang memang belum diterapkan, berurutan. File langkah 7 adalah satu skrip SQL

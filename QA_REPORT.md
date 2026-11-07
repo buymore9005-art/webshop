@@ -60,6 +60,17 @@ Perubahan stok per varian yang lebih baru melewati 83 tes, strict typecheck,
 production build, dan `git diff --check`. Pemeriksaan mencakup perilaku stok tiap
 varian dan assertion source migration; hasil tersebut bukan eksekusi SQL.
 
+## Pengikatan batas kupon ke akun
+
+Perubahan ini mewajibkan sesi pelanggan non-anonim saat validasi maupun checkout
+berkupon. Server mengidentifikasi pelanggan memakai user ID yang diverifikasi Supabase
+Auth; RPC checkout menimpa nilai identitas dari payload browser. Migration
+`supabase/migrations/20261107000000_coupon_account_identity.sql` menambah kolom
+identitas akun, backfill redemption dari order yang sudah tertaut, dan mempertahankan
+jatah redemption tamu lama hanya dalam batas total. Tes lokal memeriksa kontrak source
+Edge Function dan SQL; SQL belum dijalankan pada Supabase/PostgreSQL staging dan
+Edge Function belum dideploy.
+
 ## Yang benar-benar dijalankan
 
 | Pemeriksaan | Hasil | Bukti dan cakupan |

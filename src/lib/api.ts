@@ -254,8 +254,8 @@ export async function saveCoupon(value: Omit<Coupon, 'id' | 'times_used'>, id?: 
         throw error;
     return data as Coupon;
 }
-export async function validateCoupon(code: string, subtotal: number, phone: string) {
-    return shopAction<{ code: string; discount_amount: number }>({ action: 'validate-coupon', code, subtotal, phone });
+export async function validateCoupon(code: string, subtotal: number) {
+    return shopAction<{ code: string; discount_amount: number }>({ action: 'validate-coupon', code, subtotal });
 }
 let pendingAccess: OrderAccess | null = null;
 export function readOrderAccess(): OrderAccess | null {

@@ -112,6 +112,18 @@
 Pengembangan dilakukan dari 14 file webshop pengguna. Tidak mengambil halaman,
 SQL, role, atau dependency dari aplikasi PRODUCTION BUYMORE.
 
+## Pengikatan kupon ke akun
+
+- Validasi dan penggunaan kupon kini hanya tersedia bagi pelanggan yang login.
+- Batas penggunaan per pelanggan memakai UUID akun yang diverifikasi Supabase Auth,
+  bukan nomor WhatsApp yang dapat diganti oleh browser.
+- Menambahkan migration `20261107000000_coupon_account_identity.sql` untuk
+  menyimpan identitas redemption akun, backfill penggunaan dari pesanan tertaut, dan
+  mengikat identitas pada wrapper checkout server-side termasuk jalur Biteship.
+- Redemption lama milik tamu tidak dapat dikaitkan ke akun; tetap masuk hitungan batas
+  pemakaian total, tetapi tidak ke kuota per akun.
+- Migration dan perubahan Edge Function belum diterapkan ke Supabase pengguna.
+
 ## Penghapusan pembayaran otomatis
 
 - Menghapus Snap, webhook, endpoint sinkronisasi pembayaran, konfigurasi Admin,

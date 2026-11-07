@@ -284,13 +284,15 @@ Deno.serve(async (request: Request) => {
         if (action === 'biteship-sync')
             return json(await manualShipmentSync(db, request, body.orderId, optionalCustomerId), 200, headers);
         if (action === 'validate-coupon') {
+            const customerUserId = await optionalCustomerId(request);
+            if (!customerUserId)
+                throw new HttpError(401, 'Masuk ke akun pelanggan untuk menggunakan kupon.');
             const code = string(body.code, 'Kode kupon', 3, 40).toUpperCase();
             if (!/^[A-Z0-9_-]{3,40}$/.test(code))
                 throw new HttpError(400, 'Format kode kupon tidak valid.');
-            const phone = string(body.phone, 'Nomor pelanggan', 10, 15);
-            if (!/^62\d{8,13}$/.test(phone) || !Number.isSafeInteger(body.subtotal) || Number(body.subtotal) < 1 || Number(body.subtotal) > 1000000000)
+            if (!Number.isSafeInteger(body.subtotal) || Number(body.subtotal) < 1 || Number(body.subtotal) > 1000000000)
                 throw new HttpError(400, 'Data validasi kupon tidak valid.');
-            const customerKey = await hash(db.key + ':' + phone);
+            const customerKey = await hash(db.key + ':coupon-user:' + customerUserId);
             await db.limit('coupon-check:' + customerKey, 10, 600);
             const coupon = await db.row<{
                 id: string; code: string; discount_type: 'percent' | 'fixed'; discount_value: number;
@@ -306,7 +308,7 @@ Deno.serve(async (request: Request) => {
             if (coupon.max_uses !== null && coupon.times_used >= coupon.max_uses)
                 throw new HttpError(400, 'Kupon sudah mencapai batas pemakaian.');
             if (coupon.max_uses_per_customer !== null) {
-                const query = new URLSearchParams({ select: 'id', coupon_id: 'eq.' + coupon.id, customer_key: 'eq.' + customerKey, limit: String(coupon.max_uses_per_customer) });
+                const query = new URLSearchParams({ select: 'id', coupon_id: 'eq.' + coupon.id, customer_user_id: 'eq.' + customerUserId, limit: String(coupon.max_uses_per_customer) });
                 const uses = await db.request<Array<{ id: string }>>('coupon_redemptions?' + query);
                 if (uses.length >= coupon.max_uses_per_customer)
                     throw new HttpError(400, 'Batas pemakaian kupon untuk pelanggan ini sudah tercapai.');
@@ -337,7 +339,7 @@ Deno.serve(async (request: Request) => {
             const couponCode = typeof body.couponCode === 'string' ? body.couponCode.trim().toUpperCase() : '';
             if (couponCode && !/^[A-Z0-9_-]{3,40}$/.test(couponCode))
                 throw new HttpError(400, 'Format kode kupon tidak valid.');
-            const customerKey = await hash(db.key + ':' + data.customer.phone);
+            const customerKey = customerUserId;
             await db.limit('phone:' + await hash(db.key + data.customer.phone), 6, 600);
             const existing = await db.row<{
                 id: string;

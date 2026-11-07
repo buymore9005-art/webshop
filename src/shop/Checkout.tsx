@@ -78,8 +78,11 @@ export function Checkout({ cart, settings, methods, onDone, onBack }: {
     setError('');
     setCouponQuote(null);
     try {
+      const { data: auth, error: authError } = await client().auth.getUser();
+      if (authError || !auth.user || auth.user.is_anonymous)
+        throw new Error('Masuk ke akun pelanggan untuk menggunakan kupon.');
       const valid = validateCustomer(customer);
-      const result = await validateCoupon(couponCode, biteship && validShippingQuote ? validShippingQuote.subtotal : totals.subtotal, valid.phone);
+      const result = await validateCoupon(couponCode, biteship && validShippingQuote ? validShippingQuote.subtotal : totals.subtotal);
       setCouponQuote({ ...result, subtotal: biteship && validShippingQuote ? validShippingQuote.subtotal : totals.subtotal, phone: customer.phone });
     }
     catch (e) {
@@ -219,7 +222,7 @@ export function Checkout({ cart, settings, methods, onDone, onBack }: {
           {validShippingQuote && !validShippingQuote.rates.length && <p className="muted">Tidak ada layanan tersedia.</p>}
         </section>}
         <div className="coupon-entry">
-          <Field label="Kode kupon (opsional)">
+          <Field label="Kode kupon (opsional)" hint="Masuk ke akun pelanggan untuk menggunakan kupon.">
             <input maxLength={40} autoCapitalize="characters" value={couponCode} onChange={e => { setCouponCode(e.target.value.toUpperCase()); setCouponQuote(null); }} />
           </Field>
           <button type="button" className="button secondary" disabled={busy || couponBusy || !couponCode.trim()} onClick={() => void applyCoupon()}>{couponBusy ? 'Memeriksa…' : validCouponQuote ? 'Terapkan ulang' : 'Gunakan kupon'}</button>
