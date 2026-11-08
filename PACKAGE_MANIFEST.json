@@ -1,7 +1,7 @@
 {
   "project": "ZYHA ID webshop",
   "version": "1.2.0",
-  "status": "Showcase / Portfolio is now a standalone responsive section above the footer columns; 76 tests and production build pass; Supabase deployment remains pending.",
+  "status": "Simplified Chinese (zh) localization added across storefront and Admin; tests and production build pass; Supabase deployment remains pending.",
   "files": [
     {
       "path": ".env.example",
@@ -30,8 +30,8 @@
     },
     {
       "path": "CHANGELOG.md",
-      "bytes": 11458,
-      "sha256": "f9143ace368b16885d32c8c7e9cf3405ab71627abfb7b390371e7bbbf29a4c10"
+      "bytes": 14544,
+      "sha256": "3aa8cdd20786f6d34d4514b2a9cae2878ee1cea56c78f2427e1e024aad452cf3"
     },
     {
       "path": "docs/FILE_MAP.md",
@@ -215,8 +215,8 @@
     },
     {
       "path": "README_DEPLOYMENT.md",
-      "bytes": 24011,
-      "sha256": "b661fe367afa1eec60a38923d0fb8af036518ec8e6badf0b73a527f81013b3b3"
+      "bytes": 29448,
+      "sha256": "4b512d1cd840e75f06df35e7926d3c599176c8815744f2105549707e4182979d"
     },
     {
       "path": "scripts/check-files.cjs",
@@ -245,8 +245,8 @@
     },
     {
       "path": "src/admin/Coupons.tsx",
-      "bytes": 8853,
-      "sha256": "2467356dfb6bae79f69f03ed4af36f42ca67139eb36a524b3c3088f8b2102013"
+      "bytes": 8850,
+      "sha256": "d3c22e0a8eb24302c1d4b2bf0cdc4c035e00154e5800761db46a596a15ad7b45"
     },
     {
       "path": "src/admin/Dashboard.tsx",
@@ -462,6 +462,66 @@
       "path": "supabase/migrations/20261013000000_brand_gallery.sql",
       "bytes": 1992,
       "sha256": "ea239a599d17452987611090887fe3cf753db86e04b6dce1772654bdb529960b"
+    },
+    {
+      "path": "src/components/LanguageSelector.tsx",
+      "bytes": 962,
+      "sha256": "efb638c7fba8052bfe0db0bac81668184b0ee396cca9c72ede499b71172491f6"
+    },
+    {
+      "path": "src/components/ShipmentStatus.tsx",
+      "bytes": 5929,
+      "sha256": "b335f393f194d1274c9adcc3e8d7c08654aa18f3c6a5fc90e7c86c0a35554400"
+    },
+    {
+      "path": "src/i18n/adminPhrases.ts",
+      "bytes": 26483,
+      "sha256": "89a8b56c1732483fd4813652c5cb77424db14f98fd94ca8f6692cc23c2a3eb77"
+    },
+    {
+      "path": "src/i18n/index.ts",
+      "bytes": 2022,
+      "sha256": "d31235571371a8ee904f6cce3f8d606f5d0b6c475fdf85d220989aaeff5ec141"
+    },
+    {
+      "path": "src/i18n/phrases.ts",
+      "bytes": 17670,
+      "sha256": "3b2c51c8fee46773ca2e7ab0a4e62325a51403538d8034f794efe6af041b6686"
+    },
+    {
+      "path": "src/i18n/preference.ts",
+      "bytes": 585,
+      "sha256": "61aa87dfda675033339c9e64bf67745e22c2059a0f327935df14ac38d93d56ff"
+    },
+    {
+      "path": "src/i18n/resources.ts",
+      "bytes": 7072,
+      "sha256": "d721d0c121ccc2ef59ecef73a86ebb7231032c33aec56a95895c2e1608de6868"
+    },
+    {
+      "path": "src/i18n/runtime.ts",
+      "bytes": 1172,
+      "sha256": "580b8497b6d7e0b30df05931d882eecad6775d0f433949344c14273488296307"
+    },
+    {
+      "path": "src/i18n/zhAdminPhrases.ts",
+      "bytes": 27106,
+      "sha256": "c731e079d29ae398f0031e75191b4d82a71dea4259327ab9c241825ee59cf7cd"
+    },
+    {
+      "path": "src/i18n/zhPhrases.ts",
+      "bytes": 17835,
+      "sha256": "2c8502775929a207adb8a651fb0d4f6c763c3f529783cec14a621b7a6ae81c85"
+    },
+    {
+      "path": "tests/i18n.test.cjs",
+      "bytes": 5760,
+      "sha256": "962e5aace96d9992a0bac4eae5a6ea91c48997e2852fd3657c8174a099152ab7"
+    },
+    {
+      "path": "tests/localization.test.cjs",
+      "bytes": 3629,
+      "sha256": "af8ad769fe857ee187d1641e707c15adbb046e9227873ee0e0f404943abe2914"
     }
   ]
 }

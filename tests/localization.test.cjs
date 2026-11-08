@@ -13,7 +13,7 @@ function load(file) {
   return m.exports;
 }
 const { localizeSource } = load('scripts/localize.ts');
-const { phraseDictionary, phraseKey, phrase } = load('src/i18n/runtime.ts');
+const { phraseDictionary, phraseKey, phrase, zhPhraseDictionary, displayLocale } = load('src/i18n/runtime.ts');
 const i18n = require('i18next');
 test('all requested screens compile with localized copy and reactive subscriptions', () => {
   const files = ['App.tsx', ...['src/shop', 'src/admin'].flatMap(dir => fs.readdirSync(dir).filter(f => f.endsWith('.tsx')).map(f => dir + '/' + f)), 'src/components/UI.tsx', 'src/components/ShippingAreaPicker.tsx'];
@@ -38,10 +38,19 @@ test('phrase resources switch both ways and unknown data remains unchanged', asy
   await i18n.init({ lng: 'en', fallbackLng: 'id', resources: {
     id: { translation: Object.fromEntries(Object.keys(phraseDictionary).map(s => [phraseKey(s), s])) },
     en: { translation: Object.fromEntries(Object.entries(phraseDictionary).map(([s, en]) => [phraseKey(s), en])) },
+    zh: { translation: Object.fromEntries(Object.entries(zhPhraseDictionary).map(([s, zh]) => [phraseKey(s), zh])) },
   } });
   assert.equal(phrase('Tambah ke keranjang'), 'Add to cart');
   assert.equal(phrase('Customer supplied text'), 'Customer supplied text');
   await i18n.changeLanguage('id');
   assert.equal(phrase('Tambah ke keranjang'), 'Tambah ke keranjang');
+  await i18n.changeLanguage('zh');
+  assert.equal(phrase('Tambah ke keranjang'), '加入购物车');
+  assert.equal(displayLocale(), 'zh-CN');
   assert.ok(Object.keys(phraseDictionary).length > 400);
+});
+test('courier status namespace provides Simplified Chinese labels', () => {
+  const source = fs.readFileSync('src/components/ShipmentStatus.tsx', 'utf8');
+  assert.match(source, /const zh: typeof en = \{[^}]*title: '快递状态'/);
+  assert.match(source, /addResourceBundle\('zh', 'shipment', zh\)/);
 });

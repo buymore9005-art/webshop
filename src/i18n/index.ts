@@ -1,9 +1,9 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import { projectStorageKey } from '../../supabaseClient';
-import { id, en } from './resources';
+import { id, en, zh } from './resources';
 import { normalizeLocale, readLocale, writeLocale } from './preference';
-import { phrase, phraseDictionary, phraseKey } from './runtime';
+import { phrase, phraseDictionary, phraseKey, zhPhraseDictionary } from './runtime';
 
 export const localeStorageKey = projectStorageKey + 'locale';
 function storage(): Storage | undefined {
@@ -12,7 +12,7 @@ function storage(): Storage | undefined {
 }
 function synchronize(language: string) {
   const locale = normalizeLocale(language);
-  if (typeof document !== 'undefined') document.documentElement.lang = locale;
+  if (typeof document !== 'undefined') document.documentElement.lang = locale === 'zh' ? 'zh-CN' : locale;
   writeLocale(storage(), localeStorageKey, locale);
 }
 i18n.use(initReactI18next);
@@ -21,8 +21,9 @@ void i18n.init({
   resources: {
     id: { translation: { ...id, ...Object.fromEntries(Object.keys(phraseDictionary).map(text => [phraseKey(text), text])) } },
     en: { translation: { ...en, ...Object.fromEntries(Object.entries(phraseDictionary).map(([text, english]) => [phraseKey(text), english])) } },
+    zh: { translation: { ...zh, ...Object.fromEntries(Object.entries(zhPhraseDictionary).map(([text, translation]) => [phraseKey(text), translation])) } },
   },
-  lng: readLocale(storage(), localeStorageKey), fallbackLng: 'id', supportedLngs: ['id', 'en'],
+  lng: readLocale(storage(), localeStorageKey), fallbackLng: 'id', supportedLngs: ['id', 'en', 'zh'],
   interpolation: { escapeValue: false }, initAsync: false,
 });
 

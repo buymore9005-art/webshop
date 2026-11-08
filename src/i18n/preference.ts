@@ -1,6 +1,6 @@
-export type Locale = 'id' | 'en';
+export type Locale = 'id' | 'en' | 'zh';
 export function normalizeLocale(value: unknown): Locale {
-  return value === 'en' ? 'en' : 'id';
+  return value === 'en' || value === 'zh' ? value : 'id';
 }
 export function readLocale(storage: Pick<Storage, 'getItem'> | undefined, key: string): Locale {
   try { return normalizeLocale(storage?.getItem(key)); }

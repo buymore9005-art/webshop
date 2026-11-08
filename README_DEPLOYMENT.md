@@ -18,6 +18,9 @@ file PRODUCTION BUYMORE. Simpan commit/backup repository lama sebelum menyalin.
 Pakai Node.js 22 dan npm. Framework dan dependency utama mengikuti repository asli.
 `package-lock.json` disertakan; gunakan `npm ci` untuk clean install yang reproducible.
 Jangan memakai lockfile aplikasi produksi yang pernah diunggah pada percakapan lain.
+Storefront dan panel Admin menyediakan bahasa Indonesia, English, dan 中文
+(Mandarin Sederhana). Pilihan disimpan di browser per project; nama produk, artikel,
+dan konten lain yang dimasukkan toko/pelanggan tidak diterjemahkan otomatis.
 
 Buat project Supabase BARU yang Anda kuasai. SQL ini bukan migrasi in-place untuk
 schema lama yang tidak diketahui. Script berhenti bila mendeteksi tabel yang sama

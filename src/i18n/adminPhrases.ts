@@ -1,6 +1,6 @@
 export const adminPhrases: Record<string, string> = {
   'Artikel berhasil disimpan.': 'Article saved.', 'Informasi footer berhasil disimpan.': 'Footer information saved.', 'Foto kolase berhasil disimpan.': 'Showcase photo saved.',
-  'Hapus artikel "': 'Delete article "', 'Artikel dihapus.': 'Article deleted.', 'Hapus informasi footer "': 'Delete footer information "', 'Informasi footer dihapus.': 'Footer information deleted.',
+  'Hapus artikel "': 'Delete article "', '"?': '"?', 'Artikel dihapus.': 'Article deleted.', 'Hapus informasi footer "': 'Delete footer information "', 'Informasi footer dihapus.': 'Footer information deleted.',
   'Hapus foto "': 'Delete photo "', '" dari kolase footer?': '" from the footer showcase?', 'Foto dihapus dari kolase footer.': 'Photo removed from footer showcase.',
   'Artikel & informasi toko': 'Articles and store information', 'Kelola artikel, informasi footer, dan showcase portofolio brand.': 'Manage articles, footer information, and the brand portfolio showcase.',
   'Tambah artikel': 'Add article', 'Tambah informasi footer': 'Add footer information', 'Tambah foto showcase': 'Add showcase photo', 'Konten toko': 'Store content', 'Informasi footer': 'Footer information', 'Showcase / portofolio': 'Showcase / portfolio',
@@ -24,7 +24,7 @@ export const adminPhrases: Record<string, string> = {
   'Belum ada kupon. Kupon aktif tersedia di checkout setelah disimpan.': 'No coupons yet. Active coupons are available at checkout after saving.',
   'Ubah kupon': 'Edit coupon', 'Kode kupon': 'Coupon code', '3–40 huruf, angka, garis bawah, atau tanda hubung. Kode disimpan huruf besar.': '3–40 letters, numbers, underscores, or hyphens. Codes are stored in uppercase.',
   'Jenis diskon': 'Discount type', 'Persentase': 'Percentage', 'Nominal tetap (Rp)': 'Fixed amount (Rp)', 'Diskon (%)': 'Discount (%)', 'Diskon (Rp)': 'Discount (Rp)', 'Minimum belanja (Rp)': 'Minimum purchase (Rp)',
-  'Batas total penggunaan': 'Total usage limit', 'Kosong = tanpa batas.': 'Blank = unlimited.', 'Batas per pelanggan': 'Per-customer limit', 'Pelanggan dikenali melalui hash nomor WhatsApp checkout.': 'Customers are identified by a hash of their checkout WhatsApp number.',
+  'Batas total penggunaan': 'Total usage limit', 'Kosong = tanpa batas.': 'Blank = unlimited.',   'Batas per pelanggan': 'Per-customer limit', 'Pelanggan dikenali melalui akun pelanggan yang login.': 'Customers are identified by their signed-in customer account.',
   'Mulai berlaku': 'Valid from', 'Berakhir (opsional)': 'Ends (optional)', 'Kupon aktif': 'Active coupon', 'Simpan kupon': 'Save coupon',
   'Analitik pesanan': 'Order analytics', 'Dari tanggal (WIB)': 'From date (Jakarta time)', 'Sampai tanggal (WIB)': 'To date (Jakarta time)',
   'Pendapatan terverifikasi': 'Verified revenue', 'Jumlah pesanan': 'Order count', 'Produk aktif': 'Active products',

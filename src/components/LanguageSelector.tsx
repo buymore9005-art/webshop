@@ -5,8 +5,10 @@ export function LanguageSelector() {
   const { t, i18n } = useTranslation();
   const locale = normalizeLocale(i18n.resolvedLanguage);
   return <div className="language-selector" role="group" aria-label={t('language.label')}>
-    <button type="button" lang="id" aria-label="Bahasa Indonesia" aria-pressed={locale === 'id'} onClick={() => void i18n.changeLanguage('id')}>ID</button>
+    <button type="button" lang="id" aria-label={t('language.id')} aria-pressed={locale === 'id'} onClick={() => void i18n.changeLanguage('id')}>ID</button>
     <span className="language-divider" aria-hidden="true">/</span>
-    <button type="button" lang="en" aria-label="English" aria-pressed={locale === 'en'} onClick={() => void i18n.changeLanguage('en')}>ENG</button>
+    <button type="button" lang="en" aria-label={t('language.en')} aria-pressed={locale === 'en'} onClick={() => void i18n.changeLanguage('en')}>ENG</button>
+    <span className="language-divider" aria-hidden="true">/</span>
+    <button type="button" lang="zh-CN" aria-label={t('language.zh')} aria-pressed={locale === 'zh'} onClick={() => void i18n.changeLanguage('zh')}>中文</button>
   </div>;
 }

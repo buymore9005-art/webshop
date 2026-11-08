@@ -1,5 +1,5 @@
 export const id = {
-  language: { label: 'Bahasa', id: 'Bahasa Indonesia', en: 'English' },
+  language: { label: 'Bahasa', id: 'Bahasa Indonesia', en: 'English', zh: '简体中文' },
   common: { store: 'Lihat toko', back: 'Kembali ke toko', logout: 'Keluar', loading: 'Memuat halaman…', retry: 'Periksa kembali', email: 'Email', password: 'Password' },
   shell: { configuration: 'Konfigurasi toko diperlukan', setup: 'Atur environment project baru, lalu build/deploy ulang. Lihat README_DEPLOYMENT.md.', notFound: 'Halaman tidak ditemukan' },
   admin: { operations: 'Operasional', growth: 'Pengembangan toko', configuration: 'Konfigurasi', dashboard: 'Ringkasan', orders: 'Pesanan', products: 'Produk & katalog', coupons: 'Kupon', analytics: 'Analitik', content: 'Artikel & footer', banks: 'Metode bayar', wa: 'WhatsApp', settings: 'Pengaturan', labels: 'Template label', navigation: 'Navigasi backoffice', title: 'Administrasi toko', menu: 'Menu admin', mobileNavigation: 'Navigasi admin' },
@@ -8,11 +8,20 @@ export const id = {
   store: { navigation: 'Navigasi toko', catalog: 'Katalog', articles: 'Artikel', wishlist: 'Wishlist', wishlistCount: 'Wishlist, {{count}} produk', account: 'Akun', accountEmail: 'Akun: {{email}}', orders: 'Pesanan saya', cart: 'Keranjang belanja', cartCount: 'Keranjang belanja, {{count}} barang' },
 };
 export const en = {
-  language: { label: 'Language', id: 'Bahasa Indonesia', en: 'English' },
+  language: { label: 'Language', id: 'Indonesian', en: 'English', zh: 'Simplified Chinese' },
   common: { store: 'View store', back: 'Back to store', logout: 'Sign out', loading: 'Loading page…', retry: 'Check again', email: 'Email', password: 'Password' },
   shell: { configuration: 'Store configuration required', setup: 'Configure the new project environment, then rebuild/redeploy. See README_DEPLOYMENT.md.', notFound: 'Page not found' },
   admin: { operations: 'Operations', growth: 'Store growth', configuration: 'Configuration', dashboard: 'Overview', orders: 'Orders', products: 'Products & catalog', coupons: 'Coupons', analytics: 'Analytics', content: 'Articles & footer', banks: 'Payment methods', wa: 'WhatsApp', settings: 'Settings', labels: 'Label templates', navigation: 'Backoffice navigation', title: 'Store administration', menu: 'Admin menu', mobileNavigation: 'Admin navigation' },
   auth: { denied: 'Admin access required', deniedHelp: 'This account does not have permission, or the access check connection is failing.', resetTitle: 'Set a new password', title: 'Sign in to Backoffice', help: 'Use an activated Admin account.', busy: 'Processing…', savePassword: 'Save password', login: 'Sign in', forgot: 'Forgot password' },
   errors: { access: 'Access could not be verified.', login: 'Sign-in failed.', emailRequired: 'Enter your email first.', resetSent: 'Check your email for account recovery instructions.', request: 'Request failed.', passwordLength: 'Use a password with at least 12 characters.', passwordSave: 'Password has not been saved.', invalidCredentials: 'Incorrect email or password.', emailUnconfirmed: 'Email has not been confirmed.', https: 'The Supabase URL must use HTTPS.', missingUrl: 'Set VITE_SUPABASE_URL in the environment first.', missingKey: 'Set VITE_SUPABASE_ANON_KEY to the new project publishable/anon key.', secret: 'Server secrets must not be used on the frontend.', anon: 'Use an anon key, not a service-role key.', keyFormat: 'Invalid publishable/anon key format.' },
   store: { navigation: 'Store navigation', catalog: 'Catalog', articles: 'Articles', wishlist: 'Wishlist', wishlistCount: 'Wishlist, {{count}} products', account: 'Account', accountEmail: 'Account: {{email}}', orders: 'My orders', cart: 'Shopping cart', cartCount: 'Shopping cart, {{count}} items' },
+} satisfies typeof id;
+export const zh = {
+  language: { label: '语言', id: '印度尼西亚语', en: '英语', zh: '简体中文' },
+  common: { store: '查看商店', back: '返回商店', logout: '退出登录', loading: '页面加载中…', retry: '重新检查', email: '电子邮箱', password: '密码' },
+  shell: { configuration: '需要配置商店', setup: '请配置新项目环境，然后重新构建/部署。请参阅 README_DEPLOYMENT.md。', notFound: '未找到页面' },
+  admin: { operations: '运营管理', growth: '店铺增长', configuration: '配置', dashboard: '概览', orders: '订单', products: '商品与目录', coupons: '优惠券', analytics: '数据分析', content: '文章与页脚', banks: '支付方式', wa: 'WhatsApp', settings: '设置', labels: '面单模板', navigation: '后台导航', title: '店铺管理', menu: '管理菜单', mobileNavigation: '管理导航' },
+  auth: { denied: '需要管理员权限', deniedHelp: '此账户尚未获得权限，或权限检查连接暂时失败。', resetTitle: '设置新密码', title: '登录管理后台', help: '请使用已获启用的管理员账户。', busy: '正在处理…', savePassword: '保存密码', login: '登录', forgot: '忘记密码' },
+  errors: { access: '无法验证访问权限。', login: '登录失败。', emailRequired: '请先输入电子邮箱。', resetSent: '请查看邮箱中的账户恢复说明。', request: '请求失败。', passwordLength: '密码至少需要 12 个字符。', passwordSave: '密码尚未保存。', invalidCredentials: '电子邮箱或密码错误。', emailUnconfirmed: '电子邮箱尚未验证。', https: 'Supabase URL 必须使用 HTTPS。', missingUrl: '请先在环境变量中设置 VITE_SUPABASE_URL。', missingKey: '请将新项目的 publishable/anon key 设置为 VITE_SUPABASE_ANON_KEY。', secret: '不得在前端使用服务器密钥。', anon: '请使用 anon key，不要使用 service-role key。', keyFormat: 'publishable/anon key 格式无效。' },
+  store: { navigation: '店铺导航', catalog: '商品目录', articles: '文章', wishlist: '心愿单', wishlistCount: '心愿单，{{count}} 件商品', account: '账户', accountEmail: '账户：{{email}}', orders: '我的订单', cart: '购物车', cartCount: '购物车，{{count}} 件商品' },
 } satisfies typeof id;

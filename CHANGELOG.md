@@ -1,5 +1,13 @@
 # CHANGELOG — ZYHA ID 1.2.0
 
+## Bahasa Mandarin
+
+- Menambahkan pilihan Bahasa Mandarin Sederhana pada storefront, checkout, akun,
+  panel Admin, label pengiriman, pesan validasi, dan navigasi.
+- Pilihan bahasa disimpan per project di perangkat dan tetap aktif setelah halaman
+  dimuat ulang. Format tanggal mengikuti locale yang dipilih.
+- Konten toko dan data pelanggan yang dibuat pengguna tetap ditampilkan apa adanya.
+
 ## Antarmuka lebih bersih
 
 - Menghapus toast rutin untuk perubahan wishlist dan tautan yang berhasil disalin.
